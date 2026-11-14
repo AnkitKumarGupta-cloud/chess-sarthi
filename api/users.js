@@ -22,7 +22,7 @@ export default handler(async ({ req, body, query }) => {
   if (req.method === "DELETE") {
     const u = normUser(query.username);
     if (!(await getUser(u))) throw new HttpError(404, "That account was not found.");
-    await kvPipe([["DEL", "u:" + u], ["SREM", "users", u]]);
+    await kvPipe([["DEL", "u:" + u], ["SREM", "users", u], ["DEL", "p:" + u], ["DEL", "ps:" + u]]);
     return { ok: true };
   }
   if (req.method !== "POST") throw new HttpError(405, "Use GET, POST or DELETE.");

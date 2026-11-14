@@ -38,7 +38,8 @@ Vercel Deployment Protection must stay **off** for `chess-sathi-live`, or studen
 - **Practice:** 32 topics / 316 positions from Lichess practice, 5 sections. Play against Stockfish (runs in the browser) until the goal is reached. Hint, take back, restart, full screen, move list. 10 XP per position.
 - **Puzzles:** 115 levels × 10 puzzles (rating ~500 → ~2800) from the Lichess puzzle database (CC0) on an illustrated map of 6 worlds (Meadow, Forest, Desert, Snow, Fire, Castle; artwork made with ChatGPT). Stars, unlocks, full screen. Old 39 classic puzzles still open from the home "Puzzle of the day" tile.
 - **Tests:** a new 10-question test each time, matched to the student's puzzle level (the highest level unlocked): 3 knowledge questions from a 4-tier bank (Beginner ≤ level 5, Intermediate ≤ 20, Advanced ≤ 45, Expert above) + 7 "find the best move" positions from the levels at and just above theirs. Bank: `QBANK` in `public/index.html`.
-- **Progress** is saved in each browser (not visible to the teacher yet).
+- **Progress sync:** a student's progress (lessons, puzzles, tests, practice, daily XP, puzzle levels) is saved in the browser and copied to the server 3 s after any change (`/api/progress`; Redis `p:<user>` = full state, `ps:<user>` = summary). On sign-in it is merged with the server copy, so it follows the student to any device; a different student's leftovers on a shared device are cleared. Deleting a student deletes their progress.
+- **Teacher's Progress tab** shows the Student progress table: puzzles solved and level, practice, lessons, best test, XP and rank, last active; filter by batch; tap a student for more. Students who haven't opened the app since this update show as "Not opened".
 - No Sound/Voice buttons: move sounds and lesson voice are always on.
 - **Theme switch** in the profile menu (Auto / Light / Dark). Saved per device in `localStorage` key `cs-theme`; Auto follows the device setting. Applied by a tiny script in `<head>` so there is no flash.
 - **Board pages** (practice, puzzle levels, classic puzzles) use a Lichess-style layout: on computers the board fills the screen height with a compact panel on its right (goal, status, Next, buttons, About, position list); on phones and narrow windows (under 900px) the panel moves below the board. No Full screen button any more.
@@ -73,6 +74,5 @@ Vercel Deployment Protection must stay **off** for `chess-sathi-live`, or studen
 ## Not done yet / ideas
 
 - Recording: needs a Cloudflare R2 bucket + the five `RECORD_*` variables. LiveKit free plan includes only ~60 recorded minutes a month.
-- Teacher can't yet see each student's practice/puzzle progress (it lives in the student's browser).
 - Mobile app (Expo, separate zip `chess-sathi.zip`): needs `SITE_URL` set in `src/config.js`; not tested on a phone; doesn't have Practice/Puzzle levels yet.
 - Old Vercel projects `chess`, `chess_sathi`, `chess-sathi`, `chess--sathi-yyrr` are unused and can be deleted.

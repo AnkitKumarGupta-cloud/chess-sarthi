@@ -90,11 +90,31 @@ await call("record", { method: "POST", auth: T, body: { classId: c1.id, action: 
 assert.equal((await call("recordings", { query: { classId: c1.id }, auth: S })).recordings.length, 2);
 assert.ok(Object.values(lk.egress).every((e) => e.stopped));
 
+// --- progress ---
+assert.equal((await call("progress", { method: "POST", body: { state: {} } })).status, 401);
+assert.equal((await call("progress", { method: "POST", auth: P, body: { state: { lessons: {} } } })).status, 403);   // only students
+assert.equal((await call("progress", { method: "POST", auth: T, body: { state: { lessons: {} } } })).status, 403);
+assert.equal((await call("progress", { method: "POST", auth: S, body: {} })).status, 400);
+assert.equal((await call("progress", { method: "POST", auth: S, body: { state: { tests: ["x".repeat(210000)] } } })).status, 413);
+assert.equal((await call("progress", { auth: S })).progress, null);   // nothing saved yet
+const saved = await call("progress", { method: "POST", auth: S, body: {
+  state: { lv: { unlocked: 3, done: { 1: { stars: 3 } } }, practice: { a: true }, liveToken: "must-not-be-stored", hack: 1 },
+  summary: { xp: 75, rank: "Pawn", puzzlesSolved: 12, puzzleLevel: 3, levelsDone: 1, lastTest: { score: 7, total: 10, tier: "Beginner" }, evil: "<script>" } } });
+assert.equal(saved.status, 200); assert.ok(saved.at);
+const mine = (await call("progress", { auth: S })).progress;
+assert.deepEqual(Object.keys(mine.state).sort(), ["lv", "practice"], "only progress fields are stored");
+const board = await call("progress", { auth: T });
+const row = board.students.find((x) => x.username === stu.username);
+assert.equal(row.summary.puzzlesSolved, 12); assert.equal(row.summary.lastTest.score, 7); assert.equal(row.summary.evil, undefined);
+assert.equal(board.students.some((x) => x.role === "parent"), false, "parents are not listed");
+assert.equal(board.students.find((x) => x.username !== stu.username).summary, null);   // never synced
+
 // --- delete ---
 assert.equal((await call("classes", { method: "DELETE", auth: T, query: { id: c2.id } })).ok, true);
 assert.equal((await call("classes", { auth: T })).classes.length, 1);
 assert.equal((await call("users", { method: "DELETE", auth: T, query: { username: stu.username } })).ok, true);
 assert.equal((await call("me", { auth: S })).status, 401);   // deleted account is cut off
+assert.equal(db.has("p:" + stu.username) || db.has("ps:" + stu.username), false, "progress removed with the account");
 
 // --- missing settings give a friendly message ---
 delete process.env.LIVEKIT_API_KEY;

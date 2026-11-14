@@ -762,6 +762,17 @@ main:has(> .drill){padding-top:12px!important}
   .topbar{background:color-mix(in srgb,var(--bg) 82%,var(--ink) 4%);border-right:1px solid color-mix(in srgb,var(--line) 70%,var(--ink) 12%);box-shadow:4px 0 18px rgba(0,0,0,.06)}
   .who .chipbtn{background:var(--surface)}
 }
+/* Teacher: student progress table */
+.tp-table{width:100%;border-collapse:collapse;min-width:640px}
+.tp-table th,.tp-table td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+.tp-table thead th{font-size:.78rem;color:var(--muted);font-weight:700;background:var(--bg)}
+.tp-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.tp-row{cursor:pointer}.tp-row:hover,.tp-row.open{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.tp-more td{background:color-mix(in srgb,var(--accent) 4%,transparent)}
+.tp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.tp-grid>div{display:flex;flex-direction:column;gap:2px}.tp-grid b{font-size:1.05rem}
+.tp-week>div{display:flex;align-items:flex-end;gap:4px;height:40px}.tp-week i{flex:1;background:var(--gold,#E0A93B);border-radius:3px;min-height:3px}
+.tp-chips{display:flex;flex-wrap:wrap;gap:8px}
 </style>
 
 </head>
@@ -791,7 +802,7 @@ main:has(> .drill){padding-top:12px!important}
 const KEY="targetchess.v2";
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}}
 let S=Object.assign({lessons:{},puzzles:{},tests:[],practice:{},sound:true,voice:true,liveToken:""},load());
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}try{progQueue()}catch(e){}}
 function themeGet(){const t=document.documentElement.dataset.theme;return t==="light"||t==="dark"?t:"auto"}
 function themeSet(t){const r=document.documentElement;if(t==="light"||t==="dark")r.dataset.theme=t;else delete r.dataset.theme;
   try{t==="auto"?localStorage.removeItem("cs-theme"):localStorage.setItem("cs-theme",t)}catch(e){}
@@ -1597,7 +1608,47 @@ function afterTests(){
 }
 
 /* ---------- Progress ---------- */
+function vProgressTeacher(){
+  if(TPROG.state==="idle"){setTimeout(loadTeacherProgress,0);TPROG.state="loading"}
+  const head=`<section class="stack view"><div class="eyebrow">Progress</div><div class="row" style="justify-content:space-between;align-items:end"><h1>Student progress</h1><button class="btn ghost" id="tpRefresh">Refresh</button></div></section>`;
+  if(TPROG.state==="loading")return head+`<section class="card view"><p class="li-m">Loading…</p></section>`;
+  if(TPROG.state==="err")return head+`<section class="card view"><p>${esc(TPROG.msg||"Could not load progress.")}</p></section>`;
+  const all=TPROG.list,batches=[...new Map(all.map(u=>[u.batch,u.batchName||u.batch])).entries()];
+  if(!all.length)return head+`<section class="card view"><p>No students yet. Add them on the Live tab.</p></section>`;
+  const list=all.filter(u=>TPROG.batch==="all"||u.batch===TPROG.batch).sort((a,b)=>((b.summary||{}).xp||0)-((a.summary||{}).xp||0));
+  const ago=d=>{if(!d)return "–";const t=dayKey(),y=new Date();y.setDate(y.getDate()-1);if(d===t)return "Today";if(d===dayKey(y))return "Yesterday";
+    const n=Math.round((new Date(t)-new Date(d))/864e5);return n<30?n+" days ago":new Date(d).toLocaleDateString([], {day:"numeric",month:"short"})};
+  const row=u=>{const m=u.summary,open=TPROG.open===u.username;
+    if(!m)return `<tr><td><b>${esc(u.name)}</b><br><span class="li-m">${esc(u.batchName||"")}</span></td><td colspan="6" class="li-m">Not opened the app since this update</td></tr>`;
+    return `<tr class="tp-row${open?" open":""}" data-tp="${esc(u.username)}" tabindex="0" aria-expanded="${open}">
+      <td><b>${esc(u.name)}</b><br><span class="li-m">${esc(u.batchName||"")}</span></td>
+      <td class="num"><b>${m.puzzlesSolved}</b><br><span class="li-m">Level ${m.puzzleLevel}</span></td>
+      <td class="num">${m.practiceSolved}<span class="li-m">/${m.practiceTotal}</span></td>
+      <td class="num">${m.lessonsDone}<span class="li-m">/${m.lessonsTotal}</span></td>
+      <td class="num">${m.bestTest!=null?`${m.bestTest}<span class="li-m">/10</span>`:"–"}${m.lastTest&&m.lastTest.tier?`<br><span class="li-m">${esc(m.lastTest.tier)}</span>`:""}</td>
+      <td class="num">${m.xp}<br><span class="li-m">${esc(m.rank)}</span></td>
+      <td>${ago(m.lastActive)}${m.streak?`<br><span class="li-m">🔥 ${m.streak} day${m.streak===1?"":"s"}</span>`:""}</td></tr>
+      ${open?`<tr class="tp-more"><td colspan="7"><div class="tp-grid">
+        <div><span class="li-m">Puzzle levels finished</span><b>${m.levelsDone} of ${m.levelsTotal}</b></div>
+        <div><span class="li-m">Stars</span><b>${m.stars} ★</b></div>
+        <div><span class="li-m">Classic puzzles</span><b>${m.classicSolved}</b></div>
+        <div><span class="li-m">Tests taken</span><b>${m.tests}</b></div>
+        <div><span class="li-m">Last test</span><b>${m.lastTest?`${m.lastTest.score}/${m.lastTest.total}${m.lastTest.tier?" · "+esc(m.lastTest.tier):""}`:"–"}</b></div>
+        <div><span class="li-m">Days active</span><b>${m.daysActive||0}</b></div>
+        <div class="tp-week"><span class="li-m">Activity, last 7 days</span><div>${(m.week||[]).map(x=>`<i title="${x} XP" style="height:${Math.max(3,Math.min(100,x/Math.max(30,...m.week)*100))}%"></i>`).join("")}</div></div>
+      </div></td></tr>`:""}`};
+  return head+`<section class="view"><div class="chips tp-chips">${[["all","All batches"],...batches].map(([k,n])=>`<button class="chip${TPROG.batch===k?" on":""}" data-tpb="${esc(k)}">${esc(n)}</button>`).join("")}</div></section>
+  <section class="card view" style="overflow-x:auto;padding:0"><table class="tp-table"><thead><tr><th>Student</th><th style="text-align:right">Puzzles</th><th style="text-align:right">Practice</th><th style="text-align:right">Lessons</th><th style="text-align:right">Best test</th><th style="text-align:right">XP</th><th>Last active</th></tr></thead>
+  <tbody>${list.map(row).join("")}</tbody></table></section>
+  <p class="li-m view" style="font-size:.85rem">Tap a student for more. Progress updates a few seconds after a student does something.</p>`;
+}
+function afterProgressTeacher(){
+  const r=$("#tpRefresh");if(r)r.onclick=()=>{TPROG.state="loading";render();loadTeacherProgress()};
+  document.querySelectorAll("[data-tpb]").forEach(b=>b.onclick=()=>{TPROG.batch=b.dataset.tpb;render()});
+  document.querySelectorAll("[data-tp]").forEach(tr=>{const go=()=>{TPROG.open=TPROG.open===tr.dataset.tp?null:tr.dataset.tp;render()};tr.onclick=go;tr.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}}});
+}
 function vProgress(){
+  if(AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="teacher")return vProgressTeacher();
   const xp=totalXP(),rk=rankOf(xp),wk=week(),maxw=Math.max(DAILY_GOAL,...wk.map(w=>w.xp)),wsum=wk.reduce((a,w)=>a+w.xp,0);
   return `<section class="stack view"><div class="eyebrow">Progress</div><h1>Your report card</h1></section>
   <section class="bento bento-p view">
@@ -1631,7 +1682,7 @@ function vProgress(){
     ${S.tests.slice().reverse().map(t=>`<tr><td>${new Date(t.at).toLocaleString()}</td><td class="num">${t.score}/${testTotal(t)}${t.tier!=null?` · ${TIERS[t.tier]}`:""}</td></tr>`).join("")}</tbody></table></section>`:""}
   <section class="row view"><button class="btn ghost" id="resetAll">Reset all progress</button></section>`;
 }
-function afterProgress(){let armed=false;$("#resetAll").onclick=e=>{if(!armed){armed=true;e.target.textContent="Tap again to erase everything";return}
+function afterProgress(){if(AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="teacher")return afterProgressTeacher();let armed=false;$("#resetAll").onclick=e=>{if(!armed){armed=true;e.target.textContent="Tap again to erase everything";return}
   S={lessons:{},puzzles:{},tests:[],days:{},practice:{},sound:S.sound,voice:S.voice,liveToken:S.liveToken};save();PZ=null;toast("Progress reset");render()}}
 
 /* ---------- Sign-in and live classes (talk to the site's /api) ---------- */
@@ -1658,14 +1709,52 @@ async function authCheck(){
   AUTH.state="check";render();
   try{await liveApi("/me")}catch(e){if(e.code==="setup"||e.code==="offline"&&!S.liveToken){AUTH={state:"guest",user:null,msg:""};return render()}}
   if(!S.liveToken){AUTH={state:"out",user:null,msg:""};return render()}
-  try{AUTH={state:"in",user:(await liveApi("/me")).user,msg:""}}
+  try{AUTH={state:"in",user:(await liveApi("/me")).user,msg:""};progPull()}
   catch(e){
     if(e.code==="signin"||e.status===401){S.liveToken="";save();AUTH={state:"out",user:null,msg:""}}
     else AUTH={state:"error",user:null,msg:e.code==="offline"?"We can't reach the Chess Sathi server right now. Check your internet and try again.":e.message}
   }
   render();
 }
-function signOut(){S.liveToken="";save();AUTH={state:"out",user:null,msg:""};resetLive();stopLesson();location.hash="#home";render()}
+/* ---------- Progress sync (students) ----------
+   Progress lives in this browser (S) and is copied to the server a few seconds after any change,
+   so the teacher can see it and it follows the student to another phone or computer. */
+const PROG_KEYS=["lessons","puzzles","tests","practice","days","lv"];
+let progT=null,progBusy=false;
+const isStudent=()=>AUTH&&AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="student";
+function progQueue(){if(!isStudent()||S.owner!==AUTH.user.username)return;clearTimeout(progT);progT=setTimeout(progPush,3000)}
+function progState(){const o={};PROG_KEYS.forEach(k=>{if(S[k]!==undefined)o[k]=S[k]});return o}
+function progSummary(){const xp=totalXP(),st=lvState(),done=Object.values(st.done||{}),last=S.tests[S.tests.length-1];
+  const days=Object.keys(S.days||{}).filter(k=>S.days[k]>0).sort();
+  return {xp,rank:rankOf(xp).cur.n,streak:streak(),todayXP:todayXP(),week:week().map(w=>w.xp),
+    lessonsDone:lessonsDone(),lessonsTotal:ALL_LESSONS.length,
+    puzzlesSolved:lvSolvedCount(),puzzleLevel:st.unlocked,levelsDone:done.length,levelsTotal:LVD?LVD.length:115,stars:done.reduce((a,d)=>a+(d.stars||0),0),
+    classicSolved:Object.values(S.puzzles||{}).filter(Boolean).length,
+    practiceSolved:Object.keys(S.practice||{}).length,practiceTotal:PR?PR.topics.reduce((a,t)=>a+t.chapters.length,0):316,
+    tests:S.tests.length,bestTest:bestTest(),lastTest:last?{score:last.score,total:testTotal(last),tier:last.tier!=null?TIERS[last.tier]:"",at:last.at||""}:null,
+    lastActive:days[days.length-1]||"",daysActive:days.length}}
+async function progPush(){clearTimeout(progT);progT=null;if(!isStudent()||progBusy)return;progBusy=true;
+  try{await liveApi("/progress",{method:"POST",body:{state:progState(),summary:progSummary()}})}catch(e){}finally{progBusy=false}}
+// Combine two copies of progress without losing anything either has.
+function progMerge(a,b){a=a||{};b=b||{};const o={};
+  ["lessons","puzzles","practice"].forEach(k=>{o[k]=Object.assign({},a[k]||{},b[k]||{})});
+  const seen=new Set();o.tests=[...(a.tests||[]),...(b.tests||[])].filter(t=>{const id=(t.at||"")+"|"+t.score;if(seen.has(id))return false;seen.add(id);return true}).sort((x,y)=>String(x.at).localeCompare(String(y.at)));
+  o.days={};[a.days||{},b.days||{}].forEach(d=>Object.entries(d).forEach(([k,v])=>{o.days[k]=Math.max(o.days[k]||0,v||0)}));
+  const la=a.lv||{},lb=b.lv||{};o.lv={unlocked:Math.max(la.unlocked||1,lb.unlocked||1),done:{},part:{}};
+  [la.done||{},lb.done||{}].forEach(d=>Object.entries(d).forEach(([k,v])=>{if(!o.lv.done[k]||(v.stars||0)>(o.lv.done[k].stars||0))o.lv.done[k]=v}));
+  [la.part||{},lb.part||{}].forEach(d=>Object.entries(d).forEach(([k,v])=>{if(o.lv.done[k])return;const c=r=>(r||[]).filter(x=>x==="ok").length;if(!o.lv.part[k]||c(v)>c(o.lv.part[k]))o.lv.part[k]=v}));
+  return o}
+// After a student signs in: bring in their saved progress. A different student's leftovers on this device are cleared first.
+async function progPull(){if(!isStudent())return;const me=AUTH.user.username;
+  if(S.owner&&S.owner!==me){PROG_KEYS.forEach(k=>delete S[k]);S.lessons={};S.puzzles={};S.tests=[];S.practice={}}
+  let server=null;try{server=(await liveApi("/progress")).progress}catch(e){}
+  const local=S.owner===me||!S.owner?progState():{};
+  Object.assign(S,progMerge(local,server&&server.state));S.owner=me;save();progPush();render()}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"&&progT)progPush()});
+// Teacher: everyone's progress for the Progress tab.
+let TPROG={state:"idle",list:[],batch:"all",open:null};
+async function loadTeacherProgress(){TPROG.state="loading";try{TPROG.list=(await liveApi("/progress")).students||[];TPROG.state="ok"}catch(e){TPROG.state="err";TPROG.msg=e.message}if(route()==="progress")render()}
+function signOut(){if(progT)progPush();TPROG={state:"idle",list:[],batch:"all",open:null};S.liveToken="";save();AUTH={state:"out",user:null,msg:""};resetLive();stopLesson();location.hash="#home";render()}
 
 function authView(){
   if(AUTH.state==="check")return `<section class="login"><div class="card login-card stack" style="text-align:center"><div class="spin" aria-hidden="true"></div><p class="li-m" role="status">Opening Chess Sathi…</p></div></section>`;
@@ -1695,7 +1784,7 @@ function bindAuth(){
   f.onsubmit=async e=>{e.preventDefault();const m=$("#lgMsg"),b=$("#lgGo");m.hidden=true;
     if(!u.value.trim()||!$("#lgPw").value){m.textContent="Please enter your username and password.";m.hidden=false;return}
     b.disabled=true;b.textContent="Signing in…";
-    try{const r=await liveApi("/login",{method:"POST",body:{username:u.value,password:$("#lgPw").value}});S.liveToken=r.token;save();AUTH={state:"in",user:r.user,msg:""};resetLive();location.hash="#home";render()}
+    try{const r=await liveApi("/login",{method:"POST",body:{username:u.value,password:$("#lgPw").value}});S.liveToken=r.token;AUTH={state:"in",user:r.user,msg:""};save();progPull();resetLive();location.hash="#home";render()}
     catch(err){m.textContent=err.code==="offline"?"We can't reach the Chess Sathi server. Check your internet.":err.code==="setup"?"The website is not set up yet. Please tell your teacher.":err.message;m.hidden=false;b.disabled=false;b.textContent="Sign in"}};
 }
 function renderWho(){
