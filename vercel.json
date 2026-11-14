@@ -7,5 +7,25 @@
       "path": "/api/keepalive",
       "schedule": "30 3 * * *"
     }
+  ],
+  "headers": [
+    {
+      "source": "/vendor/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(icons|worlds|backgrounds|sounds)/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
+      ]
+    }
   ]
 }

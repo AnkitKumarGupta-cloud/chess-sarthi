@@ -16,7 +16,10 @@ try{var th=localStorage.getItem("cs-theme");if(th==="light"||th==="dark")documen
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Fonts load in the background (the page draws straight away with system fonts, then swaps). -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"></noscript>
 <style>
 /* Layout: app shell — top bar on desktop, bottom tab bar on phones; content column max 1080px; boards are the hero object */
 :root{
@@ -801,7 +804,7 @@ body.demo #tabs a:not([href="#live"])::after{content:"🔒";font-size:.7em;margi
 
 <main id="app"></main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="/vendor/chess-0.10.3.min.js"></script>
 <script>
 /* ---------- Storage (safe) ---------- */
 const KEY="targetchess.v2";
@@ -1716,7 +1719,7 @@ async function liveApi(path,opts={}){
   let j=null;try{j=await r.json()}catch(e){}
   if(!r.ok||!j){
     const err=Object.assign(new Error((j&&j.error)||"Something went wrong. Please try again."),{code:(j&&j.code)||(r.status===404?"offline":""),status:r.status});
-    if(err.code==="signin"&&AUTH.state==="in"){S.liveToken="";save();AUTH={state:"out",user:null,msg:err.message};resetLive();setTimeout(render,0)}
+    if(err.code==="signin"&&AUTH.state==="in"){S.liveToken="";S.liveUser=null;save();AUTH={state:"out",user:null,msg:err.message};resetLive();setTimeout(render,0)}
     throw err;
   }
   return j;
@@ -1728,14 +1731,17 @@ const isDemo=()=>AUTH&&AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="demo";
 
 async function authCheck(){
   AUTH.state="check";render();
-  try{await liveApi("/me")}catch(e){if(e.code==="setup"||e.code==="offline"&&!S.liveToken){AUTH={state:"guest",user:null,msg:""};return render()}}
   if(!S.liveToken){AUTH={state:"out",user:null,msg:""};return render()}
-  try{AUTH={state:"in",user:(await liveApi("/me")).user,msg:""};progPull()}
+  // Signed in before on this device: show the app straight away, then confirm with the server once.
+  const cached=S.liveUser&&S.liveUser.username?S.liveUser:null;
+  if(cached){AUTH={state:"in",user:cached,msg:""};render()}
+  try{const u=(await liveApi("/me")).user;const changed=!cached||JSON.stringify(u)!==JSON.stringify(cached);
+    S.liveUser=u;save();AUTH={state:"in",user:u,msg:""};progPull();if(changed)render()}
   catch(e){
-    if(e.code==="signin"||e.status===401){S.liveToken="";save();AUTH={state:"out",user:null,msg:""}}
-    else AUTH={state:"error",user:null,msg:e.code==="offline"?"We can't reach the Chess Sathi server right now. Check your internet and try again.":e.message}
+    if(e.code==="signin"||e.status===401){S.liveToken="";S.liveUser=null;save();AUTH={state:"out",user:null,msg:""};render()}
+    else if(!cached){AUTH={state:"error",user:null,msg:e.code==="offline"?"We can't reach the Chess Sathi server right now. Check your internet and try again.":e.message};render()}
+    // offline with a saved user: keep using the app; live classes will show their own message
   }
-  render();
 }
 /* ---------- Progress sync (students) ----------
    Progress lives in this browser (S) and is copied to the server a few seconds after any change,
@@ -1776,7 +1782,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 // Teacher: everyone's progress for the Progress tab.
 let TPROG={state:"idle",list:[],batch:"all",open:null};
 async function loadTeacherProgress(){TPROG.state="loading";try{TPROG.list=(await liveApi("/progress")).students||[];TPROG.state="ok"}catch(e){TPROG.state="err";TPROG.msg=e.message}if(route()==="progress")render()}
-function signOut(){if(progT)progPush();TPROG={state:"idle",list:[],batch:"all",open:null};S.liveToken="";save();AUTH={state:"out",user:null,msg:""};resetLive();stopLesson();location.hash="#home";render()}
+function signOut(){if(progT)progPush();TPROG={state:"idle",list:[],batch:"all",open:null};S.liveToken="";S.liveUser=null;save();AUTH={state:"out",user:null,msg:""};resetLive();stopLesson();location.hash="#home";render()}
 
 function authView(){
   if(AUTH.state==="check")return `<section class="login"><div class="card login-card stack" style="text-align:center"><div class="spin" aria-hidden="true"></div><p class="li-m" role="status">Opening Chess Sathi…</p></div></section>`;
@@ -1806,7 +1812,7 @@ function bindAuth(){
   f.onsubmit=async e=>{e.preventDefault();const m=$("#lgMsg"),b=$("#lgGo");m.hidden=true;
     if(!u.value.trim()||!$("#lgPw").value){m.textContent="Please enter your username and password.";m.hidden=false;return}
     b.disabled=true;b.textContent="Signing in…";
-    try{const r=await liveApi("/login",{method:"POST",body:{username:u.value,password:$("#lgPw").value}});S.liveToken=r.token;AUTH={state:"in",user:r.user,msg:""};save();progPull();resetLive();location.hash="#home";render()}
+    try{const r=await liveApi("/login",{method:"POST",body:{username:u.value,password:$("#lgPw").value}});S.liveToken=r.token;S.liveUser=r.user;AUTH={state:"in",user:r.user,msg:""};save();progPull();resetLive();location.hash="#home";render()}
     catch(err){m.textContent=err.code==="offline"?"We can't reach the Chess Sathi server. Check your internet.":err.code==="setup"?"The website is not set up yet. Please tell your teacher.":err.message;m.hidden=false;b.disabled=false;b.textContent="Sign in"}};
 }
 function renderWho(){
