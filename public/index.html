@@ -773,6 +773,11 @@ main:has(> .drill){padding-top:12px!important}
 .tp-grid>div{display:flex;flex-direction:column;gap:2px}.tp-grid b{font-size:1.05rem}
 .tp-week>div{display:flex;align-items:flex-end;gap:4px;height:40px}.tp-week i{flex:1;background:var(--gold,#E0A93B);border-radius:3px;min-height:3px}
 .tp-chips{display:flex;flex-wrap:wrap;gap:8px}
+.rd{font-weight:800}.rd.up{color:var(--good,#2E9E62)}.rd.down{color:var(--accent)}
+/* Demo login: every tab except Live shows a lock */
+body.demo #tabs a:not([href="#live"]){opacity:.55}
+body.demo #tabs a:not([href="#live"])::after{content:"🔒";font-size:.7em;margin-left:auto}
+.lock-i{font-size:2.6rem}
 </style>
 
 </head>
@@ -1275,7 +1280,7 @@ function vPuzzles(){
   const ranges=LV_STAGES.map(([,a,b])=>[a,Math.min(b,total)]).filter(r=>r[0]<=total);
   return `<div class="pmap view">${ranges.map((r,i)=>worldScene(i,r[0],r[1],st)).reverse().join("")}
     </div>
-  <div class="pbar" data-sec="puzzles"><div class="pbar-l"><span class="pbar-lv">Level ${cur}</span><span class="li-m">${WORLDS[ranges.findIndex(r=>cur>=r[0]&&cur<=r[1])]?.name||""} · ${done}/${total} done · ${stars} ★</span></div>
+  <div class="pbar" data-sec="puzzles"><div class="pbar-l"><span class="pbar-lv">Level ${cur}</span><span class="li-m">${WORLDS[ranges.findIndex(r=>cur>=r[0]&&cur<=r[1])]?.name||""} · ${done}/${total} done · ${stars} ★ · Rating ${prState().r}</span></div>
     <button class="pbar-go" data-lv="${cur}">${done?"Solve puzzles":"Start puzzles"}</button></div>`;
 }
 let __mapW=0;window.addEventListener("resize",()=>{clearTimeout(window.__mapT);window.__mapT=setTimeout(()=>{const w=document.querySelector("main")?.clientWidth||0;if(route()==="puzzles"&&Math.abs(w-__mapW)>40){__mapW=w;render()}},250)});
@@ -1293,7 +1298,15 @@ function lvOpen(l,k){const p=LVD[l-1][k];const prev=LVS&&LVS.l===l?LVS.res:lvPar
   LVS.color=LVS.g.turn()==="w"?"b":"w";const tok=LVS;
   setTimeout(()=>{if(LVS!==tok)return;lvPlay(LVS.moves[0]);LVS.ply=1;LVS.state="idle";render()},650)}
 function lvPlay(u){const mv=LVS.g.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});if(mv){moveSound(mv,LVS.g);LVS.anim=[mv.from,mv.to];LVS.last=[mv.from,mv.to]}return mv}
-function lvSolved(){const st=lvState();LVS.state="ok";if(LVS.res[LVS.k]==null)LVS.res[LVS.k]=LVS.miss?"retry":"ok";st.part=st.part||{};st.part[LVS.l]=LVS.res.slice();save();if(LVS.res[LVS.k]==="ok")award(5);setTimeout(()=>sfx("solved"),SOLVED_DELAY);
+/* Puzzle rating (Elo-style). Each puzzle counts once: solved first try with no hint = win, anything else = loss.
+   Starts at 600 (level 1 puzzles are rated about 500). Moves faster for the first puzzles, then settles. */
+const PR_START=600;
+const prState=()=>{S.pr=S.pr||{r:PR_START,n:0,seen:{},hist:[]};return S.pr};
+function prRate(id,puzzleRating,win){const pr=prState();if(!id||pr.seen[id])return null;
+  const e=1/(1+Math.pow(10,(puzzleRating-pr.r)/400)),k=pr.n<20?40:pr.n<60?24:16,d=Math.round(k*((win?1:0)-e));
+  pr.r=Math.max(100,pr.r+d);pr.n++;pr.seen[id]=1;pr.hist.push(pr.r);if(pr.hist.length>60)pr.hist=pr.hist.slice(-60);return d}
+function lvSolved(){const st=lvState();LVS.state="ok";if(LVS.res[LVS.k]==null)LVS.res[LVS.k]=LVS.miss?"retry":"ok";
+  {const p=LVD&&LVD[LVS.l-1]&&LVD[LVS.l-1][LVS.k];LVS.rd=p?prRate(p[0],p[3],LVS.res[LVS.k]==="ok"):null}st.part=st.part||{};st.part[LVS.l]=LVS.res.slice();save();if(LVS.res[LVS.k]==="ok")award(5);setTimeout(()=>sfx("solved"),SOLVED_DELAY);
   if(LVS.res.every(x=>x)){delete st.part[LVS.l];const stars=lvStars(LVS.res),prev=st.done[LVS.l];st.done[LVS.l]={stars:Math.max(stars,prev?prev.stars:0)};if(st.unlocked<=LVS.l)st.unlocked=LVS.l+1;LVS.complete=stars;save()}
   render()}
 function vPlevel(){
@@ -1303,7 +1316,7 @@ function vPlevel(){
   const p=list[LVS.k],s=LVS.state,col=LVS.color==="w"?"White":"Black";
   let stat="",scls="";
   if(LVS.complete){stat=`<b>Level ${l} complete!</b> ${starsHtml(LVS.complete)}`;scls="ok"}
-  else if(s==="ok"){stat=LVS.res[LVS.k]==="ok"?"<b>Correct!</b> +5 XP":"<b>Solved.</b> Next time, first try!";scls="ok"}
+  else if(s==="ok"){const rd=LVS.rd,rt=rd!=null?` · Rating ${prState().r} <span class="rd ${rd>=0?"up":"down"}">${rd>=0?"+":""}${rd}</span>`:"";stat=(LVS.res[LVS.k]==="ok"?"<b>Correct!</b> +5 XP":"<b>Solved.</b> Next time, first try!")+rt;scls="ok"}
   else if(s==="no"){stat="Not the best move. Try again!";scls="no"}
   else if(s==="think")stat=LVS.ply===0?"Watch your opponent's move…":`<span class="spin sm" aria-hidden="true"></span> Opponent is replying…`;
   else stat=LVS.ply<=1?`<i class="tm ${LVS.color}" aria-hidden="true"></i> ${col} to move`:"Good! Keep going.";
@@ -1608,6 +1621,10 @@ function afterTests(){
 }
 
 /* ---------- Progress ---------- */
+function vLocked(){return `<section class="card stack view lockcard" style="max-width:560px;margin:40px auto;text-align:center;align-items:center">
+  <div class="lock-i" aria-hidden="true">🔒</div><h1>For Chess Sathi students</h1>
+  <p class="li-m">This is a demo login, so only live classes are open. Join Chess Sathi to unlock lessons, puzzles, practice, tests and your progress.</p>
+  <button class="btn" id="lkGo">Go to live classes</button></section>`}
 function vProgressTeacher(){
   if(TPROG.state==="idle"){setTimeout(loadTeacherProgress,0);TPROG.state="loading"}
   const head=`<section class="stack view"><div class="eyebrow">Progress</div><div class="row" style="justify-content:space-between;align-items:end"><h1>Student progress</h1><button class="btn ghost" id="tpRefresh">Refresh</button></div></section>`;
@@ -1619,16 +1636,17 @@ function vProgressTeacher(){
   const ago=d=>{if(!d)return "–";const t=dayKey(),y=new Date();y.setDate(y.getDate()-1);if(d===t)return "Today";if(d===dayKey(y))return "Yesterday";
     const n=Math.round((new Date(t)-new Date(d))/864e5);return n<30?n+" days ago":new Date(d).toLocaleDateString([], {day:"numeric",month:"short"})};
   const row=u=>{const m=u.summary,open=TPROG.open===u.username;
-    if(!m)return `<tr><td><b>${esc(u.name)}</b><br><span class="li-m">${esc(u.batchName||"")}</span></td><td colspan="6" class="li-m">Not opened the app since this update</td></tr>`;
+    if(!m)return `<tr><td><b>${esc(u.name)}</b><br><span class="li-m">${esc(u.batchName||"")}</span></td><td colspan="7" class="li-m">Not opened the app since this update</td></tr>`;
     return `<tr class="tp-row${open?" open":""}" data-tp="${esc(u.username)}" tabindex="0" aria-expanded="${open}">
       <td><b>${esc(u.name)}</b><br><span class="li-m">${esc(u.batchName||"")}</span></td>
       <td class="num"><b>${m.puzzlesSolved}</b><br><span class="li-m">Level ${m.puzzleLevel}</span></td>
+      <td class="num"><b>${m.puzzleRating||"–"}</b>${m.ratedPuzzles?`<br><span class="li-m">${m.ratedPuzzles} rated</span>`:""}</td>
       <td class="num">${m.practiceSolved}<span class="li-m">/${m.practiceTotal}</span></td>
       <td class="num">${m.lessonsDone}<span class="li-m">/${m.lessonsTotal}</span></td>
       <td class="num">${m.bestTest!=null?`${m.bestTest}<span class="li-m">/10</span>`:"–"}${m.lastTest&&m.lastTest.tier?`<br><span class="li-m">${esc(m.lastTest.tier)}</span>`:""}</td>
       <td class="num">${m.xp}<br><span class="li-m">${esc(m.rank)}</span></td>
       <td>${ago(m.lastActive)}${m.streak?`<br><span class="li-m">🔥 ${m.streak} day${m.streak===1?"":"s"}</span>`:""}</td></tr>
-      ${open?`<tr class="tp-more"><td colspan="7"><div class="tp-grid">
+      ${open?`<tr class="tp-more"><td colspan="8"><div class="tp-grid">
         <div><span class="li-m">Puzzle levels finished</span><b>${m.levelsDone} of ${m.levelsTotal}</b></div>
         <div><span class="li-m">Stars</span><b>${m.stars} ★</b></div>
         <div><span class="li-m">Classic puzzles</span><b>${m.classicSolved}</b></div>
@@ -1638,7 +1656,7 @@ function vProgressTeacher(){
         <div class="tp-week"><span class="li-m">Activity, last 7 days</span><div>${(m.week||[]).map(x=>`<i title="${x} XP" style="height:${Math.max(3,Math.min(100,x/Math.max(30,...m.week)*100))}%"></i>`).join("")}</div></div>
       </div></td></tr>`:""}`};
   return head+`<section class="view"><div class="chips tp-chips">${[["all","All batches"],...batches].map(([k,n])=>`<button class="chip${TPROG.batch===k?" on":""}" data-tpb="${esc(k)}">${esc(n)}</button>`).join("")}</div></section>
-  <section class="card view" style="overflow-x:auto;padding:0"><table class="tp-table"><thead><tr><th>Student</th><th style="text-align:right">Puzzles</th><th style="text-align:right">Practice</th><th style="text-align:right">Lessons</th><th style="text-align:right">Best test</th><th style="text-align:right">XP</th><th>Last active</th></tr></thead>
+  <section class="card view" style="overflow-x:auto;padding:0"><table class="tp-table"><thead><tr><th>Student</th><th style="text-align:right">Puzzles</th><th style="text-align:right">Rating</th><th style="text-align:right">Practice</th><th style="text-align:right">Lessons</th><th style="text-align:right">Best test</th><th style="text-align:right">XP</th><th>Last active</th></tr></thead>
   <tbody>${list.map(row).join("")}</tbody></table></section>
   <p class="li-m view" style="font-size:.85rem">Tap a student for more. Progress updates a few seconds after a student does something.</p>`;
 }
@@ -1664,7 +1682,7 @@ function vProgress(){
     </article>
     <article class="tile t-stats">
       <div class="kpi"><b class="mono">${lessonsDone()}<small>/${ALL_LESSONS.length}</small></b><span>Lessons</span></div>
-      <div class="kpi"><b class="mono">${points()}</b><span>Puzzle points</span></div>
+      <div class="kpi"><b class="mono">${prState().r}</b><span>Puzzle rating · ${prState().n} rated</span></div>
       <div class="kpi"><b class="mono">${bestTest()??"–"}${bestTest()!=null?`<small>/${TEST_N}</small>`:""}</b><span>Best test · ${S.tests.length} tr${S.tests.length===1?"y":"ies"}</span></div>
     </article>
   </section>
@@ -1703,7 +1721,8 @@ async function liveApi(path,opts={}){
 }
 const whenText=iso=>new Date(iso).toLocaleString([], {weekday:"short",day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});
 const durText=s=>s>=3600?`${Math.floor(s/3600)} hr ${Math.round(s%3600/60)} min`:`${Math.max(1,Math.round(s/60))} min`;
-const ROLE_NAME={teacher:"Teacher",student:"Student",parent:"Parent"};
+const ROLE_NAME={teacher:"Teacher",student:"Student",parent:"Parent",demo:"Demo login"};
+const isDemo=()=>AUTH&&AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="demo";
 
 async function authCheck(){
   AUTH.state="check";render();
@@ -1719,7 +1738,7 @@ async function authCheck(){
 /* ---------- Progress sync (students) ----------
    Progress lives in this browser (S) and is copied to the server a few seconds after any change,
    so the teacher can see it and it follows the student to another phone or computer. */
-const PROG_KEYS=["lessons","puzzles","tests","practice","days","lv"];
+const PROG_KEYS=["lessons","puzzles","tests","practice","days","lv","pr"];
 let progT=null,progBusy=false;
 const isStudent=()=>AUTH&&AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="student";
 function progQueue(){if(!isStudent()||S.owner!==AUTH.user.username)return;clearTimeout(progT);progT=setTimeout(progPush,3000)}
@@ -1732,7 +1751,7 @@ function progSummary(){const xp=totalXP(),st=lvState(),done=Object.values(st.don
     classicSolved:Object.values(S.puzzles||{}).filter(Boolean).length,
     practiceSolved:Object.keys(S.practice||{}).length,practiceTotal:PR?PR.topics.reduce((a,t)=>a+t.chapters.length,0):316,
     tests:S.tests.length,bestTest:bestTest(),lastTest:last?{score:last.score,total:testTotal(last),tier:last.tier!=null?TIERS[last.tier]:"",at:last.at||""}:null,
-    lastActive:days[days.length-1]||"",daysActive:days.length}}
+    lastActive:days[days.length-1]||"",daysActive:days.length,puzzleRating:prState().r,ratedPuzzles:prState().n}}
 async function progPush(){clearTimeout(progT);progT=null;if(!isStudent()||progBusy)return;progBusy=true;
   try{await liveApi("/progress",{method:"POST",body:{state:progState(),summary:progSummary()}})}catch(e){}finally{progBusy=false}}
 // Combine two copies of progress without losing anything either has.
@@ -1743,6 +1762,7 @@ function progMerge(a,b){a=a||{};b=b||{};const o={};
   const la=a.lv||{},lb=b.lv||{};o.lv={unlocked:Math.max(la.unlocked||1,lb.unlocked||1),done:{},part:{}};
   [la.done||{},lb.done||{}].forEach(d=>Object.entries(d).forEach(([k,v])=>{if(!o.lv.done[k]||(v.stars||0)>(o.lv.done[k].stars||0))o.lv.done[k]=v}));
   [la.part||{},lb.part||{}].forEach(d=>Object.entries(d).forEach(([k,v])=>{if(o.lv.done[k])return;const c=r=>(r||[]).filter(x=>x==="ok").length;if(!o.lv.part[k]||c(v)>c(o.lv.part[k]))o.lv.part[k]=v}));
+  const pa=a.pr,pb=b.pr;if(pa||pb){const big=(pa&&pb)?((pa.n||0)>=(pb.n||0)?pa:pb):(pa||pb);o.pr={...big,seen:Object.assign({},(pa||{}).seen||{},(pb||{}).seen||{})}}
   return o}
 // After a student signs in: bring in their saved progress. A different student's leftovers on this device are cleared first.
 async function progPull(){if(!isStudent())return;const me=AUTH.user.username;
@@ -1793,7 +1813,7 @@ function renderWho(){
   w.innerHTML=`<button class="chipbtn" id="whoBtn" aria-haspopup="menu" aria-expanded="false"><span class="avatar" aria-hidden="true">${esc(u.name.trim()[0]||"?").toUpperCase()}</span><span class="whoname">${esc(u.name.split(" ")[0])}</span></button>
     <div class="menu" id="whoMenu" role="menu" hidden><div class="menu-h"><b>${esc(u.name)}</b><span class="li-m">${ROLE_NAME[u.role]||""}${u.batchName?" · "+esc(u.batchName):""}</span></div>
     <div class="menu-theme" role="group" aria-label="Theme"><span class="li-m">Theme</span><div class="seg">${[["auto","Auto"],["light","Light"],["dark","Dark"]].map(([k,l])=>`<button type="button" data-theme-pick="${k}" aria-pressed="${themeGet()===k}">${l}</button>`).join("")}</div></div>
-    ${u.role==="teacher"?"":`<button role="menuitem" id="whoPw">Change password</button>`}<button role="menuitem" id="whoOut">Sign out</button></div>`;
+    ${u.role==="teacher"||u.role==="demo"?"":`<button role="menuitem" id="whoPw">Change password</button>`}<button role="menuitem" id="whoOut">Sign out</button></div>`;
   const btn=$("#whoBtn"),menu=$("#whoMenu");
   btn.onclick=e=>{e.stopPropagation();menu.hidden=!menu.hidden;btn.setAttribute("aria-expanded",!menu.hidden)};
   $("#whoOut").onclick=signOut;
@@ -1836,7 +1856,7 @@ function liveProblem(root,e){
   root.innerHTML=`<div class="card stack"><h2>Live classes aren't available right now</h2><p class="li-m">${esc(msg)}</p><div class="row"><button class="btn ghost" id="lvRetry">Try again</button></div></div>`;
   $("#lvRetry").onclick=()=>{LV.classes=null;LV.users=null;render()};
 }
-const waText=a=>`Chess Sathi login\nWebsite: ${location.origin}\nUsername: ${a.username}\nPassword: ${a.password}`;
+const waText=a=>a.role==="demo"?`Join our free Chess Sathi demo class\nWebsite: ${location.origin}\nUsername: ${a.username}\nPassword: ${a.password}\nSign in, open Live, and press Join when the class is live.`:`Chess Sathi login\nWebsite: ${location.origin}\nUsername: ${a.username}\nPassword: ${a.password}`;
 function classCard(c,u){
   const teacher=u.role==="teacher",parent=u.role==="parent";
   const state=c.live?`<span class="pill live">● Live now</span>`:c.ended?`<span class="pill">Finished</span>`:`<span class="pill level">Upcoming</span>`;
@@ -1852,6 +1872,7 @@ function classCard(c,u){
 }
 function accountCard(a){return `<div class="acct"><div><b>${esc(a.name)}</b> <span class="pill">${ROLE_NAME[a.role]}</span></div>
   <div class="acct-cred"><span class="li-m">Username</span><code>${esc(a.username)}</code><span class="li-m">Password</span><code>${esc(a.password)}</code></div>
+  ${a.role==="demo"?`<p class="li-m">Share this with trial students. It only opens live classes for “${esc(a.batch||"")}”; everything else is locked. Many people can use it at the same time.</p>`:""}
   <button class="btn ghost" type="button" data-copy="${esc(waText(a))}">Copy message for WhatsApp</button></div>`}
 function liveHome(root){
   const u=AUTH.user,teacher=u.role==="teacher",cs=LV.classes||[],users=LV.users||[];
@@ -1859,7 +1880,7 @@ function liveHome(root){
   const group=(t,list,empty)=>`<section class="stack"><h2>${t}</h2>${list.length?`<div class="grid g2">${list.map(c=>classCard(c,u)).join("")}</div>`:`<p class="li-m">${empty}</p>`}</section>`;
   const batches=[...new Set([...cs.map(c=>c.batchName||c.batch),...users.map(x=>x.batchName||x.batch)].filter(Boolean))];
   root.innerHTML=`
-  <div class="row" style="justify-content:space-between"><p class="li-m">${teacher?"Signed in as teacher.":u.role==="parent"?`Parent view. You can see the schedule and watch recordings of ${esc(u.name)}'s classes.`:`You're in batch “${esc(u.batchName||u.batch)}”. Join when your class is live.`}</p>
+  <div class="row" style="justify-content:space-between"><p class="li-m">${teacher?"Signed in as teacher.":u.role==="parent"?`Parent view. You can see the schedule and watch recordings of ${esc(u.name)}'s classes.`:(u.role==="demo"?`Demo login for “${esc(u.batchName||u.batch)}”. Join the class when it is live.`:`You're in batch “${esc(u.batchName||u.batch)}”. Join when your class is live.`)}</p>
     <button class="btn ghost" id="lvRefresh">Refresh</button></div>
   ${teacher&&!LV.recReady?`<div class="feedback">Recording is off for now, so classes will not be saved for students to watch later. Live classes work normally.</div>`:""}
   ${teacher?`<div class="grid g2">
@@ -1873,7 +1894,7 @@ function liveHome(root){
     <form class="card stack" id="lvInv"><h2>Add a student</h2>
       <label class="fld"><span>Student's name</span><input id="lvSName" required maxlength="40"></label>
       <label class="fld"><span>Batch</span><input id="lvSBatch" required maxlength="40" list="lvBatches"></label>
-      <button class="btn" type="submit">Create logins</button><p class="li-m" id="lvInvMsg" role="status"></p>
+      <div class="row"><button class="btn" type="submit">Create logins</button><button class="btn ghost" type="button" id="lvDemo" title="One shared login for trial students: only live classes of this batch are open">Create demo login</button></div><p class="li-m" id="lvInvMsg" role="status"></p>
       ${LV.accounts?`<div class="stack codes"><b>Save these now. Passwords are only shown once.</b>${LV.accounts.map(accountCard).join("")}</div>`:""}</form>
   </div>
   <section class="card stack"><h2>Students</h2>${users.length?`<div class="tablewrap"><table><thead><tr><th>Name</th><th>Batch</th><th>Username</th><th>Who</th><th></th></tr></thead><tbody>${users.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.batchName||x.batch)}</td><td class="mono">${esc(x.username)}</td><td>${ROLE_NAME[x.role]}</td><td class="acts"><button class="btn ghost sm" data-reset="${esc(x.username)}">New password</button><button class="btn ghost sm" data-rm="${esc(x.username)}">Remove</button></td></tr>`).join("")}</tbody></table></div>`:`<p class="li-m">No students yet. Add the first one above.</p>`}</section>`:""}
@@ -1888,6 +1909,8 @@ function liveHome(root){
       try{const r=await liveApi("/classes",{method:"POST",body:{title:$("#lvTitle").value,batch:$("#lvBatch").value,startsAt:new Date($("#lvAt").value).toISOString(),durationMin:+$("#lvDur").value}});const nc=r.class,end=new Date(nc.startsAt).getTime()+(nc.durationMin+30)*60000;LV.classes=[{...nc,live:false,ended:Date.now()>end},...(LV.classes||[])].sort((a,b)=>new Date(b.startsAt)-new Date(a.startsAt));toast("Class added");render()}catch(err){m.textContent=err.message}};
     $("#lvInv").onsubmit=async e=>{e.preventDefault();const m=$("#lvInvMsg");m.textContent="Creating…";
       try{LV.accounts=(await liveApi("/users",{method:"POST",body:{name:$("#lvSName").value,batch:$("#lvSBatch").value,withParent:false}})).accounts;LV.users=[...(LV.users||[]),...LV.accounts.map(a=>({username:a.username,name:a.name,role:a.role,batch:(a.batch||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""),batchName:a.batch}))];render()}catch(err){m.textContent=err.message}};
+    $("#lvDemo").onclick=async()=>{const m=$("#lvInvMsg"),batch=$("#lvSBatch").value.trim();if(!batch){m.textContent="Type the batch first: the demo login joins that batch's classes.";$("#lvSBatch").focus();return}
+      m.textContent="Creating…";try{LV.accounts=(await liveApi("/users",{method:"POST",body:{demo:true,batch}})).accounts;LV.users=null;render()}catch(err){m.textContent=err.message}};
     root.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again to delete";return}
       try{await liveApi("/classes?id="+encodeURIComponent(b.dataset.del),{method:"DELETE"});LV.classes=(LV.classes||[]).filter(c=>c.id!==b.dataset.del);toast("Class deleted");render()}catch(err){toast(err.message)}});
     root.querySelectorAll("[data-reset]").forEach(b=>b.onclick=async()=>{if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again";return}
@@ -1907,7 +1930,11 @@ function render(){
   document.body.classList.toggle("gated",AUTH.state!=="in"&&AUTH.state!=="guest");renderWho();
   if(AUTH.state!=="in"&&AUTH.state!=="guest"){stopLesson();$("#app").innerHTML=authView();bindAuth();return}
   if(!HAS_CHESS){$("#app").innerHTML=`<div class="card"><h2>The chess engine didn't load</h2><p class="li-m" style="margin-top:8px">Check your connection and reload the page.</p></div>`;return}
-  const r=route();document.body.dataset.route=r;if(r!=="lesson")stopLesson();
+  document.body.classList.toggle("demo",isDemo());
+  let r=route();
+  if(isDemo()&&r!=="live"){if(r==="home"){location.replace("#live");return}stopLesson();document.body.dataset.route=r;$("#app").innerHTML=vLocked();
+    document.querySelectorAll("#tabs a").forEach(x=>x.removeAttribute("aria-current"));$("#lkGo").onclick=()=>location.hash="live";return}
+  document.body.dataset.route=r;if(r!=="lesson")stopLesson();
   const [v,a]=VIEWS[r];$("#app").innerHTML=v();a&&a();
   const tab=r==="lesson"?"courses":r==="drill"?"practice":(r==="plevel"||r==="classic")?"puzzles":r;
   document.querySelectorAll("#tabs a").forEach(x=>{if(x.getAttribute("href")==="#"+tab)x.setAttribute("aria-current","page");else x.removeAttribute("aria-current")});

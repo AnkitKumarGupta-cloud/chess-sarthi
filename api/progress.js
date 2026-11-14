@@ -6,7 +6,7 @@ import { handler, HttpError, whoIs, kv, kvPipe, listUsers } from "./_lib.js";
 //  GET   (teacher)                      -> { students: [{ username, name, batch, batchName, summary, at }] }
 // Redis keys: p:<username> = full state, ps:<username> = small summary for the teacher's table.
 const MAX_STATE = 200_000; // bytes of JSON; a very active student is well under this
-const STATE_KEYS = ["lessons", "puzzles", "tests", "practice", "days", "lv"];
+const STATE_KEYS = ["lessons", "puzzles", "tests", "practice", "days", "lv", "pr"];
 const parse = (s) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
 const num = (v, max = 1e7) => (Number.isFinite(+v) ? Math.max(0, Math.min(max, Math.round(+v))) : 0);
 const str = (v, n = 40) => (typeof v === "string" ? v.slice(0, n) : "");
@@ -24,6 +24,7 @@ function cleanSummary(s = {}) {
     lastTest: lt ? { score: num(lt.score, 100), total: num(lt.total, 100), tier: str(lt.tier, 16), at: str(lt.at, 30) } : null,
     lastActive: str(s.lastActive, 10),
     daysActive: num(s.daysActive, 99999),
+    puzzleRating: s.puzzleRating == null ? null : num(s.puzzleRating, 4000), ratedPuzzles: num(s.ratedPuzzles, 99999),
   };
 }
 

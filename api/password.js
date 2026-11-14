@@ -4,6 +4,7 @@ export default handler(async ({ req, body }) => {
   if (req.method !== "POST") throw new HttpError(405, "Use POST.");
   const me = await whoIs(req);
   if (me.role === "teacher") throw new HttpError(400, "The teacher password is changed in the Vercel settings (TEACHER_PASSWORD).");
+  if (me.role === "demo") throw new HttpError(403, "The demo login's password can only be changed by the teacher.");
   const next = String(body.newPassword || "");
   if (next.length < 6) throw new HttpError(400, "Please use at least 6 characters.");
   await checkLogin(me.username, body.oldPassword);

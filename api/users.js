@@ -32,6 +32,12 @@ export default handler(async ({ req, body, query }) => {
     const pw = newPassword(); rec.pw = hashPassword(pw); await putUser(rec);
     return { username: rec.username, password: pw, role: rec.role, name: rec.name, batch: rec.batchName };
   }
+  // A shared demo login: it can only join the live classes of its batch (everything else is locked in the app).
+  if (body.demo) {
+    const batch = String(body.batch || "").trim().slice(0, 40);
+    if (!slug(batch)) throw new HttpError(400, "Type the batch whose live classes the demo login can join.");
+    return { accounts: [await create("demo", "Demo", batch, "demo" + slug(batch).replace(/-/g, "").slice(0, 16))] };
+  }
   const name = String(body.name || "").trim().slice(0, 40), batch = String(body.batch || "").trim().slice(0, 40);
   if (!name || !slug(batch)) throw new HttpError(400, "Please enter the student's name and the batch.");
   const base = slug(name).replace(/-/g, "");

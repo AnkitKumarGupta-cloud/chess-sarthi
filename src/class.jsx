@@ -332,8 +332,24 @@ function Classroom({ pass, notify, recording }) {
   );
 }
 
+// Demo logins are shared, so each visitor types their own name before joining.
+function NameForm({ onJoin }) {
+  const [name, setName] = useState(() => { try { return sessionStorage.getItem("cs.name") || ""; } catch { return ""; } });
+  const [busy, setBusy] = useState(false);
+  return (
+    <form className="wait" onSubmit={(e) => { e.preventDefault(); if (name.trim().length < 2) return; setBusy(true); try { sessionStorage.setItem("cs.name", name.trim()); } catch {} onJoin(name.trim()); }}>
+      <Logo />
+      <h1>What's your name?</h1>
+      <p>Your teacher and classmates will see this name in the class.</p>
+      <input className="nameinput" autoFocus value={name} maxLength={30} onChange={(e) => setName(e.target.value)} placeholder="Your name" aria-label="Your name" />
+      <button className="btn" type="submit" disabled={busy || name.trim().length < 2}>{busy ? "Joining…" : "Join class"}</button>
+    </form>
+  );
+}
+
 function App() {
   const [pass, setPass] = useState(null);
+  const [needName, setNeedName] = useState(false);
   const [error, setError] = useState("");
   const [note, setNote] = useState(null);
   const [left, setLeft] = useState(false);
@@ -343,8 +359,13 @@ function App() {
   useEffect(() => {
     if (!signIn) { setError("Please sign in on the Chess Sathi website first."); return; }
     if (!classId) { setError("This class link is not complete."); return; }
-    api("/join", { classId }).then(setPass).catch((e) => setError(e.message));
+    join();
   }, []);
+  const join = (name) => {
+    if (!name) { try { name = sessionStorage.getItem("cs.name") || ""; } catch {} }
+    api("/join", { classId, name }).then((p) => { setNeedName(false); setPass(p); })
+      .catch((e) => { if (e.code === "name") setNeedName(true); else setError(e.message); });
+  };
 
   const notify = useCallback((text, bad) => setNote({ text, bad, at: Date.now() }), []);
   useEffect(() => {
@@ -355,6 +376,7 @@ function App() {
 
   if (error) return <Wait title="Can't open this class" text={error} back />;
   if (left) return <Wait title="You left the class" text={pass && pass.isTeacher ? "If recording is switched on, the recording shows up on the Live page a few minutes after the class ends." : "See you next class! Recordings, when available, are on the Live page."} back />;
+  if (needName) return <NameForm onJoin={join} />;
   if (!pass) return <Wait title="Opening your class…" spin />;
 
   return (

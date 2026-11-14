@@ -109,6 +109,25 @@ assert.equal(row.summary.puzzlesSolved, 12); assert.equal(row.summary.lastTest.s
 assert.equal(board.students.some((x) => x.role === "parent"), false, "parents are not listed");
 assert.equal(board.students.find((x) => x.username !== stu.username).summary, null);   // never synced
 
+// --- demo login ---
+assert.equal((await call("users", { method: "POST", auth: S, body: { demo: true, batch: "Beginners Saturday" } })).status, 403);
+assert.equal((await call("users", { method: "POST", auth: T, body: { demo: true, batch: "" } })).status, 400);
+const demoAcc = (await call("users", { method: "POST", auth: T, body: { demo: true, batch: "Beginners Saturday" } })).accounts[0];
+assert.equal(demoAcc.role, "demo"); assert.match(demoAcc.username, /^demo/);
+const DM = (await login(demoAcc.username, demoAcc.password)).token;
+assert.equal((await call("me", { auth: DM })).user.role, "demo");
+assert.equal((await call("classes", { auth: DM })).classes.every((c) => c.batch === "beginners-saturday"), true);   // only its batch
+assert.equal((await call("join", { method: "POST", auth: DM, body: { classId: c1.id } })).code, "name");     // must type a name
+const j1 = await call("join", { method: "POST", auth: DM, body: { classId: c1.id, name: "  Riya   Shah " } });
+const j2 = await call("join", { method: "POST", auth: DM, body: { classId: c1.id, name: "Kabir" } });
+assert.equal(j1.status, 200); assert.equal(j1.userName, "Riya Shah (demo)");
+assert.notEqual(decodeLk(j1.token).sub, decodeLk(j2.token).sub, "two visitors on the demo login get different identities");
+assert.equal((await call("join", { method: "POST", auth: DM, body: { classId: c2.id, name: "Riya" } })).status, 404);   // other batch
+assert.equal((await call("password", { method: "POST", auth: DM, body: { oldPassword: demoAcc.password, newPassword: "hacked123" } })).status, 403);
+assert.equal((await call("progress", { method: "POST", auth: DM, body: { state: { lessons: {} } } })).status, 403);
+assert.equal((await call("users", { auth: DM })).status, 403);
+assert.equal((await call("progress", { auth: T })).students.some((x) => x.role === "demo"), false, "demo is not in the progress table");
+
 // --- delete ---
 assert.equal((await call("classes", { method: "DELETE", auth: T, query: { id: c2.id } })).ok, true);
 assert.equal((await call("classes", { auth: T })).classes.length, 1);
