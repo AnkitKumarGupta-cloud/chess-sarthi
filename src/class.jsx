@@ -8,6 +8,7 @@ import {
 import "@livekit/components-styles";
 import { RoomEvent, Track } from "livekit-client";
 import { BackgroundProcessor, supportsBackgroundProcessors } from "@livekit/track-processors";
+import { usePuzzle, TeacherPuzzle, StudentPuzzle } from "./puzzle.jsx";
 
 // ---------- sign-in and API ----------
 // The sign-in comes from the website (saved in this browser) or from the mobile app (passed after # in the link).
@@ -48,6 +49,7 @@ const I = {
   close: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>,
   chev: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>,
   screen: <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>,
+  puzzle: <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 12h17M12 3.5v17"/><path d="M3.5 3.5h8.5v8.5H3.5zM12 12h8.5v8.5H12z" fill="currentColor" stroke="none" opacity=".35"/></svg>,
 };
 const Logo = () => (
   <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="var(--accent)"/><circle cx="14" cy="9.2" r="3.6" fill="#fff"/><path d="M10.4 20.6c0-3.3 1.6-5.7 3.6-7.3 2 1.6 3.6 4 3.6 7.3z" fill="#fff"/><rect x="8.4" y="20.2" width="11.2" height="2.8" rx="1.4" fill="#fff"/></svg>
@@ -215,7 +217,7 @@ function Classroom({ pass, notify, recording }) {
   const people = useParticipants();
   const { hands, mine, toggle, lower } = useHands();
   const bgCtl = useBackground(notify);
-  const [panel, setPanel] = useState(null); // "chat" | "people" | null
+  const [panel, setPanel] = useState(null); // "chat" | "people" | "puzzle" (teacher) | null
   const [bgOpen, setBgOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const clock = useClock(true);
@@ -224,6 +226,7 @@ function Classroom({ pass, notify, recording }) {
   const shareAllowed = isTeacher || canPub(3); // 3 = screen share in LiveKit's permission list (students may share too)
   const shareSupported = canShareScreen();
   const handsUp = Object.keys(hands).length;
+  const pz = usePuzzle(isTeacher);
 
   // Unread chat count while the chat panel is closed.
   useEffect(() => {
@@ -257,16 +260,17 @@ function Classroom({ pass, notify, recording }) {
       <div className="rbody">
         <Stage hands={hands} />
         {panel ? (
-          <aside className="side" aria-label={panel === "chat" ? "Chat" : "People"}>
+          <aside className="side" aria-label={panel === "chat" ? "Chat" : panel === "puzzle" ? "Puzzle" : "People"}>
             <div className="sidehead">
               <div className="tabs2" role="tablist">
                 <button role="tab" aria-selected={panel === "chat"} onClick={() => setPanel("chat")}>Chat</button>
                 <button role="tab" aria-selected={panel === "people"} onClick={() => setPanel("people")}>People ({people.length})</button>
+                {isTeacher ? <button role="tab" aria-selected={panel === "puzzle"} onClick={() => setPanel("puzzle")}>Puzzle</button> : null}
               </div>
               <button className="iconbtn" onClick={() => setPanel(null)} aria-label="Close panel">{I.close}</button>
             </div>
             <div className="sidebody">
-              {panel === "chat" ? <Chat /> : <People hands={hands} isTeacher={isTeacher} lower={lower} />}
+              {panel === "chat" ? <Chat /> : panel === "puzzle" && isTeacher ? <TeacherPuzzle pz={pz} /> : <People hands={hands} isTeacher={isTeacher} lower={lower} />}
             </div>
           </aside>
         ) : null}
@@ -312,6 +316,7 @@ function Classroom({ pass, notify, recording }) {
               ) : null}
             </div>
           ) : null}
+          {isTeacher ? <button className={"dbtn" + (panel === "puzzle" ? " on" : "")} aria-pressed={panel === "puzzle"} onClick={() => togglePanel("puzzle")}>{I.puzzle}<span className="lbl">Puzzle</span>{pz.active && !pz.active.ended ? <span className="badge">{Object.values(pz.results).filter((r) => r.status === "ok").length}</span> : null}</button> : null}
           <button className={"dbtn" + (panel === "chat" ? " on" : "")} aria-pressed={panel === "chat"} onClick={() => togglePanel("chat")}>{I.chat}<span className="lbl">Chat</span>{unread ? <span className="badge">{unread}</span> : null}</button>
           <button className={"dbtn hide-sm" + (panel === "people" ? " on" : "")} aria-pressed={panel === "people"} onClick={() => togglePanel("people")}>{I.people}<span className="lbl">People</span>{handsUp ? <span className="badge">{handsUp}</span> : null}</button>
         </div>
@@ -319,6 +324,7 @@ function Classroom({ pass, notify, recording }) {
           <button className="dbtn leave" onClick={() => room.disconnect()}>{I.leave}<span className="lbl">{isTeacher ? "End / leave" : "Leave"}</span></button>
         </div>
       </footer>
+      {!isTeacher ? <StudentPuzzle pz={pz} /> : null}
       <RoomAudioRenderer />
       <StartAudio label="Tap to turn on sound" className="startaudio" />
       <ConnectionStateToast />
