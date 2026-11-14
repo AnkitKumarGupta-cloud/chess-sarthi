@@ -132,6 +132,14 @@ assert.equal((await call("classes", { method: "POST", auth: DM, body: {} })).sta
 const named = await call("users", { method: "POST", auth: T, body: { name: "Demo", batch: "Beginners Saturday" } });
 assert.notEqual(named.accounts[0].username, "demo");
 
+// --- backup and keep-alive ---
+assert.equal((await call("backup", { auth: S })).status, 403);
+const bk = await call("backup", { auth: T });
+assert.equal(bk.status, 200); assert.ok(bk.data["u:" + stu.username] && bk.data["c:" + c1.id]);
+assert.ok(bk.data["p:" + stu.username], "progress is in the backup");
+assert.ok(!JSON.stringify(bk).includes(stu.password), "no plain-text passwords in the backup");
+assert.equal((await call("keepalive")).ok, true); assert.ok(db.has("keepalive"));
+
 // --- delete ---
 lk.rooms[c2.roomName] = 3;   // people are in the class
 assert.equal((await call("classes", { method: "DELETE", auth: T, query: { id: c2.id } })).ok, true);
