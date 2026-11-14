@@ -18,8 +18,8 @@ try{var th=localStorage.getItem("cs-theme");if(th==="light"||th==="dark")documen
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load in the background (the page draws straight away with system fonts, then swaps). -->
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap"></noscript>
 <style>
 /* Layout: app shell — top bar on desktop, bottom tab bar on phones; content column max 1080px; boards are the hero object */
 :root{
@@ -789,8 +789,105 @@ main:has(> .drill){padding-top:12px!important}
 .rd{font-weight:800}.rd.up{color:var(--good,#2E9E62)}.rd.down{color:var(--accent)}
 /* Demo login: every tab except Live shows a lock */
 body.demo #tabs a:not([href="#live"]){opacity:.55}
-body.demo #tabs a:not([href="#live"])::after{content:"🔒";font-size:.7em;margin-left:auto}
+body.demo #tabs a:not([href="#live"])::after{content:"";width:.8em;height:.8em;display:inline-block;background:currentColor;-webkit-mask:var(--lock) center/contain no-repeat;mask:var(--lock) center/contain no-repeat;font-size:.7em;margin-left:auto}
 .lock-i{font-size:2.6rem}
+
+/* =====================================================================
+   Premium pass (Nov 2026): one font, quiet surfaces, three accents
+   (red = action, gold = reward, green = correct), more room, calm motion.
+   Comes last so it overrides the older layers above.
+   ===================================================================== */
+:root{--f-display:var(--f-body);--f-mono:var(--f-body);
+  --lock:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2zm2 0h6V7a3 3 0 0 0-6 0z'/%3E%3C/svg%3E")}
+/* flat cards: the tint of the surface does the work, shadows only where something should lift */
+:root,:root:not([data-theme="light"]),:root[data-theme="dark"],:root[data-theme="light"]{--shadow:0 0 #0000}
+body{background:var(--bg);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-feature-settings:"cv11","ss01"}
+h1,h2,h3,.tile h3,.ccard b,.unit-h h2,.course h2,.card h2{font-family:var(--f-body);font-weight:700;letter-spacing:-.02em}
+h1{letter-spacing:-.03em;line-height:1.12}
+.logo{font-family:var(--f-body);font-weight:700;letter-spacing:-.02em;font-size:1.1rem}
+.mono,.pill,.kpi b,.score,.goal-n b,td.num,.lvdots span,.ds-dots button,.pzlist button{font-variant-numeric:tabular-nums}
+.mono{letter-spacing:0}
+.eyebrow{font-size:.72rem;font-weight:700;letter-spacing:.08em}
+
+.card,.hero,.tile,.ccard,.unit,.player,.prcard,.drill-side,.lvhero,.lvpath,.hchip,.classcard{border-color:transparent!important;box-shadow:none}
+.tile:hover{box-shadow:none}
+.t-continue{box-shadow:var(--shadow-up)!important;background:var(--surface)!important}
+.ccard:hover,.prcard:hover{box-shadow:var(--shadow-up)}
+.t-live.is-live{box-shadow:0 0 0 2px var(--accent)!important}
+.menu .menu-theme .seg button[aria-pressed="true"]{box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* colour: no decorative pink tints */
+.hero,.unit-h{background:var(--surface-2)!important}
+.tile-art{color:var(--ink);opacity:.05}
+.ccard-icon{color:var(--ink);opacity:.08}
+.pill.level{background:var(--surface-2);color:var(--ink)}
+.prsec-i{background:var(--surface-2);color:var(--ink)}
+.unit-icon .ic,.unit-icon{color:var(--gold)}
+
+/* icons */
+.ic{width:1.1em;height:1.1em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.16em}
+.hchip{gap:7px;padding:8px 14px;background:var(--surface)}
+.hchip .ic{width:17px;height:17px;color:var(--muted)}
+.hchip.streak.lit{background:var(--gold-soft)}
+.hchip.streak.lit .ic,.hchip.xp .ic{color:var(--gold)}
+.streak-s .ic{color:var(--gold)}
+.cele-ic{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;margin:0 auto 6px;background:var(--gold-soft);color:var(--gold)}
+.cele-ic .ic{width:30px;height:30px;stroke-width:1.8}
+.cele-card{border:0;box-shadow:0 24px 60px rgba(0,0,0,.22)}
+
+/* Home: two columns that keep their natural height (no half-empty cards) */
+.bento{display:grid!important;grid-template-columns:minmax(0,2fr) minmax(0,1fr)!important;gap:20px;align-items:start}
+.b-col{display:flex;flex-direction:column;gap:20px;min-width:0}
+.b-pair{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.bento .tile{grid-column:auto!important;grid-row:auto!important}
+.t-continue{min-height:236px}
+.t-goal .week{height:56px}
+.t-stats{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:20px 22px}
+.kpi b{font-size:1.6rem;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.kpi span{font-size:.78rem}
+.t-rank{padding:18px 20px}
+.rank-g{width:56px;height:56px;font-size:2.4rem;border-radius:16px}
+@media (max-width:1000px){.bento{grid-template-columns:1fr!important}.b-side{display:grid;grid-template-columns:1fr 1fr;align-items:start}}
+@media (max-width:640px){.b-side{display:flex}.b-pair{grid-template-columns:1fr}.t-stats{grid-template-columns:1fr 1fr;row-gap:16px}}
+
+/* spacing: a little more air everywhere */
+main{gap:32px}
+.tile{padding:22px}
+.li-m{line-height:1.55}
+@media (max-width:640px){main{gap:24px}.tile{padding:18px}.bento,.b-col,.b-pair{gap:14px}h1{font-size:1.6rem}}
+
+/* motion: quick press feedback, nothing flashy */
+.btn,.chip,.tbtn,.ctl,.ccard,.prcard,.hchip,.ds-back,nav.tabs a,.lvdots span,.ds-dots button{transition:transform .12s ease,background-color .15s ease,box-shadow .2s ease,color .15s ease}
+.btn:active:not(:disabled),.chip:active,.tbtn:active:not(:disabled),.ctl:active,.ccard:active,.prcard:active,.ds-back:active,nav.tabs a:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.btn:active,.chip:active,.tbtn:active,.ctl:active,.ccard:active,.prcard:active,.ds-back:active,nav.tabs a:active{transform:none}}
+
+/* loading placeholders */
+.sk{background:linear-gradient(90deg,var(--surface-2) 25%,color-mix(in srgb,var(--surface-2) 45%,var(--surface)) 50%,var(--surface-2) 75%);background-size:200% 100%;border-radius:10px;animation:skm 1.3s ease-in-out infinite}
+@keyframes skm{from{background-position:150% 0}to{background-position:-50% 0}}
+@media (prefers-reduced-motion:reduce){.sk{animation:none}}
+.sk-e{height:12px;width:90px}.sk-h{height:30px;width:min(340px,70%)}
+.sk-l{height:14px;width:70%}.sk-l.s{width:45%}.sk-btn{height:48px;width:100%;border-radius:12px;margin-top:8px}
+.sk-row{height:52px;width:100%;border-radius:12px}
+.sk-split{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+.sk-board{aspect-ratio:1;width:min(100%,520px);border-radius:14px}
+.sk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}.sk-card{height:150px;border-radius:var(--radius)}
+
+/* Daily goal: ring and text side by side, week underneath (no empty gap) */
+.t-goal{display:grid!important;grid-template-columns:auto 1fr;align-items:center;gap:8px 16px}
+.t-goal .week{grid-column:1/-1;margin-top:10px}
+/* Practice: section colour stays as a soft tint, no gradient or glow */
+.pricon{background:color-mix(in srgb,var(--c1) 14%,var(--surface))!important;color:var(--c1)!important;box-shadow:none!important}
+.prcard:hover .pricon{transform:none}
+.prsec-h{border-left:0;padding-left:0}
+.prsec-h h2{font-size:1.35rem;font-weight:700;letter-spacing:-.02em;text-transform:none}
+
+/* Practice board side: neutral cards, section colour only on the small icon; green stays for "solved" */
+.ds-goal{background:var(--surface-2);border-color:transparent}
+.ds-goal-i{background:color-mix(in srgb,var(--c1) 16%,var(--surface));color:var(--c1)}
+.ds-goal.ok{background:var(--good-soft);border-color:transparent}
+.ds-goal.ok .ds-goal-i{background:var(--good);color:#fff}
+.drill .ds-about{background:var(--surface-2);border-color:transparent}
+@media (max-width:640px){.t-goal .week{height:44px}}
 </style>
 
 </head>
@@ -957,6 +1054,18 @@ function idx(sq,flip){const f=FILES.indexOf(sq[0]),r=+sq[1];const col=flip?7-f:f
 /* ---------- Helpers ---------- */
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+/* Line icons (paths from Lucide, ISC licence) so rewards match the outline icons in the menu */
+const UI_ICONS={
+ flame:'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3 0 1.4.9 2.5 2.5 2.5z"/>',
+ bolt:'<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
+ trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+ trend:'<path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/>',
+ target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+ star:'<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
+ medal:'<circle cx="12" cy="14" r="6"/><path d="M8.2 9.3 5 2h4l3 6 3-6h4l-3.2 7.3"/><path d="m12 11.5.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2-1.45-1.4 2-.3z"/>'};
+const ico=(k,c="")=>`<svg class="ic${c?" "+c:""}" viewBox="0 0 24 24" aria-hidden="true">${UI_ICONS[k]||""}</svg>`;
+/* Grey placeholder shapes shown while a page's data loads */
+const skel=(kind)=>`<section class="stack view sk-page" role="status" aria-label="Loading"><div class="sk sk-e"></div><div class="sk sk-h"></div>${kind==="board"?`<div class="sk-split"><div class="sk sk-board"></div><div class="stack" style="gap:12px;flex:1"><div class="sk sk-l"></div><div class="sk sk-l s"></div><div class="sk sk-btn"></div></div></div>`:kind==="rows"?[1,2,3,4,5].map(()=>`<div class="sk sk-row"></div>`).join(""):`<div class="sk-grid">${[1,2,3,4,5,6].map(()=>`<div class="sk sk-card"></div>`).join("")}</div>`}</section>`;
 function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),1800)}
 /* Celebrations: confetti + a card for real milestones only (level, test, topic, rank, rating).
    Queued so two at once play one after another. No confetti when the device asks for less motion. */
@@ -966,7 +1075,7 @@ function celeNext(){const it=CELEQ.shift();if(!it){celeOn=false;return}celeOn=tr
   const calm=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches,cols=["#F5B300","#E4572E","#2BB673","#3A86FF","#9B5DE5","#FF7AB6"];
   let bits="";if(!calm)for(let i=0;i<70;i++)bits+=`<i style="left:${(Math.random()*100).toFixed(1)}%;background:${cols[i%cols.length]};animation-delay:${(Math.random()*.5).toFixed(2)}s;animation-duration:${(1.8+Math.random()*1.4).toFixed(2)}s;--dx:${Math.round(Math.random()*180-90)}px;--r:${Math.round(Math.random()*900)}deg"></i>`;
   const d=document.createElement("div");d.className="cele";d.setAttribute("role","status");
-  d.innerHTML=`<div class="cele-bits" aria-hidden="true">${bits}</div><div class="cele-card"><em aria-hidden="true">${icon}</em><b>${esc(title)}</b>${sub?`<span>${esc(sub)}</span>`:""}</div>`;
+  d.innerHTML=`<div class="cele-bits" aria-hidden="true">${bits}</div><div class="cele-card"><em class="cele-ic">${ico(icon)}</em><b>${esc(title)}</b>${sub?`<span>${esc(sub)}</span>`:""}</div>`;
   document.body.appendChild(d);setTimeout(()=>sfx("cheer"),SOLVED_DELAY+550);
   setTimeout(()=>d.classList.add("out"),2700);setTimeout(()=>{d.remove();celeNext()},3150)}
 const lessonsDone=()=>ALL_LESSONS.filter(l=>S.lessons[l.id]).length;
@@ -987,10 +1096,10 @@ function rankOf(xp){let i=0;RANKS.forEach((r,j)=>{if(xp>=r.xp)i=j});const cur=RA
 const todayXP=()=>(S.days&&S.days[dayKey()])||0;
 function streak(){const d=S.days||{};let n=0;const t=new Date();if(!d[dayKey(t)])t.setDate(t.getDate()-1);while(d[dayKey(t)]){n++;t.setDate(t.getDate()-1)}return n}
 function award(x){if(!x)return;S.days=S.days||{};const k=dayKey(),before=S.days[k]||0;S.days[k]=before+x;
-  {const rk=rankOf(totalXP());if(S.rankSeen==null)S.rankSeen=rk.i;else if(rk.i>S.rankSeen){S.rankSeen=rk.i;celebrate(rk.cur.g,`You're now a ${rk.cur.n}!`,"New rank unlocked. Keep learning!")}}
+  {const rk=rankOf(totalXP());if(S.rankSeen==null)S.rankSeen=rk.i;else if(rk.i>S.rankSeen){S.rankSeen=rk.i;celebrate("medal",`You're now a ${rk.cur.n}!`,"New rank unlocked. Keep learning!")}}
   save();
   const p=document.createElement("div");p.className="xppop";p.textContent="+"+x+" XP";document.body.appendChild(p);setTimeout(()=>p.remove(),1600);
-  if(before<DAILY_GOAL&&before+x>=DAILY_GOAL)setTimeout(()=>toast("🔥 Daily goal done! Streak: "+streak()+" day"+(streak()===1?"":"s")),900)}
+  if(before<DAILY_GOAL&&before+x>=DAILY_GOAL)setTimeout(()=>toast("Daily goal done! Streak: "+streak()+" day"+(streak()===1?"":"s")),900)}
 function week(){const out=[],t=new Date();t.setDate(t.getDate()-6);for(let i=0;i<7;i++){out.push({k:dayKey(t),d:t.toLocaleDateString([], {weekday:"narrow"}),xp:(S.days||{})[dayKey(t)]||0,today:i===6});t.setDate(t.getDate()+1)}return out}
 const ring=(pct,size=56,stroke=6)=>{const r=(size-stroke)/2,c=2*Math.PI*r;return `<svg class="ring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><circle cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${stroke}" class="ring-bg"/><circle cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${stroke}" class="ring-fg" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-Math.min(1,pct/100))}" transform="rotate(-90 ${size/2} ${size/2})"/></svg>`};
 const COURSE_ICON={"Beginner":"♙","Intermediate":"♘","Advanced":"♖","Expert":"♕"};
@@ -1005,9 +1114,9 @@ function vHome(){
   const nc=next&&next.course, ni=next?nc.lessons.findIndex(l=>l.id===next.id):0;
   return `<section class="hello view">
     <div><div class="eyebrow">${greet}${name?", "+esc(name):""}</div><h1>${st?`You're on a ${st}-day streak. Keep it going!`:"Let's learn one chess idea today."}</h1></div>
-    <div class="hello-chips"><span class="hchip streak${tx>0?" lit":""}" title="Days in a row you practised"><b>🔥 ${st}</b> day streak</span><span class="hchip xp" title="Total experience points"><b>⚡ ${xp}</b> XP</span><span class="hchip rank" title="Your rank"><b>${rk.cur.g}</b> ${rk.cur.n}</span></div>
+    <div class="hello-chips"><span class="hchip streak${tx>0?" lit":""}" title="Days in a row you practised">${ico("flame")}<b>${st}</b> day streak</span><span class="hchip xp" title="Total experience points">${ico("bolt")}<b>${xp}</b> XP</span><span class="hchip rank" title="Your rank"><b>${rk.cur.g}</b> ${rk.cur.n}</span></div>
   </section>
-  <section class="bento view">
+  <section class="bento view"><div class="b-col b-main">
     <article class="tile t-continue">
       ${next?`<div class="tile-top"><span class="pill level">${nc.level}</span><span class="li-m">${esc(nc.title)} · lesson ${ni+1} of ${nc.lessons.length}</span></div>
       <h2 class="tile-h">${lessonsDone()?"Continue":"Start"}: ${esc(next.title)}</h2>
@@ -1017,10 +1126,30 @@ function vHome(){
       :`<div class="tile-top"><span class="pill done">All lessons watched</span></div><h2 class="tile-h">Brilliant! Now test yourself.</h2><p class="li-m">A new test each time, matched to your puzzle level.</p><div class="row" style="margin-top:auto"><a class="btn big" href="#tests">Take the test</a></div>`}
       <div class="tile-art" aria-hidden="true">${next?COURSE_ICON[nc.level]||"♞":"♛"}</div>
     </article>
+    <div class="b-pair">
     <article class="tile t-goal">
       <div class="goal">${ring(tx/DAILY_GOAL*100,72,8)}<div class="goal-n"><b class="mono">${Math.min(tx,DAILY_GOAL)}</b><span>/${DAILY_GOAL}</span></div></div>
       <div class="stack" style="gap:4px"><h3>Daily goal</h3><p class="li-m">${tx>=DAILY_GOAL?"Done for today. Great work!":`${DAILY_GOAL-tx} XP to go`}</p></div>
       <div class="week" aria-label="XP this week">${wk.map(w=>`<div class="wd${w.today?" today":""}${w.xp?" on":""}" title="${w.k}: ${w.xp} XP"><i style="height:${Math.max(6,w.xp/maxw*100)}%"></i><span>${w.d}</span></div>`).join("")}</div>
+    </article>
+    <article class="tile t-live" id="homeLive">
+      <span class="eyebrow">Live class</span>
+      ${AUTH.user?`<div class="sk sk-l" style="height:20px"></div><div class="sk sk-l s"></div>`:`<h3>Live classes</h3><p class="li-m">Join your teacher's live class from the Live tab.</p>`}
+      <a class="btn ghost" href="#live" style="margin-top:auto">Open Live</a>
+    </article>
+    </div>
+    <article class="tile t-stats">
+      <div class="kpi"><b>${lessonsDone()}<small>/${ALL_LESSONS.length}</small></b><span>Lessons watched</span></div>
+      <div class="kpi"><b>${lvSolvedCount()}</b><span>Puzzles solved</span></div>
+      <div class="kpi"><b>${prState().r}</b><span>Puzzle rating</span></div>
+      <div class="kpi"><b>${bestTest()??"–"}${bestTest()!=null?`<small>/${TEST_N}</small>`:""}</b><span>Best test</span></div>
+    </article>
+  </div><div class="b-col b-side">
+    <article class="tile t-rank">
+      <div class="rank-g" aria-hidden="true">${rk.cur.g}</div>
+      <div class="stack" style="gap:6px;min-width:0;flex:1"><span class="eyebrow">Your rank</span><h3>${rk.cur.n}</h3>
+        <div class="bar gold"><i style="width:${rk.pct}%"></i></div>
+        <span class="li-m">${rk.nxt?`${rk.nxt.xp-xp} XP to become a ${rk.nxt.n} ${rk.nxt.g}`:"Top rank reached. You're the King!"}</span></div>
     </article>
     <article class="tile t-puzzle">
       <div class="tile-top"><span class="eyebrow">Puzzle of the day</span><span class="pill mono">+${daily.pts} XP</span></div>
@@ -1028,23 +1157,7 @@ function vHome(){
       <p class="li-m">${label(daily)} · ${daily.fen.split(" ")[1]==="w"?"White":"Black"} to move</p>
       <button class="btn ghost" id="dailyGo">${S.puzzles[daily.id]?"Solved ✓ · Try more":"Solve it"}</button>
     </article>
-    <article class="tile t-rank">
-      <div class="rank-g" aria-hidden="true">${rk.cur.g}</div>
-      <div class="stack" style="gap:6px;min-width:0;flex:1"><span class="eyebrow">Your rank</span><h3>${rk.cur.n}</h3>
-        <div class="bar gold"><i style="width:${rk.pct}%"></i></div>
-        <span class="li-m">${rk.nxt?`${rk.nxt.xp-xp} XP to become a ${rk.nxt.n} ${rk.nxt.g}`:"Top rank reached. You're the King!"}</span></div>
-    </article>
-    <article class="tile t-live" id="homeLive">
-      <span class="eyebrow">Live class</span>
-      <h3>${AUTH.user?"Checking your classes…":"Live classes"}</h3>
-      <p class="li-m">${AUTH.user?"":"Join your teacher's live class from the Live tab."}</p>
-      <a class="btn ghost" href="#live" style="margin-top:auto">Open Live</a>
-    </article>
-    <article class="tile t-stats">
-      <div class="kpi"><b class="mono">${lessonsDone()}<small>/${ALL_LESSONS.length}</small></b><span>Lessons</span></div>
-      <div class="kpi"><b class="mono">${puzzlesDone()}<small>/${PUZZLES.length}</small></b><span>Puzzles</span></div>
-      <div class="kpi"><b class="mono">${bestTest()??"–"}${bestTest()!=null?`<small>/${TEST_N}</small>`:""}</b><span>Best test</span></div>
-    </article>
+  </div>
   </section>
   <section class="stack view">
     <div class="row" style="justify-content:space-between"><h2>Your lessons</h2><a class="link" href="#courses">See all lessons →</a></div>
@@ -1064,7 +1177,7 @@ function afterHome(){
     if(live)box.innerHTML=`<span class="eyebrow">Live class</span><span class="pill live" style="align-self:flex-start">● Live now</span><h3>${esc(live.title)}</h3><a class="btn" href="/class.html?c=${encodeURIComponent(live.id)}" style="margin-top:auto">${AUTH.user.role==="teacher"?"Rejoin class":"Join now"}</a>`,box.classList.add("is-live");
     else if(up)box.innerHTML=`<span class="eyebrow">Next live class</span><h3>${esc(up.title)}</h3><p class="li-m">${esc(whenText(up.startsAt))}</p><a class="btn ghost" href="#live" style="margin-top:auto">See schedule</a>`;
     else box.innerHTML=`<span class="eyebrow">Live class</span><h3>No class scheduled</h3><p class="li-m">${AUTH.user.role==="teacher"?"Schedule one from the Live tab.":"Your teacher will add the next class soon."}</p><a class="btn ghost" href="#live" style="margin-top:auto">Open Live</a>`;
-  }).catch(()=>{const b=$("#homeLive");if(b)b.querySelector("h3").textContent="Live classes"});
+  }).catch(()=>{const b=$("#homeLive");if(b)b.innerHTML=`<span class="eyebrow">Live class</span><h3>Live classes</h3><p class="li-m">Couldn't check right now. Open the Live tab to see your classes.</p><a class="btn ghost" href="#live" style="margin-top:auto">Open Live</a>`});
 }
 
 function vCourses(){
@@ -1077,7 +1190,7 @@ function vCourses(){
       <button data-open="${l.id}" aria-label="${esc(l.title)}${done?", watched":cur?", up next":""}"><span class="node" aria-hidden="true">${done?"✓":cur?"▶":i+1}</span>
       <span class="stop-t"><b>${esc(l.title)}</b><span class="li-m mono">${l.minutes} min${done?" · watched":cur?" · up next":""}</span></span></button></li>`}).join("")}</ol>
   </div>`}).join("")}
-  <div class="unit unit-end"><header class="unit-h"><span class="unit-icon" aria-hidden="true">🏆</span><div class="stack" style="gap:2px"><span class="eyebrow">Finish line</span><h2>Take the test</h2></div><a class="btn" href="#tests">Start test</a></header></div>
+  <div class="unit unit-end"><header class="unit-h"><span class="unit-icon" aria-hidden="true">${ico("trophy")}</span><div class="stack" style="gap:2px"><span class="eyebrow">Finish line</span><h2>Take the test</h2></div><a class="btn" href="#tests">Start test</a></header></div>
   </section>`;
 }
 
@@ -1120,7 +1233,7 @@ function goalText(c,color){const g=c.goal,side=color==="w"?"White":"Black";
 const prColor=c=>c.goal||!c.line.length?c.fen.split(" ")[1]:(c.orient==="black"?"b":"w");
 
 function vPractice(){
-  if(!PR)return `<section class="stack view"><div class="eyebrow">Practice</div><h1>Practice makes perfect</h1><p class="li-m">Loading practice…</p></section>`;
+  if(!PR)return skel("cards");
   const total=PR.topics.reduce((a,t)=>a+t.chapters.length,0);
   return `<section class="stack view"><div class="eyebrow">Practice · ${prAll()}/${total} done</div><h1>Practice makes perfect</h1></section>
   ${PR_SEC_ORDER.map(sid=>{const sec=PR.sections[sid],ts=PR.topics.filter(t=>t.section===sid);return `<section class="stack view prsec" data-sec="${sid}">
@@ -1137,7 +1250,7 @@ function prParam(){const m=location.hash.match(/[?&]t=([^&]+)/);return m?decodeU
 function prOpen(t,i){const c=t.chapters[i],g=new Chess(c.fen);PRS={tid:t.id,i,g,color:prColor(c),moves:0,ply:0,sel:null,state:"idle",msg:"",last:[],bad:[],hint:null,promo:null,anim:null,hist:[]};
   if(!c.goal&&c.line.length&&g.turn()!==PRS.color)prAuto()}
 function vDrill(){
-  if(!PR)return `<section class="stack view"><p class="li-m">Loading practice…</p></section>`;
+  if(!PR)return skel("board");
   const t=PR.topics.find(x=>x.id===prParam())||PR.topics[0];
   if(!PRS||PRS.tid!==t.id){const first=t.chapters.findIndex((c,i)=>!(S.practice||{})[prKey(t,i)]);prOpen(t,first<0?0:first)}
   const c=t.chapters[PRS.i],done=(S.practice||{})[prKey(t,PRS.i)],n=t.chapters.length;
@@ -1174,7 +1287,7 @@ function vDrill(){
 }
 function prSolved(){const t=PR.topics.find(x=>x.id===PRS.tid),k=prKey(t,PRS.i);PRS.state="ok";setTimeout(()=>sfx("solved"),SOLVED_DELAY);
   S.practice=S.practice||{};if(!S.practice[k]){S.practice[k]=true;PRS.fresh=true;save();award(10);
-    if(t.chapters.every((_,i)=>S.practice[prKey(t,i)]))celebrate("🎯","Topic complete!",`You finished every position in ${t.title}.`)}render()}
+    if(t.chapters.every((_,i)=>S.practice[prKey(t,i)]))celebrate("target","Topic complete!",`You finished every position in ${t.title}.`)}render()}
 function prFail(msg){PRS.state="fail";PRS.msg=msg;sfx("wrong");render()}
 function prPlay(m){const mv=PRS.g.move(m);if(!mv)return null;moveSound(mv,PRS.g);PRS.anim=[mv.from,mv.to];PRS.last=[mv.from,mv.to];return mv}
 function prAuto(){const t=PR.topics.find(x=>x.id===PRS.tid),c=t.chapters[PRS.i];const u=c.line[PRS.ply];if(!u)return;
@@ -1339,11 +1452,11 @@ function lvSolved(){const st=lvState();LVS.state="ok";if(LVS.res[LVS.k]==null)LV
   {const pr=prState(),m=Math.floor(pr.r/100)*100;if(pr.mile==null)pr.mile=Math.max(m,Math.floor(PR_START/100)*100);
    if(LVS.rd>0&&m>pr.mile){pr.mile=m;LVS.mile=m}else LVS.mile=0}st.part=st.part||{};st.part[LVS.l]=LVS.res.slice();save();if(LVS.res[LVS.k]==="ok")award(5);setTimeout(()=>sfx("solved"),SOLVED_DELAY);
   if(LVS.res.every(x=>x)){delete st.part[LVS.l];const stars=lvStars(LVS.res),prev=st.done[LVS.l];st.done[LVS.l]={stars:Math.max(stars,prev?prev.stars:0)};if(st.unlocked<=LVS.l)st.unlocked=LVS.l+1;LVS.complete=stars;save();
-    celebrate("🏆",`Level ${LVS.l} complete!`,"★".repeat(stars)+"☆".repeat(3-stars)+(stars===3?" Perfect!":" Well played!"))}
-  if(LVS.mile)celebrate("📈",`Your rating hit ${LVS.mile}!`,"A new best. Your puzzle skills are growing.");
+    celebrate("trophy",`Level ${LVS.l} complete!`,"★".repeat(stars)+"☆".repeat(3-stars)+(stars===3?" Perfect!":" Well played!"))}
+  if(LVS.mile)celebrate("trend",`Your rating hit ${LVS.mile}!`,"A new best. Your puzzle skills are growing.");
   render()}
 function vPlevel(){
-  if(!LVD)return `<section class="stack view"><p class="li-m">Loading puzzles…</p></section>`;
+  if(!LVD)return skel("board");
   const st=lvState(),l=Math.max(1,Math.min(lvParam(),st.unlocked,LVD.length)),list=LVD[l-1];
   if(!LVS||LVS.l!==l){const part=lvPart(l),first=Math.max(0,part.findIndex(x=>!x));LVS=null;lvOpen(l,first)}
   const p=list[LVS.k],s=LVS.state,col=LVS.color==="w"?"White":"Black";
@@ -1623,7 +1736,7 @@ function buildTest(){const tier=testTier(),L=lvState().unlocked,max=LVD.length;
   return {tier,level:L,qs:[...kq,...pq]}}
 let TT=null,tq=0,tAns=[],tDone=false;
 function vTests(){
-  if(!LVD)return `<section class="stack view"><p class="li-m">Loading test…</p></section>`;
+  if(!LVD)return skel("rows");
   if(!TT){TT=buildTest();tq=0;tAns=[];tDone=false}
   const Q=TT.qs,n=Q.length,tierName=TIERS[TT.tier];
   if(tDone){const sc=tAns.filter((a,i)=>a===Q[i].a).length;
@@ -1650,7 +1763,7 @@ function afterTests(){
   const Q=TT.qs,q=Q[tq];
   if(q.kind==="pz")drawBoard($("#tBoard"),q.fen,{flip:q.color==="b",hi:q.last});
   document.querySelectorAll("[data-opt]").forEach(b=>b.onclick=()=>{tAns[tq]=+b.dataset.opt;sfx(tAns[tq]===q.a?"right":"wrong");render()});
-  $("#tnext").onclick=()=>{if(tq<Q.length-1){tq++}else{tDone=true;const sc=tAns.filter((a,i)=>a===Q[i].a).length;S.tests.push({score:sc,total:Q.length,tier:TT.tier,level:TT.level,at:new Date().toISOString()});save();award(sc*5);if(sc>=7)celebrate(sc===Q.length?"🌟":"🎉",sc===Q.length?"Perfect score!":"Test passed!",`${sc} out of ${Q.length} correct`)}render();window.scrollTo(0,0)};
+  $("#tnext").onclick=()=>{if(tq<Q.length-1){tq++}else{tDone=true;const sc=tAns.filter((a,i)=>a===Q[i].a).length;S.tests.push({score:sc,total:Q.length,tier:TT.tier,level:TT.level,at:new Date().toISOString()});save();award(sc*5);if(sc>=7)celebrate(sc===Q.length?"star":"trophy",sc===Q.length?"Perfect score!":"Test passed!",`${sc} out of ${Q.length} correct`)}render();window.scrollTo(0,0)};
 }
 
 /* ---------- Progress ---------- */
@@ -1662,7 +1775,7 @@ function vLocked(){return `<section class="card stack view lockcard" style="max-
 function vProgressTeacher(){
   if(TPROG.state==="idle"){setTimeout(loadTeacherProgress,0);TPROG.state="loading"}
   const head=`<section class="stack view"><div class="eyebrow">Progress</div><div class="row" style="justify-content:space-between;align-items:end"><h1>Student progress</h1><button class="btn ghost" id="tpRefresh">Refresh</button></div></section>`;
-  if(TPROG.state==="loading")return head+`<section class="card view"><p class="li-m">Loading…</p></section>`;
+  if(TPROG.state==="loading")return head+`<section class="stack view" role="status" aria-label="Loading">${[1,2,3,4].map(()=>`<div class="sk sk-row"></div>`).join("")}</section>`;
   if(TPROG.state==="err")return head+`<section class="card view"><p>${esc(TPROG.msg||"Could not load progress.")}</p></section>`;
   const all=TPROG.list,batches=[...new Map(all.map(u=>[u.batch,u.batchName||u.batch])).entries()];
   if(!all.length)return head+`<section class="card view"><p>No students yet. Add them on the Live tab.</p></section>`;
@@ -1679,7 +1792,7 @@ function vProgressTeacher(){
       <td class="num">${m.lessonsDone}<span class="li-m">/${m.lessonsTotal}</span></td>
       <td class="num">${m.bestTest!=null?`${m.bestTest}<span class="li-m">/10</span>`:"–"}${m.lastTest&&m.lastTest.tier?`<br><span class="li-m">${esc(m.lastTest.tier)}</span>`:""}</td>
       <td class="num">${m.xp}<br><span class="li-m">${esc(m.rank)}</span></td>
-      <td>${ago(m.lastActive)}${m.streak?`<br><span class="li-m">🔥 ${m.streak} day${m.streak===1?"":"s"}</span>`:""}</td></tr>
+      <td>${ago(m.lastActive)}${m.streak?`<br><span class="li-m streak-s">${ico("flame")} ${m.streak} day${m.streak===1?"":"s"}</span>`:""}</td></tr>
       ${open?`<tr class="tp-more"><td colspan="8"><div class="tp-grid">
         <div><span class="li-m">Puzzle levels finished</span><b>${m.levelsDone} of ${m.levelsTotal}</b></div>
         <div><span class="li-m">Stars</span><b>${m.stars} ★</b></div>
@@ -1711,7 +1824,7 @@ function vProgress(){
       <span class="li-m">${rk.nxt?`${rk.nxt.xp-xp} XP until ${rk.nxt.n}`:"You reached the top rank!"}</span>
     </article>
     <article class="tile">
-      <div class="row" style="justify-content:space-between"><h3>This week</h3><span class="li-m mono">${wsum} XP · 🔥 ${streak()}</span></div>
+      <div class="row" style="justify-content:space-between"><h3>This week</h3><span class="li-m mono">${wsum} XP · ${ico("flame")} ${streak()}</span></div>
       <div class="week big">${wk.map(w=>`<div class="wd${w.today?" today":""}${w.xp?" on":""}" title="${w.k}: ${w.xp} XP"><em class="mono">${w.xp||""}</em><i style="height:${Math.max(4,w.xp/maxw*100)}%"></i><span>${w.d}</span></div>`).join("")}</div>
     </article>
     <article class="tile t-stats">

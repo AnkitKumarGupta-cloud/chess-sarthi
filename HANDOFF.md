@@ -81,3 +81,12 @@ Vercel Deployment Protection must stay **off** for `chess-sathi-live`, or studen
 - Recording: needs a Cloudflare R2 bucket + the five `RECORD_*` variables. LiveKit free plan includes only ~60 recorded minutes a month.
 - Mobile app (Expo, separate zip `chess-sathi.zip`): needs `SITE_URL` set in `src/config.js`; not tested on a phone; doesn't have Practice/Puzzle levels yet.
 - Old Vercel projects `chess`, `chess_sathi`, `chess-sathi`, `chess--sathi-yyrr` are unused and can be deleted.
+
+## Design rules (premium pass, Nov 2026)
+- One font (Instrument Sans). No monospace or display font; use `font-variant-numeric:tabular-nums` for numbers.
+- Three accent colours only: red = action/brand, gold = reward, green = correct. No decorative tints.
+- Cards are flat (no border + shadow). Only the Home "Continue" card and hovered clickable cards lift.
+- No emoji in the UI. Use `ico("flame"|"bolt"|"trophy"|"trend"|"target"|"star"|"medal")`. Chess piece glyphs are fine.
+- Loading states use `skel("board"|"rows"|"cards")`, not "Loading…" text.
+- Milestones call `celebrate(iconName,title,sub)`; keep it for real progress only.
+- The last block in the `<style>` tag is the premium layer; put overrides there.
