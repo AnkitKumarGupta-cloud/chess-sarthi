@@ -1,11 +1,11 @@
-import { handler, HttpError, whoIs, mustBeTeacher, kv, kvPipe, getUser, putUser, listUsers, hashPassword, newPassword, slug, normUser, validUsername } from "./_lib.js";
+import { handler, HttpError, whoIs, mustBeTeacher, kv, kvPipe, getUser, putUser, listUsers, hashPassword, newPassword, slug, normUser, validUsername, RESERVED, cfg } from "./_lib.js";
 
 async function freeUsername(base) {
   let u = base.slice(0, 24);
   if (u.length < 3) u = (u + "student").slice(0, 12);
   for (let i = 0; i < 20; i++) {
     const t = i === 0 ? u : u + Math.floor(10 + Math.random() * 89);
-    if (validUsername(t) && !(await getUser(t))) return t;
+    if (validUsername(t) && !RESERVED.includes(t) && !(await getUser(t))) return t;
   }
   throw new HttpError(500, "Could not make a username. Please try another name.");
 }
@@ -18,7 +18,7 @@ async function create(role, name, batch, base) {
 // Teacher only: list accounts, add a student, reset a password, delete an account.
 export default handler(async ({ req, body, query }) => {
   mustBeTeacher(await whoIs(req));
-  if (req.method === "GET") return { users: await listUsers() };
+  if (req.method === "GET") return { users: await listUsers(), demo: cfg().demoPassword ? { username: "demo", password: cfg().demoPassword } : null };
   if (req.method === "DELETE") {
     const u = normUser(query.username);
     if (!(await getUser(u))) throw new HttpError(404, "That account was not found.");
@@ -31,12 +31,6 @@ export default handler(async ({ req, body, query }) => {
     if (!rec) throw new HttpError(404, "That account was not found.");
     const pw = newPassword(); rec.pw = hashPassword(pw); await putUser(rec);
     return { username: rec.username, password: pw, role: rec.role, name: rec.name, batch: rec.batchName };
-  }
-  // A shared demo login: it can only join the live classes of its batch (everything else is locked in the app).
-  if (body.demo) {
-    const batch = String(body.batch || "").trim().slice(0, 40);
-    if (!slug(batch)) throw new HttpError(400, "Type the batch whose live classes the demo login can join.");
-    return { accounts: [await create("demo", "Demo", batch, "demo" + slug(batch).replace(/-/g, "").slice(0, 16))] };
   }
   const name = String(body.name || "").trim().slice(0, 40), batch = String(body.batch || "").trim().slice(0, 40);
   if (!name || !slug(batch)) throw new HttpError(400, "Please enter the student's name and the batch.");

@@ -15,7 +15,7 @@ export class HttpError extends Error {
 export function cfg() {
   const e = process.env;
   return {
-    sessionSecret: e.SESSION_SECRET, teacherPassword: e.TEACHER_PASSWORD,
+    sessionSecret: e.SESSION_SECRET, teacherPassword: e.TEACHER_PASSWORD, demoPassword: e.DEMO_PASSWORD,
     dbUrl: e.UPSTASH_REDIS_REST_URL || e.KV_REST_API_URL, dbToken: e.UPSTASH_REDIS_REST_TOKEN || e.KV_REST_API_TOKEN,
     lkUrl: e.LIVEKIT_URL, lkKey: e.LIVEKIT_API_KEY, lkSecret: e.LIVEKIT_API_SECRET,
     rec: { endpoint: e.RECORD_S3_ENDPOINT, bucket: e.RECORD_S3_BUCKET, accessKey: e.RECORD_S3_ACCESS_KEY, secret: e.RECORD_S3_SECRET,
@@ -99,6 +99,10 @@ function sameSecret(a, b) {
 }
 export const publicUser = (u) => ({ username: u.username, name: u.name, role: u.role, batch: u.batch || null, batchName: u.batchName || null });
 export const TEACHER = { username: "teacher", name: "Teacher", role: "teacher", batch: null, batchName: null };
+// One shared, permanent demo login for trial students (password: the DEMO_PASSWORD setting).
+// It can join any class; everything else in the app is locked for it.
+export const DEMO = { username: "demo", name: "Demo", role: "demo", batch: null, batchName: null };
+export const RESERVED = ["teacher", "demo"];
 
 export async function getUser(username) { return jparse(await kv("GET", "u:" + normUser(username))); }
 export async function putUser(u) { await kvPipe([["SET", "u:" + u.username, JSON.stringify(u)], ["SADD", "users", u.username]]); }
@@ -125,6 +129,9 @@ export async function checkLogin(usernameRaw, password) {
     const tp = cfg().teacherPassword;
     if (!tp) throw new HttpError(503, "Live classes are not set up yet. Missing settings: TEACHER_PASSWORD", "setup");
     if (sameSecret(password, tp)) user = TEACHER;
+  } else if (username === "demo") {
+    const dp = cfg().demoPassword;
+    if (dp && sameSecret(password, dp)) user = DEMO;
   } else {
     const rec = await getUser(username);
     if (rec && checkHash(password, rec.pw)) user = publicUser(rec);
@@ -141,6 +148,7 @@ export async function whoIs(req) {
   const t = raw && verifyJwt(raw, cfg().sessionSecret);
   if (!t) throw new HttpError(401, "Please sign in.", "signin");
   if (t.r === "teacher") return { ...TEACHER, id: "teacher" };
+  if (t.r === "demo") return { ...DEMO, id: "demo" };
   const rec = await getUser(t.u);
   if (!rec) throw new HttpError(401, "This account is not active any more. Please sign in again.", "signin");
   return { ...publicUser(rec), id: rec.username };
@@ -151,7 +159,7 @@ export function mustBeTeacher(user) { if (user.role !== "teacher") throw new Htt
 // Batches match even if typed differently: "Batch 1", "batch1" and "BATCH-1" are the same batch.
 export const batchKey = (b) => String(b || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 export const sameBatch = (a, b) => !!batchKey(a) && batchKey(a) === batchKey(b);
-export const canSee = (user, cls) => user.role === "teacher" || sameBatch(user.batch, cls.batch);
+export const canSee = (user, cls) => user.role === "teacher" || user.role === "demo" || sameBatch(user.batch, cls.batch);
 export async function listClasses() {
   const ids = (await kv("SMEMBERS", "classes")) || [];
   if (!ids.length) return [];

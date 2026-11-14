@@ -127,7 +127,7 @@ function fromLibrary(p, level) {
   const g = new Chess(p[1]), mv = p[2].split(" ");
   const first = g.move({ from: mv[0].slice(0, 2), to: mv[0].slice(2, 4), promotion: mv[0][4] });
   if (!first) return null;
-  return { fen: g.fen(), line: mv.slice(1), title: `Level ${level} · rating ${p[3]}`, last: [first.from, first.to] };
+  return { fen: g.fen(), line: mv.slice(1), title: `Level ${level} · difficulty ${p[3]}`, last: [first.from, first.to] };
 }
 
 export function TeacherPuzzle({ pz }) {

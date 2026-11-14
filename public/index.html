@@ -1271,7 +1271,7 @@ function worldScene(wi,from,to,st){
     return `<button class="mtile${d?" done":""}${cur?" cur":""}${lock?" lock":""}" style="left:${p[0]}%;top:${p[1]}px" ${lock?"disabled":""} data-lv="${l}" aria-label="Level ${l}${d?`, ${d.stars} stars`:lock?", locked":cur?", your next level":""}">
       ${cur?`<span class="mpawn" aria-hidden="true">♟</span>`:""}<span class="mt-top">${d?"✓":l}</span>${d?`<span class="mt-stars">${"★".repeat(d.stars)}${"☆".repeat(3-d.stars)}</span>`:""}</button>`}).join("");
   return `<section class="world" data-w="${wi}" style="--sky1:${W.sky[0]};--sky2:${W.sky[1]};--trail:${W.trail};--edge:${W.edge};height:${H}px;background-image:url(/worlds/w${wi}.webp)">
-    <div class="world-sign"><b>${W.name}</b><span>Levels ${from}–${to} · rating ${lvRating(from)}–${lvRating(to)}</span></div>
+    <div class="world-sign"><b>${W.name}</b><span>Levels ${from}–${to} · difficulty ${lvRating(from)}–${lvRating(to)}</span></div>
     <svg class="trail" viewBox="0 0 1000 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${path}" stroke="var(--edge)" stroke-width="46" fill="none" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><path d="${path}" stroke="var(--trail)" stroke-width="34" fill="none" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><path d="${path}" stroke="rgba(0,0,0,.12)" stroke-width="3" stroke-dasharray="2 16" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>
     ${deco}${nodes}</section>`;
 }
@@ -1280,7 +1280,7 @@ function vPuzzles(){
   const ranges=LV_STAGES.map(([,a,b])=>[a,Math.min(b,total)]).filter(r=>r[0]<=total);
   return `<div class="pmap view">${ranges.map((r,i)=>worldScene(i,r[0],r[1],st)).reverse().join("")}
     </div>
-  <div class="pbar" data-sec="puzzles"><div class="pbar-l"><span class="pbar-lv">Level ${cur}</span><span class="li-m">${WORLDS[ranges.findIndex(r=>cur>=r[0]&&cur<=r[1])]?.name||""} · ${done}/${total} done · ${stars} ★ · Rating ${prState().r}</span></div>
+  <div class="pbar" data-sec="puzzles"><div class="pbar-l"><span class="pbar-lv">Level ${cur}</span><span class="li-m">${WORLDS[ranges.findIndex(r=>cur>=r[0]&&cur<=r[1])]?.name||""} · ${done}/${total} done · ${stars} ★ · Your rating ${prState().r}</span></div>
     <button class="pbar-go" data-lv="${cur}">${done?"Solve puzzles":"Start puzzles"}</button></div>`;
 }
 let __mapW=0;window.addEventListener("resize",()=>{clearTimeout(window.__mapT);window.__mapT=setTimeout(()=>{const w=document.querySelector("main")?.clientWidth||0;if(route()==="puzzles"&&Math.abs(w-__mapW)>40){__mapW=w;render()}},250)});
@@ -1294,19 +1294,20 @@ function lvParam(){const m=location.hash.match(/[?&]l=(\d+)/);return m?+m[1]:lvS
 function lvPart(l){const st=lvState();st.part=st.part||{};const n=LVD[l-1].length,a=st.part[l];
   if(Array.isArray(a)&&a.length===n)return a.slice();return Array(n).fill(null)}
 function lvOpen(l,k){const p=LVD[l-1][k];const prev=LVS&&LVS.l===l?LVS.res:lvPart(l);
-  LVS={l,k,res:prev,g:new Chess(p[1]),moves:p[2].split(" "),ply:0,sel:null,state:"think",msg:"",last:[],bad:[],hint:null,promo:null,anim:null,miss:false,shown:false};
+  LVS={l,k,res:prev,g:new Chess(p[1]),moves:p[2].split(" "),ply:0,sel:null,state:"think",msg:"",last:[],bad:[],hint:null,promo:null,anim:null,miss:false,shown:false,hinted:false,wrongs:0};
   LVS.color=LVS.g.turn()==="w"?"b":"w";const tok=LVS;
   setTimeout(()=>{if(LVS!==tok)return;lvPlay(LVS.moves[0]);LVS.ply=1;LVS.state="idle";render()},650)}
 function lvPlay(u){const mv=LVS.g.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});if(mv){moveSound(mv,LVS.g);LVS.anim=[mv.from,mv.to];LVS.last=[mv.from,mv.to]}return mv}
-/* Puzzle rating (Elo-style). Each puzzle counts once: solved first try with no hint = win, anything else = loss.
+/* Puzzle rating (Elo-style). Each puzzle counts once. Score: clean solve 1, used a hint 0.6,
+   one wrong move 0.35, more wrong moves or "show solution" 0. So a hint only costs a few points.
    Starts at 600 (level 1 puzzles are rated about 500). Moves faster for the first puzzles, then settles. */
 const PR_START=600;
 const prState=()=>{S.pr=S.pr||{r:PR_START,n:0,seen:{},hist:[]};return S.pr};
-function prRate(id,puzzleRating,win){const pr=prState();if(!id||pr.seen[id])return null;
-  const e=1/(1+Math.pow(10,(puzzleRating-pr.r)/400)),k=pr.n<20?40:pr.n<60?24:16,d=Math.round(k*((win?1:0)-e));
+function prRate(id,puzzleRating,score){const pr=prState();if(!id||pr.seen[id])return null;
+  const e=1/(1+Math.pow(10,(puzzleRating-pr.r)/400)),k=pr.n<20?40:pr.n<60?24:16,d=Math.round(k*(score-e));
   pr.r=Math.max(100,pr.r+d);pr.n++;pr.seen[id]=1;pr.hist.push(pr.r);if(pr.hist.length>60)pr.hist=pr.hist.slice(-60);return d}
 function lvSolved(){const st=lvState();LVS.state="ok";if(LVS.res[LVS.k]==null)LVS.res[LVS.k]=LVS.miss?"retry":"ok";
-  {const p=LVD&&LVD[LVS.l-1]&&LVD[LVS.l-1][LVS.k];LVS.rd=p?prRate(p[0],p[3],LVS.res[LVS.k]==="ok"):null}st.part=st.part||{};st.part[LVS.l]=LVS.res.slice();save();if(LVS.res[LVS.k]==="ok")award(5);setTimeout(()=>sfx("solved"),SOLVED_DELAY);
+  {const p=LVD&&LVD[LVS.l-1]&&LVD[LVS.l-1][LVS.k];LVS.rd=p?prRate(p[0],p[3],LVS.shown||LVS.wrongs>1?0:LVS.wrongs===1?.35:LVS.hinted?.6:1):null}st.part=st.part||{};st.part[LVS.l]=LVS.res.slice();save();if(LVS.res[LVS.k]==="ok")award(5);setTimeout(()=>sfx("solved"),SOLVED_DELAY);
   if(LVS.res.every(x=>x)){delete st.part[LVS.l];const stars=lvStars(LVS.res),prev=st.done[LVS.l];st.done[LVS.l]={stars:Math.max(stars,prev?prev.stars:0)};if(st.unlocked<=LVS.l)st.unlocked=LVS.l+1;LVS.complete=stars;save()}
   render()}
 function vPlevel(){
@@ -1316,7 +1317,7 @@ function vPlevel(){
   const p=list[LVS.k],s=LVS.state,col=LVS.color==="w"?"White":"Black";
   let stat="",scls="";
   if(LVS.complete){stat=`<b>Level ${l} complete!</b> ${starsHtml(LVS.complete)}`;scls="ok"}
-  else if(s==="ok"){const rd=LVS.rd,rt=rd!=null?` · Rating ${prState().r} <span class="rd ${rd>=0?"up":"down"}">${rd>=0?"+":""}${rd}</span>`:"";stat=(LVS.res[LVS.k]==="ok"?"<b>Correct!</b> +5 XP":"<b>Solved.</b> Next time, first try!")+rt;scls="ok"}
+  else if(s==="ok"){const rd=LVS.rd,rt=rd!=null?` · Your rating ${prState().r} <span class="rd ${rd>=0?"up":"down"}">${rd>=0?"+":""}${rd}</span>`:"";stat=(LVS.res[LVS.k]==="ok"?"<b>Correct!</b> +5 XP":"<b>Solved.</b> Next time, first try!")+rt;scls="ok"}
   else if(s==="no"){stat="Not the best move. Try again!";scls="no"}
   else if(s==="think")stat=LVS.ply===0?"Watch your opponent's move…":`<span class="spin sm" aria-hidden="true"></span> Opponent is replying…`;
   else stat=LVS.ply<=1?`<i class="tm ${LVS.color}" aria-hidden="true"></i> ${col} to move`:"Good! Keep going.";
@@ -1327,7 +1328,7 @@ function vPlevel(){
     ${LVS.promo?`<div class="promo" role="group" aria-label="Choose a piece"><span class="li-m">Promote to:</span>${["q","r","b","n"].map(x=>`<button class="chip" data-promo="${x}" aria-label="${NAMES[x]}"><i class="pc inline ${LVS.color} pk-${x}" aria-hidden="true"></i> ${NAMES[x]}</button>`).join("")}</div>`:""}</div>
   <aside class="drill-side">
     <header class="ds-head"><a class="ds-back" href="#puzzles" aria-label="Back to the level path">←</a><span class="pricon sm" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 3h4v3a2 2 0 1 0 4 0V3h3v7h-3a2 2 0 1 0 0 4h3v7h-7v-3a2 2 0 1 0-4 0v3H3v-7h3a2 2 0 1 0 0-4H3V3h7z"/></svg></span>
-      <div class="ds-ht"><span class="eyebrow">Puzzles · rating ${p[3]}</span><h1>Level ${l}</h1></div></header>
+      <div class="ds-ht"><span class="eyebrow">Puzzles · difficulty ${p[3]}</span><h1>Level ${l}</h1></div></header>
     <div class="lvdots" aria-label="Puzzles in this level">${list.map((_,i)=>`<span class="${LVS.res[i]||""}${i===LVS.k?" cur":""}" title="Puzzle ${i+1}">${LVS.res[i]==="ok"?"✓":LVS.res[i]==="retry"?"•":i+1}</span>`).join("")}</div>
     <div class="ds-status ${scls}" role="status">${stat}</div>
     <div class="ds-tools">
@@ -1355,10 +1356,10 @@ function afterPlevel(){
       moveSound(mv,g);LVS.anim=[mv.from,mv.to];LVS.last=[mv.from,mv.to];LVS.bad=[];LVS.ply++;
       if(LVS.ply>=LVS.moves.length)return lvSolved();
       LVS.state="think";render();const tok=LVS;setTimeout(()=>{if(LVS!==tok)return;lvPlay(LVS.moves[LVS.ply]);LVS.ply++;LVS.state="idle";render()},500);return}
-    g.undo();LVS.miss=true;LVS.state="no";LVS.bad=[mv.from,mv.to];LVS.last=[];sfx("wrong");render()}
+    g.undo();LVS.miss=true;LVS.wrongs=(LVS.wrongs||0)+1;LVS.state="no";LVS.bad=[mv.from,mv.to];LVS.last=[];sfx("wrong");render()}
   document.querySelectorAll("[data-promo]").forEach(b=>b.onclick=()=>{const p=LVS.promo;LVS.promo=null;lvUser({...p,promotion:b.dataset.promo})});
-  $("#lvHint").onclick=()=>{LVS.miss=true;LVS.hint=LVS.moves[LVS.ply].slice(0,2);render()};
-  $("#lvShow").onclick=()=>{LVS.miss=true;LVS.state="think";render();const tok=LVS;
+  $("#lvHint").onclick=()=>{LVS.miss=true;LVS.hinted=true;LVS.hint=LVS.moves[LVS.ply].slice(0,2);render()};
+  $("#lvShow").onclick=()=>{LVS.miss=true;LVS.shown=true;LVS.state="think";render();const tok=LVS;
     const step=()=>{if(LVS!==tok)return;if(LVS.ply>=LVS.moves.length)return lvSolved();lvPlay(LVS.moves[LVS.ply]);LVS.ply++;render();setTimeout(step,700)};setTimeout(step,300)};
   $("#lvRetry").onclick=()=>{const k=LVS.k;LVS.complete=null;lvOpen(l,k);render()};
   $("#lvNext").onclick=()=>{if(LVS.complete){LVS=null;if(l<LVD.length)location.hash="plevel?l="+(l+1);else location.hash="puzzles";return}
@@ -1598,7 +1599,7 @@ function vTests(){
       <div class="eyebrow">${tierName} test · result</div><div class="score">${sc}/${n}</div>
       <p>${sc===n?"Perfect! Solve more puzzle levels to unlock a harder test.":sc>=7?"Good job! Check the ones you missed below.":"Keep solving puzzle levels, then try again."}</p>
       <div style="overflow-x:auto"><table><thead><tr><th>Question</th><th>Your answer</th></tr></thead><tbody>
-      ${Q.map((q,i)=>`<tr><td>${q.kind==="pz"?`Best move · rating ${q.rating}`:esc(q.q)}</td><td style="color:${tAns[i]===q.a?"var(--good)":"var(--accent)"}">${esc(q.o[tAns[i]])}${tAns[i]!==q.a?`<br><span class="li-m">Answer: ${esc(q.o[q.a])}</span>`:""}</td></tr>`).join("")}
+      ${Q.map((q,i)=>`<tr><td>${q.kind==="pz"?`Best move · difficulty ${q.rating}`:esc(q.q)}</td><td style="color:${tAns[i]===q.a?"var(--good)":"var(--accent)"}">${esc(q.o[tAns[i]])}${tAns[i]!==q.a?`<br><span class="li-m">Answer: ${esc(q.o[q.a])}</span>`:""}</td></tr>`).join("")}
       </tbody></table></div>
       <div class="row"><button class="btn" id="retry">New test</button><a class="btn ghost" href="#puzzles" style="text-decoration:none">Puzzles</a></div></section>`}
   const q=Q[tq],ans=tAns[tq];
@@ -1846,7 +1847,7 @@ async function afterLive(){
     // Both lists load at the same time.
     const [cr,ur]=await Promise.all([LV.classes?null:liveApi("/classes"),teacher&&!LV.users?liveApi("/users"):null]);
     if(cr){LV.classes=cr.classes;LV.recReady=cr.recordingReady}
-    if(ur)LV.users=ur.users;
+    if(ur){LV.users=ur.users;LV.demo=ur.demo}
   }catch(e){if(e.code==="signin"||route()!=="live")return;return liveProblem(root,e)}
   if(route()!=="live"||!$("#liveRoot"))return;
   liveHome($("#liveRoot"));
@@ -1894,9 +1895,14 @@ function liveHome(root){
     <form class="card stack" id="lvInv"><h2>Add a student</h2>
       <label class="fld"><span>Student's name</span><input id="lvSName" required maxlength="40"></label>
       <label class="fld"><span>Batch</span><input id="lvSBatch" required maxlength="40" list="lvBatches"></label>
-      <div class="row"><button class="btn" type="submit">Create logins</button><button class="btn ghost" type="button" id="lvDemo" title="One shared login for trial students: only live classes of this batch are open">Create demo login</button></div><p class="li-m" id="lvInvMsg" role="status"></p>
+      <button class="btn" type="submit">Create logins</button><p class="li-m" id="lvInvMsg" role="status"></p>
       ${LV.accounts?`<div class="stack codes"><b>Save these now. Passwords are only shown once.</b>${LV.accounts.map(accountCard).join("")}</div>`:""}</form>
   </div>
+  ${LV.demo?`<section class="card stack demo-card"><div class="row" style="justify-content:space-between;align-items:center"><h2>Demo login for trial students</h2><span class="pill">Live classes only</span></div>
+    <p class="li-m">Share this in any class. Everyone can use it at the same time and types their own name when joining. Lessons, puzzles and practice stay locked.</p>
+    <div class="acct-cred"><span class="li-m">Username</span><code>${esc(LV.demo.username)}</code><span class="li-m">Password</span><code>${esc(LV.demo.password)}</code></div>
+    <button class="btn ghost" type="button" data-copy="${esc(waText({...LV.demo,role:"demo"}))}">Copy message for WhatsApp</button></section>`
+   :`<section class="card stack"><h2>Demo login for trial students</h2><p class="li-m">Not switched on. Add <code>DEMO_PASSWORD</code> in Vercel → Settings → Environment Variables, then redeploy.</p></section>`}
   <section class="card stack"><h2>Students</h2>${users.length?`<div class="tablewrap"><table><thead><tr><th>Name</th><th>Batch</th><th>Username</th><th>Who</th><th></th></tr></thead><tbody>${users.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.batchName||x.batch)}</td><td class="mono">${esc(x.username)}</td><td>${ROLE_NAME[x.role]}</td><td class="acts"><button class="btn ghost sm" data-reset="${esc(x.username)}">New password</button><button class="btn ghost sm" data-rm="${esc(x.username)}">Remove</button></td></tr>`).join("")}</tbody></table></div>`:`<p class="li-m">No students yet. Add the first one above.</p>`}</section>`:""}
   ${now.length?group("Live now",now,""):""}
   ${group("Upcoming classes",next,teacher?"No classes scheduled. Add one above.":"No upcoming classes yet. Your teacher will add them here.")}
@@ -1909,8 +1915,6 @@ function liveHome(root){
       try{const r=await liveApi("/classes",{method:"POST",body:{title:$("#lvTitle").value,batch:$("#lvBatch").value,startsAt:new Date($("#lvAt").value).toISOString(),durationMin:+$("#lvDur").value}});const nc=r.class,end=new Date(nc.startsAt).getTime()+(nc.durationMin+30)*60000;LV.classes=[{...nc,live:false,ended:Date.now()>end},...(LV.classes||[])].sort((a,b)=>new Date(b.startsAt)-new Date(a.startsAt));toast("Class added");render()}catch(err){m.textContent=err.message}};
     $("#lvInv").onsubmit=async e=>{e.preventDefault();const m=$("#lvInvMsg");m.textContent="Creating…";
       try{LV.accounts=(await liveApi("/users",{method:"POST",body:{name:$("#lvSName").value,batch:$("#lvSBatch").value,withParent:false}})).accounts;LV.users=[...(LV.users||[]),...LV.accounts.map(a=>({username:a.username,name:a.name,role:a.role,batch:(a.batch||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""),batchName:a.batch}))];render()}catch(err){m.textContent=err.message}};
-    $("#lvDemo").onclick=async()=>{const m=$("#lvInvMsg"),batch=$("#lvSBatch").value.trim();if(!batch){m.textContent="Type the batch first: the demo login joins that batch's classes.";$("#lvSBatch").focus();return}
-      m.textContent="Creating…";try{LV.accounts=(await liveApi("/users",{method:"POST",body:{demo:true,batch}})).accounts;LV.users=null;render()}catch(err){m.textContent=err.message}};
     root.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again to delete";return}
       try{await liveApi("/classes?id="+encodeURIComponent(b.dataset.del),{method:"DELETE"});LV.classes=(LV.classes||[]).filter(c=>c.id!==b.dataset.del);toast("Class deleted");render()}catch(err){toast(err.message)}});
     root.querySelectorAll("[data-reset]").forEach(b=>b.onclick=async()=>{if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again";return}

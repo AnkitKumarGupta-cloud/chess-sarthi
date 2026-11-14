@@ -109,24 +109,28 @@ assert.equal(row.summary.puzzlesSolved, 12); assert.equal(row.summary.lastTest.s
 assert.equal(board.students.some((x) => x.role === "parent"), false, "parents are not listed");
 assert.equal(board.students.find((x) => x.username !== stu.username).summary, null);   // never synced
 
-// --- demo login ---
-assert.equal((await call("users", { method: "POST", auth: S, body: { demo: true, batch: "Beginners Saturday" } })).status, 403);
-assert.equal((await call("users", { method: "POST", auth: T, body: { demo: true, batch: "" } })).status, 400);
-const demoAcc = (await call("users", { method: "POST", auth: T, body: { demo: true, batch: "Beginners Saturday" } })).accounts[0];
-assert.equal(demoAcc.role, "demo"); assert.match(demoAcc.username, /^demo/);
-const DM = (await login(demoAcc.username, demoAcc.password)).token;
+// --- demo login (one shared, permanent login; password = DEMO_PASSWORD) ---
+delete process.env.DEMO_PASSWORD;
+assert.equal((await login("demo", "ankit@12")).status, 401);                        // off until the setting exists
+assert.equal((await call("users", { auth: T })).demo, null);
+process.env.DEMO_PASSWORD = "ankit@12";
+assert.equal((await login("demo", "wrong")).status, 401);
+const DM = (await login("Demo", "ankit@12")).token;
 assert.equal((await call("me", { auth: DM })).user.role, "demo");
-assert.equal((await call("classes", { auth: DM })).classes.every((c) => c.batch === "beginners-saturday"), true);   // only its batch
+assert.deepEqual((await call("users", { auth: T })).demo, { username: "demo", password: "ankit@12" });   // teacher sees it to share
+assert.equal((await call("classes", { auth: DM })).classes.length, (await call("classes", { auth: T })).classes.length);   // any class
 assert.equal((await call("join", { method: "POST", auth: DM, body: { classId: c1.id } })).code, "name");     // must type a name
 const j1 = await call("join", { method: "POST", auth: DM, body: { classId: c1.id, name: "  Riya   Shah " } });
-const j2 = await call("join", { method: "POST", auth: DM, body: { classId: c1.id, name: "Kabir" } });
-assert.equal(j1.status, 200); assert.equal(j1.userName, "Riya Shah (demo)");
+const j2 = await call("join", { method: "POST", auth: DM, body: { classId: c2.id, name: "Kabir" } });
+assert.equal(j1.status, 200); assert.equal(j1.userName, "Riya Shah (demo)"); assert.equal(j2.status, 200);
 assert.notEqual(decodeLk(j1.token).sub, decodeLk(j2.token).sub, "two visitors on the demo login get different identities");
-assert.equal((await call("join", { method: "POST", auth: DM, body: { classId: c2.id, name: "Riya" } })).status, 404);   // other batch
-assert.equal((await call("password", { method: "POST", auth: DM, body: { oldPassword: demoAcc.password, newPassword: "hacked123" } })).status, 403);
+assert.equal((await call("password", { method: "POST", auth: DM, body: { oldPassword: "ankit@12", newPassword: "hacked123" } })).status, 403);
 assert.equal((await call("progress", { method: "POST", auth: DM, body: { state: { lessons: {} } } })).status, 403);
 assert.equal((await call("users", { auth: DM })).status, 403);
-assert.equal((await call("progress", { auth: T })).students.some((x) => x.role === "demo"), false, "demo is not in the progress table");
+assert.equal((await call("classes", { method: "POST", auth: DM, body: {} })).status, 403);
+// a student called "Demo" or "Teacher" can't take those usernames
+const named = await call("users", { method: "POST", auth: T, body: { name: "Demo", batch: "Beginners Saturday" } });
+assert.notEqual(named.accounts[0].username, "demo");
 
 // --- delete ---
 assert.equal((await call("classes", { method: "DELETE", auth: T, query: { id: c2.id } })).ok, true);
