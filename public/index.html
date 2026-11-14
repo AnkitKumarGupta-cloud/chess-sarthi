@@ -1623,9 +1623,10 @@ function afterTests(){
 
 /* ---------- Progress ---------- */
 function vLocked(){return `<section class="card stack view lockcard" style="max-width:560px;margin:40px auto;text-align:center;align-items:center">
-  <div class="lock-i" aria-hidden="true">🔒</div><h1>For Chess Sathi students</h1>
-  <p class="li-m">This is a demo login, so only live classes are open. Join Chess Sathi to unlock lessons, puzzles, practice, tests and your progress.</p>
-  <button class="btn" id="lkGo">Go to live classes</button></section>`}
+  <div class="lock-i" aria-hidden="true">♞</div><h1>More fun is waiting for you!</h1>
+  <p class="li-m">You're on a free demo, so you can join our live classes right now. When you become a Chess Sathi student, you'll also get video lessons, over 1,000 puzzles, practice games and your own progress report.</p>
+  <button class="btn" id="lkGo">Join a live class</button>
+  <p class="li-m" style="font-size:.85rem">Want to join? Just ask your coach after class.</p></section>`}
 function vProgressTeacher(){
   if(TPROG.state==="idle"){setTimeout(loadTeacherProgress,0);TPROG.state="loading"}
   const head=`<section class="stack view"><div class="eyebrow">Progress</div><div class="row" style="justify-content:space-between;align-items:end"><h1>Student progress</h1><button class="btn ghost" id="tpRefresh">Refresh</button></div></section>`;
