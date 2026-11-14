@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { sameBatch, handler, HttpError, whoIs, mustBeTeacher, listClasses, getClassFor, putClass, removeClass, liveRooms, slug, recordingReady, stopRecording } from "./_lib.js";
+import { sameBatch, handler, HttpError, whoIs, mustBeTeacher, listClasses, getClassFor, putClass, removeClass, liveRooms, endRoom, slug, recordingReady, stopRecording } from "./_lib.js";
 
 export default handler(async ({ req, body, query }) => {
   const me = await whoIs(req);
@@ -32,6 +32,7 @@ export default handler(async ({ req, body, query }) => {
   if (req.method === "DELETE") {
     const cls = await getClassFor(me, query.id);
     await stopRecording(cls).catch(() => {});
+    await endRoom(cls.roomName);   // a class that is live right now ends for everyone in it
     await removeClass(cls.id);
     return { ok: true };
   }

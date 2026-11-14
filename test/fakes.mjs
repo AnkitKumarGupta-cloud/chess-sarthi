@@ -52,6 +52,7 @@ globalThis.fetch = async (url, opts = {}) => {
       assert.equal(o.s3.bucket, "recs"); assert.match(o.filepath, /^recordings\/[a-f0-9]{12}\/\d+-[a-f0-9]{16}\.mp4$/);
       const id = "EG_" + Object.keys(lk.egress).length; lk.egress[id] = { file: o.filepath, stopped: false }; return json(200, { egressId: id });
     }
+    if (m === "RoomService/DeleteRoom") { assert.ok(tok.video.roomCreate); delete lk.rooms[body.room]; return json(200, {}); }
     if (m === "Egress/StopEgress") { assert.ok(lk.egress[body.egressId]); lk.egress[body.egressId].stopped = true; return json(200, { egressId: body.egressId }); }
     return json(404, { msg: "unexpected " + m });
   }

@@ -133,7 +133,9 @@ const named = await call("users", { method: "POST", auth: T, body: { name: "Demo
 assert.notEqual(named.accounts[0].username, "demo");
 
 // --- delete ---
+lk.rooms[c2.roomName] = 3;   // people are in the class
 assert.equal((await call("classes", { method: "DELETE", auth: T, query: { id: c2.id } })).ok, true);
+assert.equal(lk.rooms[c2.roomName], undefined, "deleting a live class closes its room");
 assert.equal((await call("classes", { auth: T })).classes.length, 1);
 assert.equal((await call("users", { method: "DELETE", auth: T, query: { username: stu.username } })).ok, true);
 assert.equal((await call("me", { auth: S })).status, 401);   // deleted account is cut off

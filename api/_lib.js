@@ -206,6 +206,12 @@ export async function liveRooms() {
   return out;
 }
 
+// Close a class's video room: everyone still in it is disconnected. A room that doesn't exist is fine.
+export async function endRoom(roomName) {
+  try { await twirp("RoomService", "DeleteRoom", { roomCreate: true }, { room: roomName }); }
+  catch (e) { if (!(e instanceof HttpError) || (e.code !== "video" && e.code !== "setup")) throw e; }
+}
+
 /* ---------- Recording (LiveKit Egress -> S3-compatible bucket) ---------- */
 export async function startRecording(cls) {
   if (!recordingReady()) throw new HttpError(503, "Recording is not set up yet. Missing settings: RECORD_S3_ENDPOINT, RECORD_S3_BUCKET, RECORD_S3_ACCESS_KEY, RECORD_S3_SECRET, RECORD_PUBLIC_URL", "setup");
