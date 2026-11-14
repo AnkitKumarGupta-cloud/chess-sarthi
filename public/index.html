@@ -1328,7 +1328,7 @@ function vPlevel(){
     ${LVS.promo?`<div class="promo" role="group" aria-label="Choose a piece"><span class="li-m">Promote to:</span>${["q","r","b","n"].map(x=>`<button class="chip" data-promo="${x}" aria-label="${NAMES[x]}"><i class="pc inline ${LVS.color} pk-${x}" aria-hidden="true"></i> ${NAMES[x]}</button>`).join("")}</div>`:""}</div>
   <aside class="drill-side">
     <header class="ds-head"><a class="ds-back" href="#puzzles" aria-label="Back to the level path">←</a><span class="pricon sm" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 3h4v3a2 2 0 1 0 4 0V3h3v7h-3a2 2 0 1 0 0 4h3v7h-7v-3a2 2 0 1 0-4 0v3H3v-7h3a2 2 0 1 0 0-4H3V3h7z"/></svg></span>
-      <div class="ds-ht"><span class="eyebrow">Puzzles · difficulty ${p[3]}</span><h1>Level ${l}</h1></div></header>
+      <div class="ds-ht"><span class="eyebrow">Puzzles</span><h1>Level ${l}</h1></div></header>
     <div class="lvdots" aria-label="Puzzles in this level">${list.map((_,i)=>`<span class="${LVS.res[i]||""}${i===LVS.k?" cur":""}" title="Puzzle ${i+1}">${LVS.res[i]==="ok"?"✓":LVS.res[i]==="retry"?"•":i+1}</span>`).join("")}</div>
     <div class="ds-status ${scls}" role="status">${stat}</div>
     <div class="ds-tools">
