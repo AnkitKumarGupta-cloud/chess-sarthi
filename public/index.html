@@ -173,8 +173,11 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--f-mo
 .scrub button.on i{background:var(--accent)}
 .scrub button.on i::after{display:none}
 .controls{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.ctl{width:42px;height:42px;border-radius:50%;border:0;background:var(--bg);color:var(--ink);font-weight:800}
-.ctl.big{width:54px;height:54px;background:var(--accent);color:var(--accent-ink);font-size:1.1rem}
+.controls>.row{flex-wrap:nowrap}
+@media (max-width:480px){#lpTime{display:none}.controls{gap:4px}.controls>.row{gap:5px!important}.ctl{min-width:50px;padding:0 3px}.ctl.big{min-width:58px}.ctl.txt{min-width:0;padding:0 9px}}
+.ctl{min-width:56px;height:52px;border-radius:14px;border:0;background:var(--bg);color:var(--ink);font-weight:800;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0 8px}
+.ctl i{font-style:normal;line-height:1}.ctl small{font-size:.68rem;font-weight:600;line-height:1}
+.ctl.big{min-width:66px;height:58px;background:var(--accent);color:var(--accent-ink);font-size:1.1rem}
 .ctl.txt{width:auto;padding:0 12px;border-radius:99px;font-family:var(--f-mono)}
 .transcript{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;max-height:420px;overflow:auto;border-top:1px solid var(--line)}
 .transcript button{width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 6px;color:var(--muted);font-size:.92rem;line-height:1.45}
@@ -447,6 +450,13 @@ nav.tabs a[aria-current="page"]{background:var(--accent-soft);color:var(--accent
 /* XP pop */
 .xppop{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:60;background:var(--gold);color:#2A1D00;font-weight:800;font-family:var(--f-display);padding:10px 18px;border-radius:99px;box-shadow:0 10px 30px rgba(0,0,0,.2);pointer-events:none;animation:xp 1.6s ease forwards}
 @keyframes xp{0%{opacity:0;transform:translate(-50%,10px) scale(.9)}15%{opacity:1;transform:translate(-50%,0) scale(1.05)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-18px)}}
+.cele{position:fixed;inset:0;pointer-events:none;z-index:70;transition:opacity .4s}.cele.out{opacity:0}
+.cele-bits i{position:absolute;top:-14px;width:8px;height:13px;border-radius:2px;animation:conf linear forwards}
+@keyframes conf{to{transform:translate(var(--dx),108vh) rotate(var(--r))}}
+.cele-card{position:absolute;left:50%;top:32%;transform:translateX(-50%);background:var(--surface);color:var(--ink);border:2px solid var(--gold);border-radius:20px;padding:18px 28px;box-shadow:var(--shadow-up);text-align:center;display:flex;flex-direction:column;gap:4px;min-width:min(260px,86vw);max-width:90vw;animation:celepop .4s cubic-bezier(.2,1.4,.4,1)}
+.cele-card em{font-style:normal;font-size:2rem;line-height:1}.cele-card b{font-family:var(--f-display);font-size:1.45rem}.cele-card span{color:var(--muted);font-weight:600}
+@keyframes celepop{from{transform:translateX(-50%) scale(.6);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.cele-card{animation:none}}
 @media (prefers-reduced-motion:reduce){.xppop{animation:none}.ccard:hover,.stop button:hover .node{transform:none}}
 
 /* small refinements on existing screens */
@@ -529,7 +539,7 @@ a.back{text-decoration:none}
 .drill-board .board{max-width:min(calc(100vh - 80px),720px);width:100%;border-radius:12px}
 .drill-side{display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:var(--shadow)}
 .ds-head{display:flex;align-items:center;gap:12px}
-.ds-back{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;text-decoration:none;color:var(--ink);background:var(--surface-2);font-weight:700;flex:none}
+.ds-back{height:36px;padding:0 12px;border-radius:10px;display:inline-flex;gap:6px;align-items:center;font-size:.9rem;text-decoration:none;color:var(--ink);background:var(--surface-2);font-weight:700;flex:none}
 .ds-back:hover{background:var(--accent-soft);color:var(--accent)}
 .pricon.sm{width:44px;height:44px;border-radius:12px}.pricon.sm svg{width:24px;height:24px}
 .ds-ht{min-width:0}.ds-ht h1{font-family:var(--f-body);font-weight:800;font-size:1.35rem;letter-spacing:-.01em;line-height:1.15}
@@ -792,7 +802,7 @@ body.demo #tabs a:not([href="#live"])::after{content:"🔒";font-size:.7em;margi
   </a>
   <nav class="tabs" id="tabs">
     <a href="#home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>Home</a>
-    <a href="#courses"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h7a2 2 0 012 2v12a2 2 0 00-2-2H4zM20 5h-5a2 2 0 00-2 2v12a2 2 0 012-2h5z"/></svg>Courses</a>
+    <a href="#courses"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h7a2 2 0 012 2v12a2 2 0 00-2-2H4zM20 5h-5a2 2 0 00-2 2v12a2 2 0 012-2h5z"/></svg>Lessons</a>
     <a href="#live"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="M15 10l6-3v10l-6-3z"/></svg>Live</a>
     <a href="#practice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21h6M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5v1h6v-1c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>Practice</a>
     <a href="#puzzles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>Puzzles</a>
@@ -886,7 +896,8 @@ function sfx(kind){if(!S.sound)return;const c=ac();if(!c)return;sndLoad();const 
   else if(kind==="mate")knock(t,"capture",1.1);
   else if(kind==="wrong"){tone(t,330,.18,.08,"sine");tone(t+.1,262,.25,.07,"sine")}
   else if(kind==="right"){tone(t,784,.15,.08,"sine");tone(t+.09,1047,.25,.08,"sine")}
-  else if(kind==="solved"){tone(t,784,.22,.045,"sine");tone(t+.11,1175,.4,.04,"sine")}}
+  else if(kind==="solved"){tone(t,784,.22,.045,"sine");tone(t+.11,1175,.4,.04,"sine")}
+  else if(kind==="cheer"){[523,659,784,1047].forEach((f,i)=>tone(t+i*.09,f,i===3?.5:.18,.05,"sine"))}}
 const SOLVED_DELAY=380; /* after the ~200ms knock has finished, so the two never overlap */
 function moveSound(m,g){if(!m)return;if(g&&g.in_checkmate())return sfx("mate");if(g&&g.in_check())return sfx("check");
   if(m.flags&&(m.flags.includes("k")||m.flags.includes("q")))return sfx("castle");sfx(m.captured?"capture":"move")}
@@ -947,6 +958,17 @@ function idx(sq,flip){const f=FILES.indexOf(sq[0]),r=+sq[1];const col=flip?7-f:f
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),1800)}
+/* Celebrations: confetti + a card for real milestones only (level, test, topic, rank, rating).
+   Queued so two at once play one after another. No confetti when the device asks for less motion. */
+const CELEQ=[];let celeOn=false;
+function celebrate(icon,title,sub){CELEQ.push([icon,title,sub]);if(!celeOn)celeNext()}
+function celeNext(){const it=CELEQ.shift();if(!it){celeOn=false;return}celeOn=true;const [icon,title,sub]=it;
+  const calm=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches,cols=["#F5B300","#E4572E","#2BB673","#3A86FF","#9B5DE5","#FF7AB6"];
+  let bits="";if(!calm)for(let i=0;i<70;i++)bits+=`<i style="left:${(Math.random()*100).toFixed(1)}%;background:${cols[i%cols.length]};animation-delay:${(Math.random()*.5).toFixed(2)}s;animation-duration:${(1.8+Math.random()*1.4).toFixed(2)}s;--dx:${Math.round(Math.random()*180-90)}px;--r:${Math.round(Math.random()*900)}deg"></i>`;
+  const d=document.createElement("div");d.className="cele";d.setAttribute("role","status");
+  d.innerHTML=`<div class="cele-bits" aria-hidden="true">${bits}</div><div class="cele-card"><em aria-hidden="true">${icon}</em><b>${esc(title)}</b>${sub?`<span>${esc(sub)}</span>`:""}</div>`;
+  document.body.appendChild(d);setTimeout(()=>sfx("cheer"),SOLVED_DELAY+550);
+  setTimeout(()=>d.classList.add("out"),2700);setTimeout(()=>{d.remove();celeNext()},3150)}
 const lessonsDone=()=>ALL_LESSONS.filter(l=>S.lessons[l.id]).length;
 const puzzlesDone=()=>PUZZLES.filter(p=>S.puzzles[p.id]).length;
 const points=()=>PUZZLES.reduce((a,p)=>a+(S.puzzles[p.id]?p.pts:0),0);
@@ -964,7 +986,9 @@ const totalXP=()=>lessonsDone()*20+points()+(bestTest()||0)*5+Object.keys(S.prac
 function rankOf(xp){let i=0;RANKS.forEach((r,j)=>{if(xp>=r.xp)i=j});const cur=RANKS[i],nxt=RANKS[i+1];return{cur,nxt,i,pct:nxt?Math.round((xp-cur.xp)/(nxt.xp-cur.xp)*100):100}}
 const todayXP=()=>(S.days&&S.days[dayKey()])||0;
 function streak(){const d=S.days||{};let n=0;const t=new Date();if(!d[dayKey(t)])t.setDate(t.getDate()-1);while(d[dayKey(t)]){n++;t.setDate(t.getDate()-1)}return n}
-function award(x){if(!x)return;S.days=S.days||{};const k=dayKey(),before=S.days[k]||0;S.days[k]=before+x;save();
+function award(x){if(!x)return;S.days=S.days||{};const k=dayKey(),before=S.days[k]||0;S.days[k]=before+x;
+  {const rk=rankOf(totalXP());if(S.rankSeen==null)S.rankSeen=rk.i;else if(rk.i>S.rankSeen){S.rankSeen=rk.i;celebrate(rk.cur.g,`You're now a ${rk.cur.n}!`,"New rank unlocked. Keep learning!")}}
+  save();
   const p=document.createElement("div");p.className="xppop";p.textContent="+"+x+" XP";document.body.appendChild(p);setTimeout(()=>p.remove(),1600);
   if(before<DAILY_GOAL&&before+x>=DAILY_GOAL)setTimeout(()=>toast("🔥 Daily goal done! Streak: "+streak()+" day"+(streak()===1?"":"s")),900)}
 function week(){const out=[],t=new Date();t.setDate(t.getDate()-6);for(let i=0;i<7;i++){out.push({k:dayKey(t),d:t.toLocaleDateString([], {weekday:"narrow"}),xp:(S.days||{})[dayKey(t)]||0,today:i===6});t.setDate(t.getDate()+1)}return out}
@@ -999,7 +1023,7 @@ function vHome(){
       <div class="week" aria-label="XP this week">${wk.map(w=>`<div class="wd${w.today?" today":""}${w.xp?" on":""}" title="${w.k}: ${w.xp} XP"><i style="height:${Math.max(6,w.xp/maxw*100)}%"></i><span>${w.d}</span></div>`).join("")}</div>
     </article>
     <article class="tile t-puzzle">
-      <div class="tile-top"><span class="eyebrow">Puzzle of the day</span><span class="pill mono">${daily.pts} pts</span></div>
+      <div class="tile-top"><span class="eyebrow">Puzzle of the day</span><span class="pill mono">+${daily.pts} XP</span></div>
       <div class="board" id="heroBoard"></div>
       <p class="li-m">${label(daily)} · ${daily.fen.split(" ")[1]==="w"?"White":"Black"} to move</p>
       <button class="btn ghost" id="dailyGo">${S.puzzles[daily.id]?"Solved ✓ · Try more":"Solve it"}</button>
@@ -1023,7 +1047,7 @@ function vHome(){
     </article>
   </section>
   <section class="stack view">
-    <div class="row" style="justify-content:space-between"><h2>Your courses</h2><a class="link" href="#courses">See the path →</a></div>
+    <div class="row" style="justify-content:space-between"><h2>Your lessons</h2><a class="link" href="#courses">See all lessons →</a></div>
     <div class="cards-x">${COURSES.map(c=>{const d=courseProgress(c),n=c.lessons.length;return `<button class="ccard" data-open="${(c.lessons.find(l=>!S.lessons[l.id])||c.lessons[0]).id}">
       <span class="ccard-icon" aria-hidden="true">${COURSE_ICON[c.level]||"♞"}</span>
       <span class="pill level">${c.level}</span><b>${esc(c.title)}</b><span class="li-m">${esc(c.blurb)}</span>
@@ -1045,7 +1069,7 @@ function afterHome(){
 
 function vCourses(){
   const nextId=(ALL_LESSONS.find(l=>!S.lessons[l.id])||{}).id;
-  return `<section class="stack view"><div class="eyebrow">Learning path</div><h1>From first moves to checkmate</h1></section>
+  return `<section class="stack view"><div class="eyebrow">Lessons</div><h1>From first moves to checkmate</h1></section>
   <section class="path view">${COURSES.map((c,ci)=>{const d=courseProgress(c),n=c.lessons.length;return `<div class="unit${d===n?" unit-done":""}">
     <header class="unit-h"><span class="unit-icon" aria-hidden="true">${COURSE_ICON[c.level]||"♞"}</span><div class="stack" style="gap:2px;min-width:0"><span class="eyebrow">Unit ${ci+1} · ${c.level}</span><h2>${esc(c.title)}</h2><span class="li-m">${esc(c.blurb)}</span></div>
       <div class="unit-prog">${ring(d/n*100,44,5)}<span class="mono">${d}/${n}</span></div></header>
@@ -1122,7 +1146,7 @@ function vDrill(){
   let stat="",scls="";
   if(st==="ok"){stat=`<b>Goal reached!</b> ${done&&!PRS.fresh?"Well played again.":"+10 XP"}`;scls="ok"}
   else if(st==="fail"){stat=esc(PRS.msg||"Not quite. Try again!");scls="no"}
-  else if(st==="no"){stat="Not this move. Try again!";scls="no"}
+  else if(st==="no"){stat="Not quite. Try another move!";scls="no"}
   else if(st==="think"){stat=`<span class="spin sm" aria-hidden="true"></span> ${esc(PRS.msg||"The computer is thinking…")}`;scls="think"}
   else stat=PRS.g.turn()===PRS.color?"":"Waiting for the computer…";
   const ti=PR.topics.indexOf(t),nt=PR.topics[ti+1];
@@ -1132,7 +1156,7 @@ function vDrill(){
     ${PRS.promo?`<div class="promo" role="group" aria-label="Choose a piece"><span class="li-m">Promote to:</span>${["q","r","b","n"].map(p=>`<button class="chip" data-promo="${p}" aria-label="${NAMES[p]}"><i class="pc inline ${PRS.color} pk-${p}" aria-hidden="true"></i> ${NAMES[p]}</button>`).join("")}</div>`:""}
   </div>
   <aside class="drill-side">
-    <header class="ds-head"><a class="ds-back" href="#practice" aria-label="Back to practice">←</a>
+    <header class="ds-head"><a class="ds-back" href="#practice" aria-label="Back to practice">← <span>Practice</span></a>
       <div class="ds-ht"><span class="eyebrow">${esc(PR.sections[t.section].title)}</span><h1>${esc(t.title)}</h1></div></header>
     <details class="ds-about"${window.innerWidth>900?" open":""}><summary><span class="ds-about-i" aria-hidden="true">i</span>About this topic</summary><p>${esc(t.intro)}</p></details>
     <div class="ds-goal${st==="ok"?" ok":""}"><span class="ds-goal-i" aria-hidden="true">${st==="ok"?"✓":ICON("target")}</span>
@@ -1149,7 +1173,8 @@ function vDrill(){
 </section>`;
 }
 function prSolved(){const t=PR.topics.find(x=>x.id===PRS.tid),k=prKey(t,PRS.i);PRS.state="ok";setTimeout(()=>sfx("solved"),SOLVED_DELAY);
-  S.practice=S.practice||{};if(!S.practice[k]){S.practice[k]=true;PRS.fresh=true;save();award(10)}render()}
+  S.practice=S.practice||{};if(!S.practice[k]){S.practice[k]=true;PRS.fresh=true;save();award(10);
+    if(t.chapters.every((_,i)=>S.practice[prKey(t,i)]))celebrate("🎯","Topic complete!",`You finished every position in ${t.title}.`)}render()}
 function prFail(msg){PRS.state="fail";PRS.msg=msg;sfx("wrong");render()}
 function prPlay(m){const mv=PRS.g.move(m);if(!mv)return null;moveSound(mv,PRS.g);PRS.anim=[mv.from,mv.to];PRS.last=[mv.from,mv.to];return mv}
 function prAuto(){const t=PR.topics.find(x=>x.id===PRS.tid),c=t.chapters[PRS.i];const u=c.line[PRS.ply];if(!u)return;
@@ -1310,8 +1335,12 @@ function prRate(id,puzzleRating,score){const pr=prState();if(!id||pr.seen[id])re
   const e=1/(1+Math.pow(10,(puzzleRating-pr.r)/400)),k=pr.n<20?40:pr.n<60?24:16,d=Math.round(k*(score-e));
   pr.r=Math.max(100,pr.r+d);pr.n++;pr.seen[id]=1;pr.hist.push(pr.r);if(pr.hist.length>60)pr.hist=pr.hist.slice(-60);return d}
 function lvSolved(){const st=lvState();LVS.state="ok";if(LVS.res[LVS.k]==null)LVS.res[LVS.k]=LVS.miss?"retry":"ok";
-  {const p=LVD&&LVD[LVS.l-1]&&LVD[LVS.l-1][LVS.k];LVS.rd=p?prRate(p[0],p[3],LVS.shown||LVS.wrongs>1?0:LVS.wrongs===1?.35:LVS.hinted?.6:1):null}st.part=st.part||{};st.part[LVS.l]=LVS.res.slice();save();if(LVS.res[LVS.k]==="ok")award(5);setTimeout(()=>sfx("solved"),SOLVED_DELAY);
-  if(LVS.res.every(x=>x)){delete st.part[LVS.l];const stars=lvStars(LVS.res),prev=st.done[LVS.l];st.done[LVS.l]={stars:Math.max(stars,prev?prev.stars:0)};if(st.unlocked<=LVS.l)st.unlocked=LVS.l+1;LVS.complete=stars;save()}
+  {const p=LVD&&LVD[LVS.l-1]&&LVD[LVS.l-1][LVS.k];LVS.rd=p?prRate(p[0],p[3],LVS.shown||LVS.wrongs>1?0:LVS.wrongs===1?.35:LVS.hinted?.6:1):null}
+  {const pr=prState(),m=Math.floor(pr.r/100)*100;if(pr.mile==null)pr.mile=Math.max(m,Math.floor(PR_START/100)*100);
+   if(LVS.rd>0&&m>pr.mile){pr.mile=m;LVS.mile=m}else LVS.mile=0}st.part=st.part||{};st.part[LVS.l]=LVS.res.slice();save();if(LVS.res[LVS.k]==="ok")award(5);setTimeout(()=>sfx("solved"),SOLVED_DELAY);
+  if(LVS.res.every(x=>x)){delete st.part[LVS.l];const stars=lvStars(LVS.res),prev=st.done[LVS.l];st.done[LVS.l]={stars:Math.max(stars,prev?prev.stars:0)};if(st.unlocked<=LVS.l)st.unlocked=LVS.l+1;LVS.complete=stars;save();
+    celebrate("🏆",`Level ${LVS.l} complete!`,"★".repeat(stars)+"☆".repeat(3-stars)+(stars===3?" Perfect!":" Well played!"))}
+  if(LVS.mile)celebrate("📈",`Your rating hit ${LVS.mile}!`,"A new best. Your puzzle skills are growing.");
   render()}
 function vPlevel(){
   if(!LVD)return `<section class="stack view"><p class="li-m">Loading puzzles…</p></section>`;
@@ -1321,16 +1350,16 @@ function vPlevel(){
   let stat="",scls="";
   if(LVS.complete){stat=`<b>Level ${l} complete!</b> ${starsHtml(LVS.complete)}`;scls="ok"}
   else if(s==="ok"){const rd=LVS.rd,rt=rd!=null?` · Your rating ${prState().r} <span class="rd ${rd>=0?"up":"down"}">${rd>=0?"+":""}${rd}</span>`:"";stat=(LVS.res[LVS.k]==="ok"?"<b>Correct!</b> +5 XP":"<b>Solved.</b> Next time, first try!")+rt;scls="ok"}
-  else if(s==="no"){stat="Not the best move. Try again!";scls="no"}
+  else if(s==="no"){stat="Not quite. Try another move!";scls="no"}
   else if(s==="think")stat=LVS.ply===0?"Watch your opponent's move…":`<span class="spin sm" aria-hidden="true"></span> Opponent is replying…`;
   else stat=LVS.ply<=1?`<i class="tm ${LVS.color}" aria-hidden="true"></i> ${col} to move`:"Good! Keep going.";
-  const nextBtn=LVS.complete?(l<LVD.length?`Go to Level ${l+1} →`:"Back to the path"):LVS.k<list.length-1?"Next puzzle →":"Finish level";
+  const nextBtn=LVS.complete?(l<LVD.length?`Go to Level ${l+1} →`:"Back to puzzles"):LVS.k<list.length-1?"Next puzzle →":"Finish level";
   const canNext=s==="ok"||LVS.complete;
   return `<section class="drill view" data-sec="puzzles">
   <div class="drill-board"><div class="board" id="lvBoard"></div>
     ${LVS.promo?`<div class="promo" role="group" aria-label="Choose a piece"><span class="li-m">Promote to:</span>${["q","r","b","n"].map(x=>`<button class="chip" data-promo="${x}" aria-label="${NAMES[x]}"><i class="pc inline ${LVS.color} pk-${x}" aria-hidden="true"></i> ${NAMES[x]}</button>`).join("")}</div>`:""}</div>
   <aside class="drill-side">
-    <header class="ds-head"><a class="ds-back" href="#puzzles" aria-label="Back to the level path">←</a><span class="pricon sm" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 3h4v3a2 2 0 1 0 4 0V3h3v7h-3a2 2 0 1 0 0 4h3v7h-7v-3a2 2 0 1 0-4 0v3H3v-7h3a2 2 0 1 0 0-4H3V3h7z"/></svg></span>
+    <header class="ds-head"><a class="ds-back" href="#puzzles" aria-label="Back to puzzles">← <span>Puzzles</span></a><span class="pricon sm" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 3h4v3a2 2 0 1 0 4 0V3h3v7h-3a2 2 0 1 0 0 4h3v7h-7v-3a2 2 0 1 0-4 0v3H3v-7h3a2 2 0 1 0 0-4H3V3h7z"/></svg></span>
       <div class="ds-ht"><span class="eyebrow">Puzzles</span><h1>Level ${l}</h1></div></header>
     <div class="lvdots" aria-label="Puzzles in this level">${list.map((_,i)=>`<span class="${LVS.res[i]||""}${i===LVS.k?" cur":""}" title="Puzzle ${i+1}">${LVS.res[i]==="ok"?"✓":LVS.res[i]==="retry"?"•":i+1}</span>`).join("")}</div>
     <div class="ds-status ${scls}" role="status">${stat}</div>
@@ -1379,7 +1408,7 @@ function buildFrames(steps){
 }
 function vLesson(){
   const l=ALL_LESSONS.find(x=>x.id===curLesson)||ALL_LESSONS[0];
-  const idx=l.course.lessons.indexOf(l), nxt=l.course.lessons[idx+1];
+  const idx=l.course.lessons.findIndex(x=>x.id===l.id), nxt=l.course.lessons[idx+1];
   return `<section class="stack view"><button class="back" data-go="courses">← ${esc(l.course.title)}</button>
     <div class="row"><span class="pill level">${l.course.level}</span><span class="pill mono">Lesson ${idx+1} of ${l.course.lessons.length}</span><span class="pill mono">${l.minutes} min</span>${S.lessons[l.id]?`<span class="pill done">Watched</span>`:""}</div>
     <h1>${esc(l.title)}</h1></section>
@@ -1391,10 +1420,10 @@ function vLesson(){
       <div class="controls">
         <span class="mono li-m" id="lpTime">0:00</span>
         <div class="row" style="gap:8px">
-          <button class="ctl" id="lpRestart" aria-label="Restart">⏮</button>
-          <button class="ctl" id="lpPrev" aria-label="Previous step">◀</button>
-          <button class="ctl big" id="lpPlay" aria-label="Play">▶</button>
-          <button class="ctl" id="lpNext" aria-label="Next step">▶▏</button>
+          <button class="ctl" id="lpRestart"><i aria-hidden="true">⏮</i><small>Restart</small></button>
+          <button class="ctl" id="lpPrev"><i aria-hidden="true">◀</i><small>Back</small></button>
+          <button class="ctl big" id="lpPlay"><i aria-hidden="true">▶</i><small>Play</small></button>
+          <button class="ctl" id="lpNext"><i aria-hidden="true">▶▏</i><small>Next</small></button>
         </div>
         <button class="ctl txt" id="lpSpeed" aria-label="Playback speed">1×</button>
       </div>
@@ -1435,7 +1464,7 @@ function afterLesson(){
     document.querySelectorAll("#lpScrub button").forEach((b,k)=>b.classList.toggle("on",k<LP.i));
     document.querySelectorAll("#lpTx button").forEach((b,k)=>b.classList.toggle("cur",k===LP.i));
     const cur=document.querySelector("#lpTx button.cur");if(cur&&LP.playing)cur.scrollIntoView({block:"nearest"});
-    $("#lpPlay").textContent=LP.playing?"❚❚":"▶";$("#lpPlay").setAttribute("aria-label",LP.playing?"Pause":"Play");drawClock();};
+    $("#lpPlay").innerHTML=LP.playing?'<i aria-hidden="true">❚❚</i><small>Pause</small>':'<i aria-hidden="true">▶</i><small>Play</small>';drawClock();};
   // The audio is the clock: every 100ms read its position and move the board to the matching step.
   LP.clockTimer=setInterval(()=>{if(!$("#lpTime"))return stopLesson();
     const k=stepAt(audio.currentTime);if(k!==LP.i){const fwd=k===LP.i+1;LP.i=k;paint(fwd)}else drawClock()},100);
@@ -1481,7 +1510,7 @@ function afterLessonTTS(){
     document.querySelectorAll("#lpTx button").forEach((b,k)=>b.classList.toggle("cur",k===LP.i));
     const cur=document.querySelector("#lpTx button.cur");if(cur&&LP.playing)cur.scrollIntoView({block:"nearest"});
     LP.clock=Math.max(starts[LP.i],Math.min(LP.clock,starts[LP.i]+frames[LP.i].ms-1));if(LP.clock<starts[LP.i]||LP.clock>=starts[LP.i]+frames[LP.i].ms)LP.clock=starts[LP.i];LP.lastT=performance.now();drawClock();
-    $("#lpPlay").textContent=LP.playing?"❚❚":"▶";$("#lpPlay").setAttribute("aria-label",LP.playing?"Pause":"Play");};
+    $("#lpPlay").innerHTML=LP.playing?'<i aria-hidden="true">❚❚</i><small>Pause</small>':'<i aria-hidden="true">▶</i><small>Play</small>';};
   const finish=()=>{LP.playing=false;LP.clock=total;paint(false);$("#lpTime").textContent=`${fmt(total)} / ${fmt(total)}`;if(!S.lessons[l.id]){S.lessons[l.id]=true;save();award(20);toast("Lesson watched");const b=$("#doneBtn");b.textContent="Watched ✓";b.classList.add("ghost")}};
   // Narrate the current step, then advance when the voice finishes (or after a timer when voice is off).
   const run=()=>{clearTimeout(LP.timer);const tok=++LP.token;if(!LP.playing){hush();return}
@@ -1512,10 +1541,10 @@ function vClassic(){
   const left=Math.ceil((p.line.length-PZ.ply)/2);
   let fb=`<div class="feedback">${p.line.length>1?`Checkmate in ${movesLeft(p)} moves. Find your first move. The computer plays the other side.`:"Tap a piece, then tap where it should go."}</div>`;
   if(PZ.state==="ok")fb=`<div class="feedback ok">Solved. +${p.pts} points</div>`;
-  else if(PZ.state==="no")fb=`<div class="feedback no">Not this move. Try again!</div>`;
+  else if(PZ.state==="no")fb=`<div class="feedback no">Not quite. Try another move!</div>`;
   else if(PZ.state==="wait")fb=`<div class="feedback">Good move! The computer is replying…</div>`;
   else if(PZ.ply>0)fb=`<div class="feedback ok">Correct! ${left>1?`Keep going: checkmate in ${left} more moves.`:"Now finish it: checkmate in 1 move."}</div>`;
-  return `<section class="stack view"><div class="eyebrow">Puzzle trainer · ${points()} points</div><h1>Find the best move</h1>
+  return `<section class="stack view"><div class="eyebrow">Puzzles · ${points()} XP</div><h1>Find the best move</h1>
     <div class="row chips">${["All",...LEVELS].map(l=>`<button class="chip ${pzLevel===l?"on":""}" data-lvl="${l}">${l}${l!=="All"?` <span class="mono">${PUZZLES.filter(x=>x.level===l&&S.puzzles[x.id]).length}/${PUZZLES.filter(x=>x.level===l).length}</span>`:""}</button>`).join("")}</div></section>
   <section class="pz view">
     <div><div class="board" id="pzBoard"></div></div>
@@ -1600,7 +1629,7 @@ function vTests(){
   if(tDone){const sc=tAns.filter((a,i)=>a===Q[i].a).length;
     return `<section class="card stack view" style="max-width:680px">
       <div class="eyebrow">${tierName} test · result</div><div class="score">${sc}/${n}</div>
-      <p>${sc===n?"Perfect! Solve more puzzle levels to unlock a harder test.":sc>=7?"Good job! Check the ones you missed below.":"Keep solving puzzle levels, then try again."}</p>
+      <p>${sc===n?"Perfect! Solve more puzzle levels to unlock a harder test.":sc>=7?"Great job! Look at the ones you missed below.":"Nice try! Solve a few more puzzle levels and you'll do even better next time."}</p>
       <div style="overflow-x:auto"><table><thead><tr><th>Question</th><th>Your answer</th></tr></thead><tbody>
       ${Q.map((q,i)=>`<tr><td>${q.kind==="pz"?`Best move · difficulty ${q.rating}`:esc(q.q)}</td><td style="color:${tAns[i]===q.a?"var(--good)":"var(--accent)"}">${esc(q.o[tAns[i]])}${tAns[i]!==q.a?`<br><span class="li-m">Answer: ${esc(q.o[q.a])}</span>`:""}</td></tr>`).join("")}
       </tbody></table></div>
@@ -1621,7 +1650,7 @@ function afterTests(){
   const Q=TT.qs,q=Q[tq];
   if(q.kind==="pz")drawBoard($("#tBoard"),q.fen,{flip:q.color==="b",hi:q.last});
   document.querySelectorAll("[data-opt]").forEach(b=>b.onclick=()=>{tAns[tq]=+b.dataset.opt;sfx(tAns[tq]===q.a?"right":"wrong");render()});
-  $("#tnext").onclick=()=>{if(tq<Q.length-1){tq++}else{tDone=true;const sc=tAns.filter((a,i)=>a===Q[i].a).length;S.tests.push({score:sc,total:Q.length,tier:TT.tier,level:TT.level,at:new Date().toISOString()});save();award(sc*5)}render();window.scrollTo(0,0)};
+  $("#tnext").onclick=()=>{if(tq<Q.length-1){tq++}else{tDone=true;const sc=tAns.filter((a,i)=>a===Q[i].a).length;S.tests.push({score:sc,total:Q.length,tier:TT.tier,level:TT.level,at:new Date().toISOString()});save();award(sc*5);if(sc>=7)celebrate(sc===Q.length?"🌟":"🎉",sc===Q.length?"Perfect score!":"Test passed!",`${sc} out of ${Q.length} correct`)}render();window.scrollTo(0,0)};
 }
 
 /* ---------- Progress ---------- */
@@ -1692,7 +1721,7 @@ function vProgress(){
     </article>
   </section>
   <section class="grid g2 view">
-    <div class="card" style="overflow-x:auto"><h2 style="margin-bottom:8px">By course</h2>
+    <div class="card" style="overflow-x:auto"><h2 style="margin-bottom:8px">Lessons</h2>
       <table><thead><tr><th>Course</th><th>Level</th><th style="text-align:right">Watched</th></tr></thead><tbody>
       ${COURSES.map(c=>`<tr><td>${esc(c.title)}</td><td>${c.level}</td><td class="num">${courseProgress(c)}/${c.lessons.length}</td></tr>`).join("")}
       </tbody></table></div>
