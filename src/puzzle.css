@@ -47,3 +47,8 @@
 .pz-msg .tm{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--muted);display:inline-block;flex:none}
 .pz-msg .tm.w{background:#fff}.pz-msg .tm.b{background:#111}
 .pz-chip{position:fixed;right:16px;bottom:100px;z-index:50;background:var(--accent);color:#fff;border:0;border-radius:99px;padding:12px 18px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.4);cursor:pointer}
+.pzt-nav{display:flex;gap:6px;justify-content:center}.pzt-nav .chipbtn{min-width:44px;font-size:.95rem}
+.pzt-moves{display:flex;flex-wrap:wrap;gap:2px 4px;max-height:140px;overflow:auto;padding:8px;background:var(--bg);border:1px solid var(--line);border-radius:10px;font-size:.85rem;align-items:center}
+.pzt-moves .mn{color:var(--muted);margin-left:4px}
+.pzt-moves button{background:none;border:0;color:var(--ink);padding:3px 5px;border-radius:6px;cursor:pointer;font:inherit}
+.pzt-moves button:hover{background:var(--panel-2)}.pzt-moves button.on{background:var(--accent);color:#fff}

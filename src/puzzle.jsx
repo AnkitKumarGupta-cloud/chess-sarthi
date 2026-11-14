@@ -99,6 +99,26 @@ export function usePuzzle(isTeacher) {
   return { active, results, start, end, clear, report, dismiss: () => setActive(null) };
 }
 
+// A PGN (a whole game) -> every position in it, so the teacher can pick one as a puzzle.
+// Comments, side lines and move marks are dropped; only the main game is used.
+function cleanPgn(t) {
+  t = String(t).replace(/\{[^}]*\}/g, " ").replace(/;[^\n]*/g, " ");
+  let out = "", depth = 0;
+  for (const c of t) { if (c === "(") depth++; else if (c === ")") depth = Math.max(0, depth - 1); else if (!depth) out += c; }
+  return out.replace(/\$\d+/g, " ");
+}
+export function readPgn(text) {
+  const g = new Chess();
+  if (!g.load_pgn(cleanPgn(text), { sloppy: true })) return null;
+  const h = g.header() || {}, moves = g.history({ verbose: true });
+  if (!moves.length) return null;
+  const b = new Chess(h.FEN || undefined), fens = [b.fen()];
+  for (const m of moves) { b.move(m); fens.push(b.fen()); }
+  return { fens, sans: moves.map((m) => m.san), ucis: moves.map(uciOf), lasts: [null, ...moves.map((m) => [m.from, m.to])],
+    title: h.White && h.Black && h.White !== "?" ? `${h.White} – ${h.Black}` : "" };
+}
+const looksLikeFen = (t) => /^\s*[pnbrqkPNBRQK1-8]+(\/[pnbrqkPNBRQK1-8]+){7}\s+[wb]\b/.test(t);
+
 // ---------- teacher: pick and send, then watch results ----------
 let LEVELS = null;
 const loadLevels = async () => { if (LEVELS) return LEVELS; const r = await fetch("/levels.json?v=1"); LEVELS = (await r.json()).levels; return LEVELS; };
@@ -116,7 +136,8 @@ export function TeacherPuzzle({ pz }) {
   const [level, setLevel] = useState(1);
   const [pick, setPick] = useState(null);
   const [fenText, setFenText] = useState("");
-  const [custom, setCustom] = useState(null);   // { fen, line:[], g }
+  const [custom, setCustom] = useState(null);   // { fen, line:[], next:[uci from the game], title }
+  const [game, setGame] = useState(null);       // a loaded PGN: { fens, sans, ucis, lasts, title, idx }
   const [err, setErr] = useState("");
   const [, tick] = useState(0);
 
@@ -131,9 +152,16 @@ export function TeacherPuzzle({ pz }) {
 
   const loadFen = () => {
     const f = fenText.trim(); setErr("");
-    try { const g = new Chess(); if (!g.load(f)) throw 0; setCustom({ fen: g.fen(), line: [] }); }
-    catch { setErr("That isn't a valid FEN. Copy it from Lichess (Share & export → FEN)."); }
+    if (looksLikeFen(f)) {
+      try { const g = new Chess(); if (!g.load(f)) throw 0; setCustom({ fen: g.fen(), line: [], next: [] }); }
+      catch { setErr("That FEN isn't valid. Copy it from Lichess (Share & export → FEN)."); }
+      return;
+    }
+    const pg = readPgn(f);
+    if (!pg) { setErr("That isn't a valid FEN or PGN. On Lichess: Share & export → copy the PGN or the FEN."); return; }
+    setGame({ ...pg, idx: Math.max(0, pg.fens.length - 2) });
   };
+  const usePosition = () => { const i = game.idx; setCustom({ fen: game.fens[i], line: [], next: game.ucis.slice(i), title: game.title ? `${game.title}, move ${Math.floor(i / 2) + 1}` : "From a game" }); };
   const customFen = () => { const g = new Chess(custom.fen); custom.line.forEach((u) => g.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] || "q" })); return g.fen(); };
   const customMove = (from, to, promo) => {
     const g = new Chess(customFen()); const m = g.move({ from, to, promotion: promo ? "q" : undefined });
@@ -163,7 +191,7 @@ export function TeacherPuzzle({ pz }) {
         </ul>
         {a.ended ? <p className="pzt-ans">Answer: <b>{answer.join(" ")}</b></p> : null}
         <div className="pzt-actions">
-          {!a.ended ? <button className="btn" onClick={pz.end}>Show answer to everyone</button> : <button className="btn" onClick={() => { pz.clear(); setPick(null); }}>New puzzle</button>}
+          {!a.ended ? <button className="btn" onClick={pz.end}>Show answer to everyone</button> : <button className="btn" onClick={() => { pz.clear(); setPick(null); setCustom(null); }}>New puzzle</button>}
         </div>
       </div>
     );
@@ -174,7 +202,7 @@ export function TeacherPuzzle({ pz }) {
     <div className="pzt">
       <div className="tabs2 pzt-tabs" role="tablist">
         <button role="tab" aria-selected={mode === "levels"} onClick={() => setMode("levels")}>Puzzle levels</button>
-        <button role="tab" aria-selected={mode === "custom"} onClick={() => setMode("custom")}>Your position</button>
+        <button role="tab" aria-selected={mode === "custom"} onClick={() => setMode("custom")}>PGN / FEN</button>
       </div>
       {mode === "levels" ? (
         <>
@@ -190,21 +218,39 @@ export function TeacherPuzzle({ pz }) {
         </>
       ) : (
         <>
-          {!custom ? (
+          {game && !custom ? (
             <>
-              <p className="pzt-meta">Paste a FEN (on Lichess: Share &amp; export → FEN), then play the answer on the board.</p>
-              <textarea className="pzt-fen" rows="2" value={fenText} onChange={(e) => setFenText(e.target.value)} placeholder="e.g. 6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1" />
-              <button className="btn wide" onClick={loadFen} disabled={!fenText.trim()}>Load position</button>
+              <div className="pzt-head"><b>Pick the position</b><span>{game.title || "Your game"} · {game.idx ? `after ${Math.floor((game.idx - 1) / 2) + 1}${game.idx % 2 ? "." : "…"} ${game.sans[game.idx - 1]}` : "start"}</span></div>
+              <div className="pzt-board"><Board fen={game.fens[game.idx]} flip={new Chess(game.fens[game.idx]).turn() === "b"} canMove={false} last={game.lasts[game.idx]} /></div>
+              <div className="pzt-nav">
+                {[["⏮", 0, "First move"], ["◀", game.idx - 1, "Back"], ["▶", game.idx + 1, "Forward"], ["⏭", game.fens.length - 1, "Last move"]].map(([t, i, l]) => (
+                  <button key={l} className="chipbtn" aria-label={l} disabled={i < 0 || i >= game.fens.length || i === game.idx} onClick={() => setGame({ ...game, idx: i })}>{t}</button>))}
+              </div>
+              <div className="pzt-moves">
+                {game.sans.map((m, i) => (
+                  <React.Fragment key={i}>{i % 2 === 0 ? <span className="mn">{i / 2 + 1}.</span> : null}
+                    <button className={game.idx === i + 1 ? "on" : ""} onClick={() => setGame({ ...game, idx: i + 1 })}>{m}</button></React.Fragment>))}
+              </div>
+              <p className="pzt-meta">{sideName(new Chess(game.fens[game.idx]).turn())} to move in this position.</p>
+              <button className="btn wide" onClick={usePosition} disabled={game.idx >= game.fens.length - 1 && new Chess(game.fens[game.idx]).game_over()}>Use this position</button>
+              <button className="chipbtn" onClick={() => { setGame(null); setFenText(""); }}>Paste something else</button>
+            </>
+          ) : !custom ? (
+            <>
+              <p className="pzt-meta">Paste a <b>PGN</b> (a whole game) or a <b>FEN</b> (one position). On Lichess: Share &amp; export.</p>
+              <textarea className="pzt-fen" rows="4" value={fenText} onChange={(e) => setFenText(e.target.value)} placeholder={"1. e4 e5 2. Nf3 Nc6 3. Bc4 …\nor\n6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1"} />
+              <button className="btn wide" onClick={loadFen} disabled={!fenText.trim()}>Load</button>
             </>
           ) : (
             <>
               <div className="pzt-board"><Board fen={customFen()} flip={new Chess(custom.fen).turn() === "b"} canMove onMove={customMove} /></div>
               <p className="pzt-meta">{custom.line.length ? <>Answer: <b>{sanLine(custom.fen, custom.line).join(" ")}</b></> : `Play the answer for ${sideName(new Chess(custom.fen).turn())}. Play the replies too for a longer puzzle.`}</p>
               <div className="pzt-row">
+                {custom.next && custom.next[custom.line.length] ? <button className="chipbtn" onClick={() => setCustom({ ...custom, line: [...custom.line, custom.next[custom.line.length]] })}>+ Game's next move ({sanLine(customFen(), [custom.next[custom.line.length]])[0]})</button> : null}
                 <button className="chipbtn" disabled={!custom.line.length} onClick={() => setCustom({ ...custom, line: custom.line.slice(0, -1) })}>Undo</button>
-                <button className="chipbtn" onClick={() => { setCustom(null); setFenText(""); }}>Change position</button>
+                <button className="chipbtn" onClick={() => setCustom(null)}>{game ? "Pick another move" : "Change position"}</button>
               </div>
-              <button className="btn wide" disabled={!custom.line.length || custom.line.length % 2 === 0} onClick={() => pz.start({ fen: custom.fen, line: custom.line, title: "Teacher's position" })}>Send to class</button>
+              <button className="btn wide" disabled={!custom.line.length || custom.line.length % 2 === 0} onClick={() => pz.start({ fen: custom.fen, line: custom.line, title: custom.title || "Teacher's position" })}>Send to class</button>
               {custom.line.length && custom.line.length % 2 === 0 ? <p className="pzt-meta">End on your student's move (undo the last reply).</p> : null}
             </>
           )}
