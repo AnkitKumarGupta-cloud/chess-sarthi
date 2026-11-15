@@ -107,3 +107,5 @@ Vercel Deployment Protection must stay **off** for `chess-sathi-live`, or studen
 - Access: signed-in students and coaches (reads `targetchess.v2` from localStorage); demo logins and signed-out visitors are turned away. This is a screen-level check only, since the model itself is public.
 - Tests: `node test/reader.test.mjs` (part of `npm test`) and `python3 test/reader-e2e.py` (Playwright, reader calls mocked; needs the dev server running).
 - `test/fixtures/reader-result.json` is a STAND-IN made to match the brief's numbers (60 moves, move 14 read as Qf4 instead of Rfd1). Replace it with the real read when available; the "26 of 60" and "33 of 60" expectations may need adjusting to the real file.
+- Review line (changed 15 Nov 2026 with the owner's OK): a move joins the "left to check" queue below confidence 0.70 (`LOW_CONF`); from 0.70 to 0.90 (`NOTE_CONF`) it only gets a ! on its chip. Reason: on 5 hand-labelled test sheets, 0.90 flagged 74 of 601 moves and 46 of those were correct.
+- `fixCase` also repairs capital-letter slips the model makes: F3 -> f3, KF4 -> Kf4, Exd5 -> exd5, X -> x. `written` still keeps the original text.

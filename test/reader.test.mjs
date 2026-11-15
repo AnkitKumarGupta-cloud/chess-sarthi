@@ -7,17 +7,21 @@ const fresh = () => L.newSession(L.normaliseResult(structuredClone(fixture)));
 const mk = (list, conf = 0.99) => L.newSession(L.normaliseResult({ moves: list.map((w, i) => ({ move: (i >> 1) + 1, colour: i % 2 ? "b" : "w", written: w, confidence: conf })) }));
 
 // fixCase
-for (const [a, b] of [["nf3", "Nf3"], ["kxe2", "Kxe2"], ["rfd1", "Rfd1"], ["qh5", "Qh5"], ["o-o", "O-O"], ["0-0-0", "O-O-O"], ["e8q", "e8Q"], ["b4", "b4"], ["bxc3", "bxc3"], [" 0-0 ", "O-O"], ["e8=n", "e8=N"]]) assert.equal(L.fixCase(a), b, a);
+for (const [a, b] of [["nf3", "Nf3"], ["kxe2", "Kxe2"], ["rfd1", "Rfd1"], ["qh5", "Qh5"], ["o-o", "O-O"], ["0-0-0", "O-O-O"], ["e8q", "e8Q"], ["b4", "b4"], ["bxc3", "bxc3"], ["F3", "f3"], ["KF4", "Kf4"], ["KF2", "Kf2"], ["F6", "f6"], ["RD1", "Rd1"], ["NXF7", "Nxf7"], ["Exd5", "exd5"], ["EXD5", "exd5"], ["Bxc3", "Bxc3"], ["Bc4", "Bc4"], ["B1d3", "B1d3"], ["B4", "b4"], ["E8Q", "e8Q"], ["Nbd7", "Nbd7"], ["R1a3", "R1a3"], ["O-O-O", "O-O-O"], [" 0-0 ", "O-O"], ["e8=n", "e8=N"]]) assert.equal(L.fixCase(a), b, a);
 // moveKey
 assert.equal(L.moveKey("Nxe4+"), L.moveKey("Ne4")); assert.equal(L.moveKey("exd5"), L.moveKey("ed5")); assert.equal(L.moveKey("e8=Q"), L.moveKey("e8Q"));
 assert.equal(L.moveKey("0-0"), "O-O"); assert.equal(L.moveKey("exd6 e.p."), "ed6"); assert.notEqual(L.moveKey("bxc3"), L.moveKey("Bxc3"));
 
 // recheck: legal game, illegal move, fixing it, missing ply
+{ const s = mk(["E4", "e5", "NF3", "Nc6", "Bb5", "A6", "Ba4", "NF6", "0-0", "Be7", "Re1", "B5"]); assert.ok(s.moves.every((m) => m.check === "ok"), "capital-letter slips are legal"); assert.equal(s.moves[0].written, "E4"); assert.equal(s.moves[0].san, "e4"); assert.equal(s.moves[11].san, "b5"); assert.ok(L.toPGN(s).includes("1. e4 e5 2. Nf3")); }
+// 0.70 puts a move in the queue; 0.70-0.90 only marks it
+{ const s = mk(["e4", "e5", "Nf3"], 0.8); assert.equal(L.reviewReason(s.moves[0]), null); assert.ok(L.isUnsure(s.moves[0])); assert.deepEqual(L.reviewList(s), []); assert.equal(L.summary(s).unsure, 3); assert.equal(L.summary(s).pending, 0); assert.equal(L.summary(s).complete, true);
+  const t = mk(["e4", "e5"], 0.69); assert.equal(L.reviewReason(t.moves[0]), "Low confidence"); L.acceptAsWritten(t, 0); assert.ok(!L.isUnsure(t.moves[0])); assert.equal(L.LOW_CONF, 0.7); assert.equal(L.NOTE_CONF, 0.9); }
 { const s = mk(["e4", "e5", "nf3", "Nc6", "Bb5", "a6"]); assert.ok(s.moves.every((m) => m.check === "ok")); assert.equal(s.moves[2].san, "Nf3"); assert.equal(s.moves[2].written, "nf3"); }
 { const s = fresh(); const sum = L.summary(s);
   assert.deepEqual([sum.total, sum.legal, sum.illegal, sum.unchecked, sum.unsure, sum.playable], [60, 26, 1, 33, 6, 26]);
   assert.equal(s.moves[26].check, "illegal"); assert.ok(s.moves.slice(27).every((m) => m.check === "unchecked" && m.fenBefore === null)); assert.ok(s.moves[26].fenBefore);
-  assert.equal(L.currentIndex(s), L.reviewList(s)[0]); assert.equal(L.reviewReason(s.moves[26]), "Cannot be played in this position");
+  assert.equal(L.currentIndex(s), L.reviewList(s)[0]); assert.deepEqual(L.reviewList(s), [11, 22, 26, 33, 40]); assert.equal(L.reviewReason(s.moves[26]), "Cannot be played in this position");
   L.setPlayed(s, 26, "Rfd1");
   const after = L.summary(s); assert.equal(after.legal, 33); assert.equal(s.moves[26].written, "Qf4"); assert.equal(s.moves[26].played, "Rfd1"); assert.equal(s.moves[26].san, "Rfd1"); assert.equal(s.moves[33].check, "illegal");
   const pgn = L.toPGN(s, { date: "2026.11.15" });

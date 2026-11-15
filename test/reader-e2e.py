@@ -163,6 +163,11 @@ with sync_playwright() as p:
         ctx, pg, m = new(b, result=res); read(pg, wait=None); pg.wait_for_selector("#rdStatus.err"); check("bad result: " + name, "cannot read" in status(pg) and pg.errs == [], (status(pg), pg.errs)); ctx.close()
     ctx, pg, m = new(b, stream=sse("complete", json.dumps([json.dumps(FIX)]))); read(pg); check("result as JSON string", "26 of 60" in pg.inner_text("#rdSummary")); ctx.close()
 
+    # capital-letter slips are read as the right move; 0.70-0.90 gets a ! but is not in the queue
+    caps = {"moves": [{"move": (i >> 1) + 1, "colour": "b" if i % 2 else "w", "written": w, "confidence": c} for i, (w, c) in enumerate([("E4", 0.99), ("e5", 0.8), ("NF3", 0.95), ("Nc6", 0.99), ("Bb5", 0.99), ("A6", 0.6)])]}
+    ctx, pg, m = new(b, result=caps); read(pg)
+    check("capitals legal", "6 of 6 moves legal" in pg.inner_text("#rdSummary"), pg.inner_text("#rdSummary")); check("capitals keep what was written", pg.locator(".rd-chip").first.inner_text() == "1.E4 ✓" and "1. e4 e5 2. Nf3" in pg.inner_text("#rdPgn"))
+    check("0.80 marked but not queued", pg.locator(".rd-chip").nth(1).inner_text() == "1…e5 !" and "1 left to check" in pg.inner_text("#rdLeft") and "Check move 3… (Black)" in pg.inner_text("#rdCheck"), (pg.locator(".rd-chip").nth(1).inner_text(), pg.inner_text("#rdLeft"))); ctx.close()
     # 5. triple tap -> one read
     ctx, pg, m = new(b, delay=0.6); pg.set_input_files("#rdFile", JPG)
     pg.evaluate("(()=>{const b=document.querySelector('#rdRead');b.click();b.click();b.click()})()"); pg.wait_for_selector("#rdResult", timeout=15000)

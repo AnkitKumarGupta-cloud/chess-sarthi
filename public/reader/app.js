@@ -144,7 +144,7 @@ function engine(fen) {
 }
 
 /* ---------- rendering ---------- */
-const mark = (m) => (m.check === "illegal" ? "✗" : m.check === "unchecked" ? "?" : L.reviewReason(m) ? "!" : "✓");
+const mark = (m) => (m.check === "illegal" ? "✗" : m.check === "unchecked" ? "?" : L.isUnsure(m) ? "!" : "✓");
 function chipText(m, suspect) {
   return L.label(m) + m.written + (m.played != null ? "→" + m.played + " ✎" : "") + " " + mark(m) + (suspect ? " ▲" : "");
 }
@@ -199,7 +199,7 @@ function resultCard() {
   const field = (label, key, max) => h("label", { class: "rd-fld" }, h("span", { text: label }), h("input", { type: "text", value: s[key], maxLength: max, autocomplete: "off", oninput: (e) => { s[key] = e.target.value; persist(); const p = $("#rdPgn"); if (p) p.textContent = L.toPGN(s, { result: st.result }); } }));
   const parts = [sum.illegal ? `${sum.illegal} cannot be played` : "", sum.unchecked ? `${sum.unchecked} not checkable yet` : "", sum.unsure ? `${sum.unsure} unsure` : ""].filter(Boolean);
   const chips = h("div", { class: "rd-chips", id: "rdChips" }, s.moves.map((m, i) => h("button", { type: "button", "data-i": i,
-    class: "rd-chip " + (m.check === "illegal" ? "bad" : m.check === "unchecked" ? "unk" : L.reviewReason(m) ? "low" : "ok") + (i === cur ? " cur" : "") + (sus.includes(i) ? " sus" : ""),
+    class: "rd-chip " + (m.check === "illegal" ? "bad" : m.check === "unchecked" ? "unk" : L.isUnsure(m) ? "low" : "ok") + (i === cur ? " cur" : "") + (sus.includes(i) ? " sus" : ""),
     text: chipText(m, sus.includes(i)), onclick: () => { s.focus = i; st.inputError = ""; persist(); render(); const r = $("#rdReview"); if (r && r.scrollIntoView) r.scrollIntoView({ block: "start", behavior: "smooth" }); } })));
   return h("section", { class: "rd-card", id: "rdResult" },
     h("h2", { text: `Score sheet read — ${sum.total} move${sum.total === 1 ? "" : "s"}${s.pages ? ` · ${s.pages} page${s.pages === 1 ? "" : "s"}` : ""}` }),
@@ -207,7 +207,7 @@ function resultCard() {
     h("p", { class: "rd-m", text: "Names come from the reader and can be wrong — fix them here." }),
     h("p", { id: "rdSummary", class: "rd-sum" }, h("b", { text: `${sum.legal} of ${sum.total} moves legal` }), parts.length ? " · " + parts.join(" · ") : ""),
     chips,
-    h("p", { class: "rd-m", text: "✓ legal · ! unsure · ✗ cannot be played · ? not checked yet · ✎ changed by you. Tap a move to check it." }));
+    h("p", { class: "rd-m", text: "✓ legal · ! the reader was a little unsure (worth a glance) · ✗ cannot be played · ? not checked yet · ✎ changed by you. Tap a move to check it." }));
 }
 function reviewCard() {
   const s = st.session, i = L.currentIndex(s), left = L.reviewList(s).length, dec = L.decisions(s);

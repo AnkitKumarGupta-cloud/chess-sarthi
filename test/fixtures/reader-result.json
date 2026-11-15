@@ -107,7 +107,7 @@
    "move": 6,
    "colour": "b",
    "written": "Nbd7",
-   "confidence": 0.74,
+   "confidence": 0.64,
    "status": "ok",
    "suggestions": [],
    "review": true
@@ -375,7 +375,7 @@
    "move": 21,
    "colour": "w",
    "written": "Rg5",
-   "confidence": 0.79,
+   "confidence": 0.59,
    "status": "ok",
    "suggestions": [],
    "review": true

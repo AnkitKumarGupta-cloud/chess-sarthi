@@ -3,12 +3,16 @@
 //
 // Rules that must not change without asking the owner:
 //  1. `written` is what the model read and is never modified. The human's choice goes in `played`.
-//  2. Legality checking only flags. The single automatic fix is fixCase(), used for checking/display.
+//  2. Legality checking only flags. The single automatic fix is fixCase() (capital/small letter slips),
+//     used for checking/display.
 //  3. After the first move that cannot be played, later moves are "unchecked" until it is fixed.
 //  4. Everything from the model is untrusted text.
 
 const newGame = (fen) => (fen ? new globalThis.Chess(fen) : new globalThis.Chess());
-export const LOW_CONF = 0.9;
+export const LOW_CONF = 0.7;       // below this a move joins the "left to check" queue
+export const NOTE_CONF = 0.9;      // below this it only gets a ! on its chip
+// Why 0.70: on 5 hand-labelled test sheets (601 moves) the 0.90 line flagged 74 moves of which 46 were
+// correct; 0.70 flags 39 (16 correct) and misses 5 more misreads, most of which are illegal moves anyway.
 export const MAX_MOVES = 600;      // plies kept from one read
 export const MAX_PHOTOS = 4;
 
@@ -16,6 +20,9 @@ export const MAX_PHOTOS = 4;
 export function fixCase(s) {
   return String(s == null ? "" : s).trim()
     .replace(/^[o0]-[o0]-[o0]/i, "O-O-O").replace(/^[o0]-[o0]/i, "O-O")
+    .replace(/X/g, "x")                                                                         // KXF4 -> KxF4
+    .replace(/[A-H](?=[1-8])(?![1-8]x?[a-h][1-8])/g, (c) => c.toLowerCase())                    // a capital before a rank is a square: F3 -> f3, KF4 -> Kf4 (not B1d3)
+    .replace(/^[ACDEFGH](?=x)/, (c) => c.toLowerCase())                                         // Exd5 -> exd5 (B is left alone: Bxc3 is a bishop)
     .replace(/^[nkqr](?=[a-h1-8x:×])/, (c) => c.toUpperCase())                                  // n,k,q,r are never files; b is (b4, bxc3)
     .replace(/([a-h][18])(=?)([nqrb])/, (_, sq, eq, p) => sq + eq + p.toUpperCase());           // promotion piece
 }
@@ -103,8 +110,10 @@ export function summary(s) {
   let playable = s.moves.findIndex((m) => m.check !== "ok"); if (playable < 0) playable = total;
   const pending = reviewList(s).length, legal = count((m) => m.check === "ok");
   return { total, pending, playable, legal, illegal: count((m) => m.check === "illegal"), unchecked: count((m) => m.check === "unchecked"),
-    unsure: count((m) => reviewReason(m) === "Low confidence"), complete: pending === 0 && legal === total && total > 0 };
+    unsure: count(isUnsure), complete: pending === 0 && legal === total && total > 0 };
 }
+// A legal-looking move the reader was not fully sure of: it gets a ! on its chip.
+export const isUnsure = (m) => !m.confirmed && !m.accepted && m.check !== "illegal" && m.confidence != null && m.confidence < NOTE_CONF;
 export const decisions = (s) => s.moves.map((m, i) => (m.confirmed ? i : -1)).filter((i) => i >= 0);
 
 /* ---------- 4.5 several pages ---------- */
