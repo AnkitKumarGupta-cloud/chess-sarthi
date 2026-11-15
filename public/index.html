@@ -678,6 +678,18 @@ main{gap:32px}
 .bento-p{align-items:stretch!important}.bento-p .t-stats{grid-column:1/-1!important;grid-template-columns:repeat(5,minmax(0,1fr))}
 @media (max-width:760px){.adm-kpis{grid-template-columns:1fr 1fr}.adm-fields,.adm-fields.two{grid-template-columns:1fr}.adm-tabs{display:flex;width:100%}.adm-tabs button{flex:1;padding:9px 4px;font-size:.84rem;white-space:nowrap}
   .adm-list li{flex-wrap:wrap}.adm-list .acts{width:100%;padding-left:50px}.bento-p .t-stats{grid-template-columns:1fr 1fr 1fr}}
+
+/* Final polish: login without the empty side menu, wider lessons page, centred tests */
+@media (min-width:1100px){body.gated{padding-left:0}body.gated .topbar{position:static;width:auto;height:auto;border-right:0;background:none}body.gated .topbar-in{height:auto;padding:22px 32px 0}
+  .path{max-width:none;display:grid;grid-template-columns:1fr 1fr;align-items:start}.path .unit-end{grid-column:1/-1}}
+.tcol{margin-left:auto;margin-right:auto;width:100%}
+.opt{display:flex;align-items:center;gap:12px}
+.opt-k{width:28px;height:28px;flex:none;border-radius:8px;display:grid;place-items:center;background:var(--surface-2);font-size:.85rem;font-weight:700;color:var(--muted)}
+.opt.right .opt-k{background:var(--good);color:#fff}.opt.wrong .opt-k{background:var(--accent);color:#fff}
+.tres{display:flex;align-items:center;gap:18px}.tres .ring-fg{stroke:var(--good)}
+.score{font-family:var(--f-body);font-weight:700;font-size:2.6rem;letter-spacing:-.03em;line-height:1}.score small{font-size:1.2rem;color:var(--muted);font-weight:600}
+.tans{font-weight:600}.tans .ic{margin-right:6px}.tans.ok{color:var(--good)}.tans.no{color:var(--accent)}.tans .li-m{font-weight:400}
+.ctl .ic{width:18px;height:18px}.ctl.big .ic{width:20px;height:20px;fill:currentColor}
 </style>
 
 </head>
@@ -845,6 +857,13 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 /* Line icons (paths from Lucide, ISC licence) so rewards match the outline icons in the menu */
 const UI_ICONS={
+ play:'<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>',
+ pause:'<rect x="14" y="3" width="5" height="18" rx="1"/> <rect x="5" y="3" width="5" height="18" rx="1"/>',
+ restart:'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/> <path d="M3 3v5h5"/>',
+ prev:'<path d="M17.971 4.285A2 2 0 0 1 21 6v12a2 2 0 0 1-3.029 1.715l-9.997-5.998a2 2 0 0 1-.003-3.432z"/> <path d="M3 20V4"/>',
+ next:'<path d="M21 4v16"/> <path d="M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z"/>',
+ check:'<path d="M20 6 9 17l-5-5"/>',
+ cross:'<path d="M18 6 6 18"/> <path d="m6 6 12 12"/>',
  flame:'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3 0 1.4.9 2.5 2.5 2.5z"/>',
  bolt:'<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
  trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
@@ -1292,10 +1311,10 @@ function vLesson(){
       <div class="controls">
         <span class="mono li-m" id="lpTime">0:00</span>
         <div class="row" style="gap:8px">
-          <button class="ctl" id="lpRestart"><i aria-hidden="true">⏮</i><small>Restart</small></button>
-          <button class="ctl" id="lpPrev"><i aria-hidden="true">◀</i><small>Back</small></button>
-          <button class="ctl big" id="lpPlay"><i aria-hidden="true">▶</i><small>Play</small></button>
-          <button class="ctl" id="lpNext"><i aria-hidden="true">▶▏</i><small>Next</small></button>
+          <button class="ctl" id="lpRestart">${ico("restart")}<small>Restart</small></button>
+          <button class="ctl" id="lpPrev">${ico("prev")}<small>Back</small></button>
+          <button class="ctl big" id="lpPlay">${ico("play")}<small>Play</small></button>
+          <button class="ctl" id="lpNext">${ico("next")}<small>Next</small></button>
         </div>
         <button class="ctl txt" id="lpSpeed" aria-label="Playback speed">1×</button>
       </div>
@@ -1336,7 +1355,7 @@ function afterLesson(){
     document.querySelectorAll("#lpScrub button").forEach((b,k)=>b.classList.toggle("on",k<LP.i));
     document.querySelectorAll("#lpTx button").forEach((b,k)=>b.classList.toggle("cur",k===LP.i));
     const cur=document.querySelector("#lpTx button.cur");if(cur&&LP.playing)cur.scrollIntoView({block:"nearest"});
-    $("#lpPlay").innerHTML=LP.playing?'<i aria-hidden="true">❚❚</i><small>Pause</small>':'<i aria-hidden="true">▶</i><small>Play</small>';drawClock();};
+    $("#lpPlay").innerHTML=ico(LP.playing?"pause":"play")+`<small>${LP.playing?"Pause":"Play"}</small>`;drawClock();};
   // The audio is the clock: every 100ms read its position and move the board to the matching step.
   LP.clockTimer=setInterval(()=>{if(!$("#lpTime"))return stopLesson();
     const k=stepAt(audio.currentTime);if(k!==LP.i){const fwd=k===LP.i+1;LP.i=k;paint(fwd)}else drawClock()},100);
@@ -1382,7 +1401,7 @@ function afterLessonTTS(){
     document.querySelectorAll("#lpTx button").forEach((b,k)=>b.classList.toggle("cur",k===LP.i));
     const cur=document.querySelector("#lpTx button.cur");if(cur&&LP.playing)cur.scrollIntoView({block:"nearest"});
     LP.clock=Math.max(starts[LP.i],Math.min(LP.clock,starts[LP.i]+frames[LP.i].ms-1));if(LP.clock<starts[LP.i]||LP.clock>=starts[LP.i]+frames[LP.i].ms)LP.clock=starts[LP.i];LP.lastT=performance.now();drawClock();
-    $("#lpPlay").innerHTML=LP.playing?'<i aria-hidden="true">❚❚</i><small>Pause</small>':'<i aria-hidden="true">▶</i><small>Play</small>';};
+    $("#lpPlay").innerHTML=ico(LP.playing?"pause":"play")+`<small>${LP.playing?"Pause":"Play"}</small>`;};
   const finish=()=>{LP.playing=false;LP.clock=total;paint(false);$("#lpTime").textContent=`${fmt(total)} / ${fmt(total)}`;if(!S.lessons[l.id]){S.lessons[l.id]=true;save();award(20);toast("Lesson watched");const b=$("#doneBtn");b.textContent="Watched ✓";b.classList.add("ghost")}};
   // Narrate the current step, then advance when the voice finishes (or after a timer when voice is off).
   const run=()=>{clearTimeout(LP.timer);const tok=++LP.token;if(!LP.playing){hush();return}
@@ -1421,7 +1440,7 @@ function vClassic(){
   <section class="pz view">
     <div><div class="board" id="pzBoard"></div></div>
     <div class="stack">
-      <div class="row"><span class="pill level">${esc(label(p))}</span><span class="pill">${p.level}</span><span class="pill mono">${p.pts} pts</span>${S.puzzles[p.id]?`<span class="pill done">Solved</span>`:""}</div>
+      <div class="row"><span class="pill level">${esc(label(p))}</span><span class="pill">${p.level}</span><span class="pill mono">+${p.pts} XP</span>${S.puzzles[p.id]?`<span class="pill done">Solved</span>`:""}</div>
       <h2>Puzzle ${PUZZLES.indexOf(p)+1} · ${esc(p.theme)}</h2>
       <span class="tomove"><i class="${turn}"></i>${turn==="w"?"White":"Black"} to move</span>
       ${fb}
@@ -1499,20 +1518,20 @@ function vTests(){
   if(!TT){TT=buildTest();tq=0;tAns=[];tDone=false}
   const Q=TT.qs,n=Q.length,tierName=TIERS[TT.tier];
   if(tDone){const sc=tAns.filter((a,i)=>a===Q[i].a).length;
-    return `<section class="card stack view" style="max-width:680px">
-      <div class="eyebrow">${tierName} test · result</div><div class="score">${sc}/${n}</div>
+    return `<section class="card stack view tcol" style="max-width:680px">
+      <div class="eyebrow">${tierName} test · result</div><div class="tres">${ring(sc/n*100,84,8)}<div><div class="score">${sc}<small>/${n}</small></div><span class="li-m">correct answers</span></div></div>
       <p>${sc===n?"Perfect! Solve more puzzle levels to unlock a harder test.":sc>=7?"Great job! Look at the ones you missed below.":"Nice try! Solve a few more puzzle levels and you'll do even better next time."}</p>
       <div style="overflow-x:auto"><table><thead><tr><th>Question</th><th>Your answer</th></tr></thead><tbody>
-      ${Q.map((q,i)=>`<tr><td>${q.kind==="pz"?`Best move · difficulty ${q.rating}`:esc(q.q)}</td><td style="color:${tAns[i]===q.a?"var(--good)":"var(--accent)"}">${esc(q.o[tAns[i]])}${tAns[i]!==q.a?`<br><span class="li-m">Answer: ${esc(q.o[q.a])}</span>`:""}</td></tr>`).join("")}
+      ${Q.map((q,i)=>`<tr><td>${q.kind==="pz"?`Best move · difficulty ${q.rating}`:esc(q.q)}</td><td class="tans ${tAns[i]===q.a?"ok":"no"}">${ico(tAns[i]===q.a?"check":"cross")}${esc(q.o[tAns[i]])}${tAns[i]!==q.a?`<br><span class="li-m">Answer: ${esc(q.o[q.a])}</span>`:""}</td></tr>`).join("")}
       </tbody></table></div>
       <div class="row"><button class="btn" id="retry">New test</button><a class="btn ghost" href="#puzzles" style="text-decoration:none">Puzzles</a></div></section>`}
   const q=Q[tq],ans=tAns[tq];
-  return `<section class="stack view" style="max-width:640px"><div class="eyebrow">${tierName} test</div><h1>Question ${tq+1} of ${n}</h1>
+  return `<section class="stack view tcol" style="max-width:640px"><div class="eyebrow">${tierName} test</div><h1>Question ${tq+1} of ${n}</h1>
     <div class="bar"><i style="width:${tq/n*100}%"></i></div></section>
-  <section class="card q view" style="max-width:640px">
+  <section class="card q view tcol" style="max-width:640px">
     ${q.kind==="pz"?`<h2 style="font-family:var(--f-body);font-size:1.15rem">${q.color==="w"?"White":"Black"} to move. Find the best move.</h2><div class="board" id="tBoard" style="max-width:360px;margin:4px auto 8px"></div>`
       :`<h2 style="font-family:var(--f-body);font-size:1.15rem">${esc(q.q)}</h2>`}
-    ${q.o.map((o,i)=>`<button class="opt ${ans!=null?(i===q.a?"right":i===ans?"wrong":""):""}" data-opt="${i}" ${ans!=null?"disabled":""}>${String.fromCharCode(65+i)}. ${esc(o)}</button>`).join("")}
+    ${q.o.map((o,i)=>`<button class="opt ${ans!=null?(i===q.a?"right":i===ans?"wrong":""):""}" data-opt="${i}" ${ans!=null?"disabled":""}><span class="opt-k">${String.fromCharCode(65+i)}</span>${esc(o)}</button>`).join("")}
     <div class="row" style="justify-content:flex-end"><button class="btn" id="tnext" ${ans==null?"disabled":""}>${tq===n-1?"See result":"Next question"}</button></div>
   </section>`;
 }
