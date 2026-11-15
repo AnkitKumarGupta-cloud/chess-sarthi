@@ -90,3 +90,4 @@ Vercel Deployment Protection must stay **off** for `chess-sathi-live`, or studen
 - Loading states use `skel("board"|"rows"|"cards")`, not "Loading…" text.
 - Milestones call `celebrate(iconName,title,sub)`; keep it for real progress only.
 - The last block in the `<style>` tag is the premium layer; put overrides there.
+- Icons: menu tabs, practice topics (`practice.json` → `icons`) and classroom buttons all use Lucide (ISC licence) paths. Add new ones from lucide.dev so the set stays consistent. The logo pawn lives in `public/icons/icon.svg`; PNG sizes are rendered from it.

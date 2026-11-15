@@ -41,19 +41,24 @@ const canShareScreen = () => typeof navigator !== "undefined" && !!(navigator.me
   && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 // ---------- small pieces ----------
+// Icons are from Lucide (ISC licence), the same set the main app uses.
 const I = {
-  hand: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12m0-1V4.5a1.5 1.5 0 0 1 3 0V12m0-6.5a1.5 1.5 0 0 1 3 0V13m0-4.5a1.5 1.5 0 0 1 3 0V15a7 7 0 0 1-7 7h-1.2a6 6 0 0 1-4.6-2.2L3.5 15.5a1.6 1.6 0 0 1 2.4-2.1L8 15.5"/></svg>,
-  image: <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>,
-  chat: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-5A8 8 0 1 1 21 12Z"/></svg>,
-  people: <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.2A5 5 0 0 1 21.5 19"/></svg>,
-  leave: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 14.5c5-4.7 12-4.7 17 0l-2.3 2.6-3.2-1.4v-2.6a11 11 0 0 0-6 0v2.6l-3.2 1.4z"/></svg>,
-  close: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>,
-  chev: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>,
-  screen: <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>,
-  puzzle: <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 12h17M12 3.5v17"/><path d="M3.5 3.5h8.5v8.5H3.5zM12 12h8.5v8.5H12z" fill="currentColor" stroke="none" opacity=".35"/></svg>,
+  hand: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/> <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/> <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/> <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>,
+  image: <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/> <circle cx="9" cy="9" r="2"/> <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>,
+  chat: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/></svg>,
+  people: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/> <path d="M16 3.128a4 4 0 0 1 0 7.744"/> <path d="M22 21v-2a4 4 0 0 0-3-3.87"/> <circle cx="9" cy="7" r="4"/></svg>,
+  leave: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.1 13.9a14 14 0 0 0 3.732 2.668 1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2 18 18 0 0 1-12.728-5.272"/> <path d="M22 2 2 22"/> <path d="M4.76 13.582A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 .244.473"/></svg>,
+  close: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/> <path d="m6 6 12 12"/></svg>,
+  chev: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>,
+  screen: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 10 3-3 3 3"/> <path d="M12 13V7"/> <rect width="20" height="14" x="2" y="3" rx="2"/> <path d="M12 17v4"/> <path d="M8 21h8"/></svg>,
+  puzzle: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.39 4.39a1 1 0 0 0 1.68-.474 2.5 2.5 0 1 1 3.014 3.015 1 1 0 0 0-.474 1.68l1.683 1.682a2.414 2.414 0 0 1 0 3.414L19.61 15.39a1 1 0 0 1-1.68-.474 2.5 2.5 0 1 0-3.014 3.015 1 1 0 0 1 .474 1.68l-1.683 1.682a2.414 2.414 0 0 1-3.414 0L8.61 19.61a1 1 0 0 0-1.68.474 2.5 2.5 0 1 1-3.014-3.015 1 1 0 0 0 .474-1.68l-1.683-1.682a2.414 2.414 0 0 1 0-3.414L4.39 8.61a1 1 0 0 1 1.68.474 2.5 2.5 0 1 0 3.014-3.015 1 1 0 0 1-.474-1.68l1.683-1.682a2.414 2.414 0 0 1 3.414 0z"/></svg>,
+  mic: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19v3"/> <path d="M19 10v2a7 7 0 0 1-14 0v-2"/> <rect x="9" y="2" width="6" height="13" rx="3"/></svg>,
+  micOff: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19v3"/> <path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/> <path d="M16.95 16.95A7 7 0 0 1 5 12v-2"/> <path d="M18.89 13.23A7 7 0 0 0 19 12v-2"/> <path d="m2 2 20 20"/> <path d="M9 9v3a3 3 0 0 0 5.12 2.12"/></svg>,
+  cam: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/> <rect x="2" y="6" width="14" height="12" rx="2"/></svg>,
+  camOff: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.66 6H14a2 2 0 0 1 2 2v2.5l5.248-3.062A.5.5 0 0 1 22 7.87v8.196"/> <path d="M16 16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2"/> <path d="m2 2 20 20"/></svg>,
 };
 const Logo = () => (
-  <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="var(--accent)"/><circle cx="14" cy="9.2" r="3.6" fill="#fff"/><path d="M10.4 20.6c0-3.3 1.6-5.7 3.6-7.3 2 1.6 3.6 4 3.6 7.3z" fill="#fff"/><rect x="8.4" y="20.2" width="11.2" height="2.8" rx="1.4" fill="#fff"/></svg>
+  <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><defs><linearGradient id="cs-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#E5525B"/><stop offset="1" stopColor="#B3202B"/></linearGradient></defs><rect width="28" height="28" rx="7" fill="url(#cs-g)"/><g fill="#fff"><circle cx="14" cy="8.5" r="3.7"/><rect x="9.7" y="11.9" width="8.6" height="2.2" rx="1.1"/><path d="M11.4 13h5.2c.2 3.6 1.2 5.9 2.9 7.9h-11c1.7-2 2.7-4.3 2.9-7.9z"/><rect x="7" y="20.2" width="14" height="3" rx="1.5"/></g></svg>
 );
 
 function Wait({ title, text, back, spin }) {
@@ -290,16 +295,16 @@ function Classroom({ pass, notify, recording }) {
       <footer className="dock">
         <div className="group">
           <div className="combo">
-            <TrackToggle source={Track.Source.Microphone} className="dbtn"><span className="lbl">Mic</span></TrackToggle>
+            <TrackToggle source={Track.Source.Microphone} showIcon={false} className="dbtn"><span className="i-on">{I.mic}</span><span className="i-off">{I.micOff}</span><span className="lbl">Mic</span></TrackToggle>
             <MediaDeviceMenu kind="audioinput" className="dmenu" aria-label="Choose microphone" title="Choose microphone">{I.chev}</MediaDeviceMenu>
           </div>
           <div className="combo">
-            <TrackToggle source={Track.Source.Camera} className="dbtn"><span className="lbl">Camera</span></TrackToggle>
+            <TrackToggle source={Track.Source.Camera} showIcon={false} className="dbtn"><span className="i-on">{I.cam}</span><span className="i-off">{I.camOff}</span><span className="lbl">Camera</span></TrackToggle>
             <MediaDeviceMenu kind="videoinput" className="dmenu" aria-label="Choose camera" title="Choose camera">{I.chev}</MediaDeviceMenu>
           </div>
           {shareAllowed ? (
             shareSupported
-              ? <TrackToggle source={Track.Source.ScreenShare} captureOptions={{ audio: true, selfBrowserSurface: "include" }} className="dbtn" onDeviceError={() => notify("Screen sharing was blocked or cancelled.", true)}><span className="lbl">Share screen</span></TrackToggle>
+              ? <TrackToggle source={Track.Source.ScreenShare} captureOptions={{ audio: true, selfBrowserSurface: "include" }} showIcon={false} className="dbtn" onDeviceError={() => notify("Screen sharing was blocked or cancelled.", true)}>{I.screen}<span className="lbl">Share screen</span></TrackToggle>
               : <button className="dbtn" disabled title="Screen sharing works on a computer (Chrome, Edge or Safari)" onClick={() => {}}>{I.screen}<span className="lbl">Share screen</span></button>
           ) : null}
         </div>
