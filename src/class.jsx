@@ -337,7 +337,8 @@ function Classroom({ pass, notify, recording }) {
               ) : null}
             </div>
           ) : null}
-          {pip.kind ? <button className={"dbtn" + (pip.on ? " on" : "")} aria-pressed={pip.on} onClick={pip.toggle} title="A small floating window with everyone in the class">{P.pip}<span className="lbl">Mini window</span></button> : null}
+          {/* Chrome/Edge on a computer open the mini window by themselves on tab switch, so no button there. */}
+          {pip.kind === "video" ? <button className={"dbtn" + (pip.on ? " on" : "")} aria-pressed={pip.on} onClick={pip.toggle} title="A small floating window with everyone in the class">{P.pip}<span className="lbl">Mini window</span></button> : null}
           {isTeacher ? <button className={"dbtn" + (panel === "puzzle" ? " on" : "")} aria-pressed={panel === "puzzle"} onClick={() => togglePanel("puzzle")}>{I.puzzle}<span className="lbl">Puzzle</span>{pz.active && !pz.active.ended ? <span className="badge">{Object.values(pz.results).filter((r) => r.status === "ok").length}</span> : null}</button> : null}
           <button className={"dbtn" + (panel === "chat" ? " on" : "")} aria-pressed={panel === "chat"} onClick={() => togglePanel("chat")}>{I.chat}<span className="lbl">Chat</span>{unread ? <span className="badge">{unread}</span> : null}</button>
           <button className={"dbtn hide-sm" + (panel === "people" ? " on" : "")} aria-pressed={panel === "people"} onClick={() => togglePanel("people")}>{I.people}<span className="lbl">People</span>{handsUp ? <span className="badge">{handsUp}</span> : null}</button>
