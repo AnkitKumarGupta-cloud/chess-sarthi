@@ -711,6 +711,33 @@ html{scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent
 .tp-pz{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;padding:4px 0 14px}.tp-pz .board{width:min(260px,100%)}
 @media (max-width:900px){.tp-wrap{position:sticky;left:16px;width:calc(100vw - 66px)}.tp-mb b{min-width:0;width:100%}.tp-grid{grid-template-columns:1fr 1fr}}
 .t-scan{display:flex!important;flex-direction:row!important;align-items:center;gap:14px;text-decoration:none;color:var(--ink)}.t-scan:hover{box-shadow:var(--shadow-up)}.scan-i{width:46px;height:46px;flex:none;border-radius:14px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}.scan-i .ic{width:24px;height:24px}
+
+/* Openings */
+.op-search{display:flex;align-items:center;gap:10px;padding:0 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);max-width:640px}
+.op-search .ic{width:18px;height:18px;color:var(--muted);flex:none}
+.op-search input{flex:1;border:0;background:transparent;font:inherit;padding:12px 0;color:var(--ink);min-width:0}
+.op-search input:focus{outline:none}.op-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft,rgba(210,55,63,.15))}
+.op-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.op-card{display:flex;gap:14px;align-items:center;text-align:left;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
+.op-card:hover{border-color:var(--accent)}.op-card:focus-visible,.op-row:focus-visible,.op-fam:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.op-thumb{width:96px;flex:none;border-radius:8px;overflow:hidden;pointer-events:none}
+.op-thumb .coord{display:none}
+.op-card-t{display:flex;flex-direction:column;gap:4px;min-width:0}
+.op-card-t .mono{font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.op-fams{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px}
+.op-fam,.op-row{display:flex;justify-content:space-between;gap:12px;align-items:center;text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
+.op-fam:hover,.op-row:hover{border-color:var(--accent)}
+.op-list{display:flex;flex-direction:column;gap:6px;max-width:820px}
+.op-row{flex-direction:column;align-items:flex-start;gap:2px}
+.op-row .mono{font-size:.8rem}
+.op-ideas{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.op-lines{display:flex;flex-wrap:wrap;gap:6px}
+.op-lines .chip{padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:.88rem;font-weight:600;cursor:pointer}
+.op-lines .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.op-allfam{align-self:flex-start;background:none;border:0;padding:0;color:var(--accent);font:inherit;font-weight:600;cursor:pointer}
+.op-moves li.on button{background:var(--accent-soft,rgba(210,55,63,.1))}
+.op-moves li.op-branch{border-top:2px dashed var(--line);padding-top:4px;margin-top:4px}
+.op-play .controls .ctl:disabled{opacity:.4}
 </style>
 
 </head>
@@ -723,6 +750,7 @@ html{scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent
   <nav class="tabs" id="tabs">
     <a href="#home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/> <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</a>
     <a href="#courses"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v16"/> <path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"/></svg>Lessons</a>
+    <a href="#openings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>Openings</a>
     <a href="#live"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/> <rect x="2" y="6" width="14" height="12" rx="2"/></svg>Live</a>
     <a href="#practice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.596 12.768a2 2 0 1 0 2.829-2.829l-1.768-1.767a2 2 0 0 0 2.828-2.829l-2.828-2.828a2 2 0 0 0-2.829 2.828l-1.767-1.768a2 2 0 1 0-2.829 2.829z"/> <path d="m2.5 21.5 1.4-1.4"/> <path d="m20.1 3.9 1.4-1.4"/> <path d="M5.343 21.485a2 2 0 1 0 2.829-2.828l1.767 1.768a2 2 0 1 0 2.829-2.829l-6.364-6.364a2 2 0 1 0-2.829 2.829l1.768 1.767a2 2 0 0 0-2.828 2.829z"/> <path d="m9.6 14.4 4.8-4.8"/></svg>Practice</a>
     <a href="#puzzles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.39 4.39a1 1 0 0 0 1.68-.474 2.5 2.5 0 1 1 3.014 3.015 1 1 0 0 0-.474 1.68l1.683 1.682a2.414 2.414 0 0 1 0 3.414L19.61 15.39a1 1 0 0 1-1.68-.474 2.5 2.5 0 1 0-3.014 3.015 1 1 0 0 1 .474 1.68l-1.683 1.682a2.414 2.414 0 0 1-3.414 0L8.61 19.61a1 1 0 0 0-1.68.474 2.5 2.5 0 1 1-3.014-3.015 1 1 0 0 0 .474-1.68l-1.683-1.682a2.414 2.414 0 0 1 0-3.414L4.39 8.61a1 1 0 0 1 1.68.474 2.5 2.5 0 1 0 3.014-3.015 1 1 0 0 1-.474-1.68l1.683-1.682a2.414 2.414 0 0 1 3.414 0z"/></svg>Puzzles</a>
@@ -878,6 +906,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 /* Line icons (paths from Lucide, ISC licence) so rewards match the outline icons in the menu */
 const UI_ICONS={
+ search:'<path d="m21 21-4.34-4.34"/> <circle cx="11" cy="11" r="8"/>',
  scan:'<path d="M3 7V5a2 2 0 0 1 2-2h2"/> <path d="M17 3h2a2 2 0 0 1 2 2v2"/> <path d="M21 17v2a2 2 0 0 1-2 2h-2"/> <path d="M7 21H5a2 2 0 0 1-2-2v-2"/> <path d="M7 12h10"/>',
  play:'<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>',
  pause:'<rect x="14" y="3" width="5" height="18" rx="1"/> <rect x="5" y="3" width="5" height="18" rx="1"/>',
@@ -2010,7 +2039,161 @@ function liveHome(root){
 }
 
 /* ---------- Router ---------- */
-const VIEWS={plevel:[vPlevel,afterPlevel],classic:[vClassic,afterClassic],practice:[vPractice,afterPractice],drill:[vDrill,afterDrill],live:[vLive,afterLive],home:[vHome,afterHome],courses:[vCourses],lesson:[vLesson,afterLesson],puzzles:[vPuzzles,afterPuzzles],tests:[vTests,afterTests],progress:[vProgress,afterProgress]};
+/* ---------- Openings (explained lines are our own; every named line from Lichess chess-openings, CC0) ---------- */
+let OPG=null,OPA=null,OPN=null; // explained openings, all named lines, notes by move sequence
+const opHq=k=>new URLSearchParams((location.hash.split("?")[1]||"")).get(k);
+async function opLoad(all){
+  if(!OPG){const r=await fetch("/openings/guide.json?v=1");if(!r.ok)throw new Error("load");OPG=await r.json();
+    OPN={};OPG.forEach(o=>o.lines.forEach(l=>l.moves.forEach((m,i)=>{const k=l.moves.slice(0,i+1).join(" ");if(!(k in OPN))OPN[k]=l.notes[i]})))}
+  if(all&&!OPA){const r=await fetch("/openings/all.json?v=1");if(!r.ok)throw new Error("load");OPA=(await r.json()).families}
+}
+const opSide=s=>s==="w"?"White":"Black";
+const opMovesText=(ms,n)=>{const a=ms.slice(0,n||ms.length);return a.map((m,i)=>(i%2?"":((i/2+1)+". "))+m).join(" ")+(n&&ms.length>n?" …":"")};
+const OP_PIECE={p:"pawn",n:"knight",b:"bishop",r:"rook",q:"queen",k:"king"};
+/* A plain description of a move, used when there is no written note for it. */
+function opSay(mv,ply){
+  const who=mv.color==="w"?"White":"Black",pc=OP_PIECE[mv.piece];let t;
+  if(mv.flags.includes("k"))t=`${who} castles on the king side. The king goes to safety and the rook joins the game.`;
+  else if(mv.flags.includes("q"))t=`${who} castles on the queen side. The king steps aside and the rook comes to the centre.`;
+  else if(mv.captured)t=`${who} takes the ${OP_PIECE[mv.captured]} on ${mv.to} with the ${pc}${mv.flags.includes("e")?" (en passant)":""}.`;
+  else if(mv.piece==="p")t=`${who} pushes the ${mv.from[0]}-pawn to ${mv.to}${ply<6&&"de".includes(mv.from[0])?", taking space in the centre":""}.`;
+  else{const home=(mv.color==="w"?"1":"8")===mv.from[1];t=`${who} ${home&&"nb".includes(mv.piece)?"develops":"moves"} the ${pc} to ${mv.to}.`}
+  if(mv.promotion)t+=` The pawn becomes a ${OP_PIECE[mv.promotion]}.`;
+  if(mv.san.includes("#"))t+=" Checkmate!";else if(mv.san.includes("+"))t+=" Check!";
+  return t;
+}
+/* The line being shown: {title, sub, moves, notes, side, guide, family, lines, li} */
+let OPL=null,OPI=0,OPT=0,OPFLIP=null,OPJUMP=null;
+function opBuild(moves,notes){
+  const g=new Chess(),fens=[g.fen()],hi=[null],says=[];
+  moves.forEach((m,i)=>{const mv=g.move(m);if(!mv)return;fens.push(g.fen());hi.push([mv.from,mv.to]);
+    says.push((notes&&notes[i])||OPN[moves.slice(0,i+1).join(" ")]||opSay(mv,i))});
+  return {fens,hi,says};
+}
+function vOpenings(){
+  if(!OPG){opLoad().then(()=>route()==="openings"&&render()).catch(()=>{const a=$("#app");if(a&&route()==="openings")a.innerHTML=`<div class="card"><h2>Couldn't load the openings</h2><p class="li-m">Check your internet and try again.</p></div>`});return skel()}
+  const card=o=>`<button class="op-card" data-op="${o.id}"><div class="board op-thumb" data-fen="${esc(opBuild(o.lines[0].moves.slice(0,Math.min(8,o.lines[0].moves.length)),o.lines[0].notes).fens.pop())}" data-flip="${o.side==="b"?1:""}" aria-hidden="true"></div>
+    <span class="op-card-t"><b>${esc(o.name)}</b><span class="li-m mono">${esc(opMovesText(o.lines[0].moves,4))}</span><span class="row" style="gap:6px"><span class="pill level">${o.level}</span><span class="li-m">${o.lines.length} lines</span></span></span></button>`;
+  return `<section class="stack view"><div class="eyebrow">Openings</div><h1>Learn the first moves</h1>
+    <p class="li-m" style="max-width:640px">${OPG.length} openings explained move by move, in simple words. You can also explore every named opening line, 3,865 of them, from the free Lichess openings list.</p></section>
+  <section class="stack view">
+    <label class="op-search">${ico("search")}<input id="opQ" type="search" placeholder="Search a name or moves, like Najdorf or e4 c5" autocomplete="off" aria-label="Search openings"></label>
+    <div id="opRes"></div>
+  </section>
+  <section class="stack view" id="opMain">
+    <h2>Openings for White</h2><div class="op-grid">${OPG.filter(o=>o.side==="w").map(card).join("")}</div>
+    <h2 style="margin-top:12px">Defences for Black</h2><div class="op-grid">${OPG.filter(o=>o.side==="b").map(card).join("")}</div>
+    <h2 style="margin-top:12px">Every named opening</h2>
+    <div id="opFams">${OPA?opFamList():`<button class="btn ghost" id="opAll">Show all 149 opening families</button>`}</div>
+  </section>`;
+}
+const opFamList=()=>`<div class="op-fams">${OPA.map(f=>`<button class="op-fam" data-fam="${esc(f.name)}"><b>${esc(f.name)}</b><span class="li-m">${f.lines.length}</span></button>`).join("")}</div>`;
+function opNorm(s){return s.toLowerCase().replace(/\d+\.(\.\.)?/g," ").replace(/[^a-z0-9#+=\-' ]/g," ").replace(/\s+/g," ").trim()}
+function opSearch(q){
+  const box=$("#opRes"),main=$("#opMain");if(!box)return;
+  q=q.trim();if(!q){box.innerHTML="";main.hidden=false;return}
+  if(!OPA){box.innerHTML=`<p class="li-m" role="status">Loading every opening…</p>`;opLoad(true).then(()=>opSearch($("#opQ")?$("#opQ").value:"")).catch(()=>box.innerHTML=`<p class="li-m">Couldn't load the list. Check your internet.</p>`);return}
+  main.hidden=true;const nq=opNorm(q),words=nq.split(" "),out=[];
+  for(const o of OPG)if(opNorm(o.name).includes(nq))out.push(`<button class="op-row" data-op="${o.id}"><b>${esc(o.name)}</b><span class="li-m">Explained, ${o.lines.length} lines</span></button>`);
+  for(const f of OPA){f.lines.forEach((l,i)=>{if(out.length>=80)return;const name=opNorm(f.name+" "+l[1]),mv=opNorm(l[2]);
+    if(words.every(w=>name.includes(w))||mv.startsWith(nq))out.push(`<button class="op-row" data-fam="${esc(f.name)}" data-i="${i}"><b>${esc(f.name)}${l[1]?": "+esc(l[1]):""}</b><span class="li-m mono">${l[0]}, ${esc(opMovesText(l[2].split(" "),8))}</span></button>`)})}
+  box.innerHTML=out.length?`<p class="li-m">${out.length>=80?"First 80 matches":out.length+" match"+(out.length>1?"es":"")}</p><div class="op-list">${out.join("")}</div>`:`<p class="li-m">No opening matches “${esc(q)}”. Try a shorter word or the first moves, like e4 e5.</p>`;
+  opBind(box);
+}
+function opBind(root){
+  root.querySelectorAll("[data-op]").forEach(b=>b.onclick=()=>location.hash="opening?id="+b.dataset.op);
+  root.querySelectorAll("[data-fam]").forEach(b=>b.onclick=()=>location.hash=(b.dataset.i!=null?"opening?f="+encodeURIComponent(b.dataset.fam)+"&i="+b.dataset.i:"ofam?f="+encodeURIComponent(b.dataset.fam)));
+}
+function afterOpenings(){
+  if(!OPG)return;
+  document.querySelectorAll(".op-thumb").forEach(el=>drawBoard(el,el.dataset.fen,{flip:!!el.dataset.flip}));
+  opBind($("#opMain"));
+  const q=$("#opQ");if(q){q.oninput=()=>opSearch(q.value)}
+  const all=$("#opAll");if(all)all.onclick=()=>{all.textContent="Loading…";all.disabled=true;opLoad(true).then(()=>{$("#opFams").innerHTML=opFamList();opBind($("#opFams"))}).catch(()=>{all.textContent="Couldn't load. Try again";all.disabled=false})};
+}
+function vOfam(){
+  const fname=opHq("f")||"";
+  if(!OPA||!OPG){opLoad(true).then(()=>route()==="ofam"&&render()).catch(()=>{});return skel()}
+  const f=OPA.find(x=>x.name===fname);if(!f)return `<section class="stack view"><button class="back" data-go="openings">← Openings</button><h1>Opening not found</h1></section>`;
+  const g=OPG.find(o=>o.families.includes(f.name));
+  return `<section class="stack view"><button class="back" data-go="openings">← Openings</button><div class="eyebrow">${f.lines.length} named lines</div><h1>${esc(f.name)}</h1>
+    ${g?`<div class="keypoint"><p>${esc(g.about)}</p><button class="btn" data-op="${g.id}" style="margin-top:10px">Learn it move by move</button></div>`:""}
+    <label class="op-search">${ico("search")}<input id="ofQ" type="search" placeholder="Filter by name or moves" autocomplete="off" aria-label="Filter lines"></label>
+    <div class="op-list" id="ofList">${f.lines.map((l,i)=>`<button class="op-row" data-fam="${esc(f.name)}" data-i="${i}" data-k="${esc(opNorm(l[1]+" "+l[2]))}"><b>${l[1]?esc(l[1]):"Main position"}</b><span class="li-m mono">${l[0]}, ${esc(opMovesText(l[2].split(" "),10))}</span></button>`).join("")}</div></section>`;
+}
+function afterOfam(){
+  const list=$("#ofList");if(!list)return;opBind(document.querySelector("#app"));
+  const q=$("#ofQ");q.oninput=()=>{const n=opNorm(q.value);list.querySelectorAll(".op-row").forEach(r=>r.hidden=!!n&&!r.dataset.k.includes(n))};
+}
+function vOpening(){
+  const id=opHq("id"),fam=opHq("f"),li=+(opHq("l")||0),fi=+(opHq("i")||0);
+  if(!OPG||(fam&&!OPA)){opLoad(!!fam).then(()=>route()==="opening"&&render()).catch(()=>{});return skel("board")}
+  let L;
+  if(id){const o=OPG.find(x=>x.id===id)||OPG[0],l=o.lines[Math.min(li,o.lines.length-1)];
+    L={title:o.name,sub:l.name,moves:l.moves,notes:l.notes,side:o.side,guide:o,li:Math.min(li,o.lines.length-1),level:o.level,from:l.from||0}}
+  else{const f=OPA.find(x=>x.name===fam)||OPA[0],l=f.lines[Math.min(fi,f.lines.length-1)],g=OPG.find(o=>o.families.includes(f.name));
+    const ms=l[2].split(" ");L={title:f.name,sub:l[1]||"Main position",moves:ms,notes:null,side:g?g.side:"w",guide:g,family:f.name,eco:l[0],famCount:f.lines.length,from:0}}
+  OPL=Object.assign(L,opBuild(L.moves,L.notes));
+  if(OPI>L.moves.length||OPL.key!==location.hash){OPI=OPJUMP||0;OPJUMP=null;OPFLIP=null}OPL.key=location.hash;
+  const o=L.guide;
+  return `<section class="stack view"><button class="back" data-go="${L.family?"ofam?f="+encodeURIComponent(L.family):"openings"}">← ${esc(L.family||"Openings")}</button>
+    <div class="row">${L.level?`<span class="pill level">${L.level}</span>`:""}${o?`<span class="pill">${o.side==="w"?"For White":"For Black"}</span>`:""}${L.eco?`<span class="pill mono">${L.eco}</span>`:""}<span class="pill mono">${L.moves.length} moves</span></div>
+    <h1>${esc(L.title)}</h1><p class="li-m" style="margin-top:-6px">${esc(L.sub)}</p></section>
+  <section class="lesson view op-play">
+    <div class="player">
+      <div class="screen"><div class="board" id="opBoard"></div></div>
+      <div class="subtitle" id="opSay" aria-live="polite"></div>
+      <div class="controls">
+        <span class="mono li-m" id="opPos"></span>
+        <div class="row" style="gap:8px">
+          <button class="ctl" id="opStart">${ico("restart")}<small>Start</small></button>
+          <button class="ctl" id="opPrev">${ico("prev")}<small>Back</small></button>
+          <button class="ctl big" id="opAuto">${ico("play")}<small>Play</small></button>
+          <button class="ctl" id="opNext">${ico("next")}<small>Next</small></button>
+        </div>
+        <button class="ctl txt" id="opFlip" aria-label="Turn the board around">Flip</button>
+      </div>
+    </div>
+    <div class="stack">
+      ${o&&L.guide&&(L.li!=null)?`<div class="keypoint"><div class="eyebrow">About the ${esc(o.name)}</div><p style="margin-top:4px">${esc(o.about)}</p><ul class="op-ideas">${o.ideas.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+      <div class="eyebrow" style="margin-top:4px">Lines in this opening</div>
+      <div class="op-lines">${o.lines.map((l,i)=>`<button class="chip${i===L.li?" on":""}" data-line="${i}" aria-pressed="${i===L.li}">${esc(l.name)}</button>`).join("")}</div>
+      <button class="link op-allfam" data-fam="${esc(o.families[0])}">See all ${esc(o.families[0])} lines</button>`
+      :`<div class="keypoint"><p>${o?esc(o.about):`One of ${L.famCount} named lines in the ${esc(L.family)}. Moves with a written explanation come from our opening guide; the others are described plainly.`}</p>${o?`<button class="btn ghost" data-op="${o.id}" style="margin-top:10px">Learn the ${esc(o.name)} move by move</button>`:""}</div>`}
+      <div class="eyebrow" style="margin-top:4px">Moves, tap one to jump there</div>
+      <ol class="transcript op-moves" id="opTx">${L.moves.map((m,i)=>`<li${L.from&&i===L.from?' class="op-branch"':""}><button data-ply="${i+1}"><b class="mono">${i%2?Math.floor(i/2)+1+"... ":Math.floor(i/2)+1+". "}${esc(m)}</b> ${esc(OPL.says[i])}</button></li>`).join("")}</ol>
+    </div>
+  </section>`;
+}
+function opStop(){clearInterval(OPT);OPT=0;const b=$("#opAuto");if(b)b.innerHTML=`${ico("play")}<small>Play</small>`}
+function opShow(i){
+  if(!OPL||!$("#opBoard"))return;OPI=Math.max(0,Math.min(i,OPL.moves.length));
+  const flip=OPFLIP==null?OPL.side==="b":OPFLIP;
+  drawBoard($("#opBoard"),OPL.fens[OPI],{flip,hi:OPL.hi[OPI]||[]});
+  const n=OPI,ms=OPL.moves;
+  $("#opSay").innerHTML=n?`<b class="mono">${n%2?Math.ceil(n/2)+". ":Math.ceil(n/2-.5)+"... "}${esc(ms[n-1])}</b> ${esc(OPL.says[n-1])}`:`Starting position. Press Next or Play to go through the ${ms.length} moves.`;
+  $("#opPos").textContent=`Move ${n} of ${ms.length}`;
+  document.querySelectorAll("#opTx li").forEach((li,k)=>{li.classList.toggle("on",k===n-1);if(k===n-1&&OPT)li.scrollIntoView({block:"nearest"})});
+  $("#opPrev").disabled=n===0;$("#opNext").disabled=n===ms.length;
+}
+function opKey(e){if(route()!=="opening"||e.target.closest("input,textarea"))return;if(e.key==="ArrowRight"){opStop();opShow(OPI+1)}else if(e.key==="ArrowLeft"){opStop();opShow(OPI-1)}}
+document.addEventListener("keydown",opKey);
+window.addEventListener("hashchange",()=>{if(route()!=="opening")opStop()});
+function afterOpening(){
+  if(!OPL||!$("#opBoard"))return;opStop();
+  opShow(OPI);
+  $("#opStart").onclick=()=>{opStop();opShow(0)};
+  $("#opPrev").onclick=()=>{opStop();opShow(OPI-1)};
+  $("#opNext").onclick=()=>{opStop();opShow(OPI+1)};
+  $("#opFlip").onclick=()=>{OPFLIP=!(OPFLIP==null?OPL.side==="b":OPFLIP);opShow(OPI)};
+  $("#opAuto").onclick=()=>{if(OPT){opStop();return}if(OPI>=OPL.moves.length)opShow(0);
+    $("#opAuto").innerHTML=`${ico("pause")}<small>Pause</small>`;OPT=setInterval(()=>{if(OPI>=OPL.moves.length){opStop();return}opShow(OPI+1)},2600)};
+  document.querySelectorAll("#opTx [data-ply]").forEach(b=>b.onclick=()=>{opStop();opShow(+b.dataset.ply)});
+  // switching to a variation starts where it leaves the main line
+  document.querySelectorAll("[data-line]").forEach(b=>b.onclick=()=>{OPJUMP=OPL.guide.lines[+b.dataset.line].from||0;location.hash="opening?id="+OPL.guide.id+"&l="+b.dataset.line});
+  opBind(document.querySelector(".op-play"));
+}
+const VIEWS={plevel:[vPlevel,afterPlevel],classic:[vClassic,afterClassic],practice:[vPractice,afterPractice],drill:[vDrill,afterDrill],live:[vLive,afterLive],home:[vHome,afterHome],courses:[vCourses],lesson:[vLesson,afterLesson],puzzles:[vPuzzles,afterPuzzles],tests:[vTests,afterTests],progress:[vProgress,afterProgress],openings:[vOpenings,afterOpenings],opening:[vOpening,afterOpening],ofam:[vOfam,afterOfam]};
 function route(){const h=(location.hash||"#home").slice(1).split("?")[0];return VIEWS[h]?h:"home"}
 function render(){
   document.body.classList.toggle("gated",AUTH.state!=="in"&&AUTH.state!=="guest");renderWho();
@@ -2022,7 +2205,7 @@ function render(){
     document.querySelectorAll("#tabs a").forEach(x=>x.removeAttribute("aria-current"));$("#lkGo").onclick=()=>location.hash="live";return}
   document.body.dataset.route=r;if(r!=="lesson")stopLesson();
   const [v,a]=VIEWS[r];$("#app").innerHTML=v();a&&a();
-  const tab=r==="lesson"?"courses":r==="drill"?"practice":(r==="plevel"||r==="classic")?"puzzles":r;
+  const tab=r==="lesson"?"courses":(r==="opening"||r==="ofam")?"openings":r==="drill"?"practice":(r==="plevel"||r==="classic")?"puzzles":r;
   document.querySelectorAll("#tabs a").forEach(x=>{if(x.getAttribute("href")==="#"+tab)x.setAttribute("aria-current","page");else x.removeAttribute("aria-current")});
   document.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{curLesson=b.dataset.open;if(location.hash==="#lesson")render();else location.hash="lesson";window.scrollTo(0,0)});
   document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>location.hash=b.dataset.go);

@@ -142,3 +142,10 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - Home "Live class" tile draws last time's list at once (localStorage `cs-classes:<username>`, up to 6 h old), then the fresh one. The same GET sent twice within 4 s shares one request (`liveApi`).
 - Server functions already run in Mumbai (bom1).
 - Puzzle map art (`public/worlds/w0..w5.webp`): re-saved at WebP quality 65 (1.5 MB → 1.06 MB, same 1024×1536 size). Each world first shows a tiny blurred preview built into the page (`WORLD_TINY`), then the full picture: the current world's at once, the others only when scrolled near (IntersectionObserver). Home fetches the current world's picture while idle. Pictures load as `?v=2`; bump it (and remake `WORLD_TINY`) if the art changes.
+
+## Openings tab (15 Nov 2026)
+- New tab **Openings** (`#openings`, after Lessons). 21 openings explained move by move in simple words (9 for White, 12 defences for Black), 61 lines (main line + variations), 841 move notes, each with an "About" text and 3 key ideas. Plus every named line from the Lichess chess-openings list (CC0): 149 families, 3,865 lines, searchable by name or moves.
+- Pages: `#openings` (cards + search + all families), `#ofam?f=<family>` (all lines of a family, filter box), `#opening?id=<id>&l=<line>` (explained line) and `#opening?f=<family>&i=<n>` (Lichess line). Player: Start/Back/Play/Next/Flip, tap any move, arrow keys. Switching to a variation jumps to the move where it leaves the main line.
+- Lichess lines use our written note when the same move order appears in the guide; other moves get a plain description ("Black develops the knight to f6").
+- Data: `public/openings/guide.json` (48 KB) and `all.json` (300 KB, 52 KB gzipped, loaded only when searching or listing families). Edit the text in `tools/openings/guide1-3.py`, then run `python3 tools/openings/build.py public/openings` (needs `pip install chess` and a clone of lichess-org/chess-openings in `co/` next to the script). Bump `?v=1` in `opLoad` when the files change.
+- Code: "Openings" block before `const VIEWS` in `public/index.html`.
