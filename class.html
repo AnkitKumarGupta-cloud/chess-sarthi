@@ -163,6 +163,25 @@
     .bgpanel{position:fixed;left:8px;right:8px;bottom:84px;transform:none;width:auto}
     .handsbar{bottom:80px}
   }
+  /* before joining: mic and camera choice */
+  .lobby{min-height:100%;display:flex;align-items:center;justify-content:center;gap:40px;padding:24px;flex-wrap:wrap}
+  .lobby-prev{position:relative;width:min(640px,100%);aspect-ratio:16/9;background:var(--panel);border-radius:14px;overflow:hidden}
+  .lobby-prev video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+  .lobby-off{position:absolute;inset:0 0 72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted)}
+  .lobby-off svg{width:36px;height:36px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .lobby-btns{position:absolute;left:0;right:0;bottom:16px;display:flex;justify-content:center;gap:14px}
+  .lobby-tg{position:relative;width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.35);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .lobby-tg.off{background:var(--accent);border-color:var(--accent)}
+  .lobby-tg svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .lobby-lvl{position:absolute;right:9px;bottom:12px;width:3px;height:16px;border-radius:2px;background:var(--good);transform-origin:bottom}
+  .lobby-side{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;max-width:320px}
+  .lobby-side h1{font-size:1.4rem;margin:0}
+  .lobby-side p{color:var(--muted);margin:0;line-height:1.55}
+  .lobby-side .lobby-err{color:var(--accent-2)}
+  .lobby-side .btn{min-width:180px;font-size:1rem}
+  @media (max-width:760px){.lobby{align-content:center;gap:24px}.lobby-prev{aspect-ratio:3/4;max-height:58vh}}
+  .lobby-back{color:var(--muted);font-size:.9rem}
+  .lobby-tg:focus-visible,.lobby-side .btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
   .nameinput{width:min(320px,100%);background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:12px 14px;font:inherit;font-size:1rem;text-align:center}
   .btn:disabled{opacity:.5;cursor:not-allowed}
   /* the floating class window (mini window) */

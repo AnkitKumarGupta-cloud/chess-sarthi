@@ -371,6 +371,83 @@ function NameForm({ onJoin }) {
   );
 }
 
+// ---------- before joining: choose mic and camera (like Google Meet) ----------
+const AV_KEY = "cs.av";
+function savedAv(isTeacher) {
+  try { const v = JSON.parse(localStorage.getItem(AV_KEY) || "null"); if (v && typeof v.mic === "boolean" && typeof v.cam === "boolean") return v; } catch {}
+  return { mic: !!isTeacher, cam: true };
+}
+function Lobby({ pass, onJoin }) {
+  const [av, setAv] = useState(() => savedAv(pass.isTeacher));
+  const [err, setErr] = useState("");
+  const [level, setLevel] = useState(0);
+  const vid = useRef(null);
+  const camStream = useRef(null);
+  const micStream = useRef(null);
+  const stop = (r) => { if (r.current) { r.current.getTracks().forEach((t) => t.stop()); r.current = null; } };
+
+  // Camera preview
+  useEffect(() => {
+    if (!av.cam) { stop(camStream); return; }
+    let dead = false;
+    navigator.mediaDevices.getUserMedia({ video: true }).then((st) => {
+      if (dead) { st.getTracks().forEach((t) => t.stop()); return; }
+      camStream.current = st; if (vid.current) vid.current.srcObject = st; setErr("");
+    }).catch(() => { if (!dead) { setAv((a) => ({ ...a, cam: false })); setErr("We couldn't use your camera. Allow it in the browser's address bar."); } });
+    return () => { dead = true; stop(camStream); };
+  }, [av.cam]);
+
+  // Microphone level, so you can see it works
+  useEffect(() => {
+    if (!av.mic) { stop(micStream); setLevel(0); return; }
+    let dead = false, ctx = null, raf = 0;
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((st) => {
+      if (dead) { st.getTracks().forEach((t) => t.stop()); return; }
+      micStream.current = st; setErr("");
+      try {
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const an = ctx.createAnalyser(); an.fftSize = 512;
+        ctx.createMediaStreamSource(st).connect(an);
+        const buf = new Uint8Array(an.fftSize);
+        const tick = () => {
+          an.getByteTimeDomainData(buf);
+          let m = 0; for (const b of buf) m = Math.max(m, Math.abs(b - 128));
+          setLevel(Math.min(1, m / 64)); raf = requestAnimationFrame(tick);
+        };
+        tick();
+      } catch {}
+    }).catch(() => { if (!dead) { setAv((a) => ({ ...a, mic: false })); setErr("We couldn't use your microphone. Allow it in the browser's address bar."); } });
+    return () => { dead = true; cancelAnimationFrame(raf); if (ctx) ctx.close().catch(() => {}); stop(micStream); };
+  }, [av.mic]);
+
+  const flip = (k) => setAv((a) => ({ ...a, [k]: !a[k] }));
+  const join = () => {
+    stop(camStream); stop(micStream);
+    try { localStorage.setItem(AV_KEY, JSON.stringify(av)); } catch {}
+    onJoin(av);
+  };
+  return (
+    <div className="lobby">
+      <div className="lobby-prev">
+        {av.cam ? <video ref={vid} autoPlay playsInline muted /> : <div className="lobby-off">{I.camOff}<span>Camera is off</span></div>}
+        <div className="lobby-btns">
+          <button type="button" className={"lobby-tg" + (av.mic ? "" : " off")} aria-pressed={av.mic} onClick={() => flip("mic")} title={av.mic ? "Turn off microphone" : "Turn on microphone"}>
+            {av.mic ? I.mic : I.micOff}{av.mic ? <span className="lobby-lvl" style={{ transform: "scaleY(" + (0.15 + level * 0.85) + ")" }} /> : null}
+          </button>
+          <button type="button" className={"lobby-tg" + (av.cam ? "" : " off")} aria-pressed={av.cam} onClick={() => flip("cam")} title={av.cam ? "Turn off camera" : "Turn on camera"}>{av.cam ? I.cam : I.camOff}</button>
+        </div>
+      </div>
+      <div className="lobby-side">
+        <h1>Ready to join?</h1>
+        <p>{pass.isTeacher ? "Your students will see and hear you as you choose here." : "Choose your microphone and camera. You can change them any time in the class."}</p>
+        {err ? <p className="lobby-err" role="alert">{err}</p> : null}
+        <button className="btn" type="button" onClick={join}>Join now</button>
+        <a className="lobby-back" href="/#live">Back to classes</a>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [pass, setPass] = useState(null);
   const [needName, setNeedName] = useState(false);
@@ -378,6 +455,7 @@ function App() {
   const [note, setNote] = useState(null);
   const [left, setLeft] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [av, setAv] = useState(null); // chosen in the lobby: { mic, cam }
   const stopped = useRef(false);
 
   useEffect(() => {
@@ -402,13 +480,14 @@ function App() {
   if (left) return <Wait title="You left the class" text={pass && pass.isTeacher ? "If recording is switched on, the recording shows up on the Live page a few minutes after the class ends." : "See you next class! Recordings, when available, are on the Live page."} back />;
   if (needName) return <NameForm onJoin={join} />;
   if (!pass) return <Wait title="Opening your class…" spin />;
+  if (!av) return <Lobby pass={pass} onJoin={setAv} />;
 
   return (
     <div style={{ height: "100%" }} data-lk-theme="default">
       {note ? <div className={"note" + (note.bad ? " bad" : "")} role="status">{note.text}</div> : null}
       <LiveKitRoom
         serverUrl={pass.serverUrl} token={pass.token} connect
-        video={true} audio={pass.isTeacher}
+        video={av.cam} audio={av.mic}
         onConnected={() => {
           // Recording starts automatically when the teacher joins, if it is switched on.
           if (!pass.isTeacher) return;

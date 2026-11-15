@@ -119,3 +119,9 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - Other browsers and phones get one picture-in-picture video with everyone drawn into it on a canvas (`useVideoPip`, `drawEveryone`). It has no buttons, and it has not been tried on a real iPhone, Android phone, Safari or Firefox.
 - `window.open` must come **after** `requestWindow` in the same click (the other order is refused by Chrome).
 - Test without a class: `test/harness/pip.jsx` (see the top of that file). Not tested in a real class with real cameras.
+
+## Before joining a class (lobby, 15 Nov 2026)
+- After the class opens, everyone sees "Ready to join?" with a camera preview and mic / camera buttons (like Google Meet), then **Join now**. `Lobby` in `src/class.jsx`, styles `.lobby…` in `class.html`.
+- Starting choice: last time's choice on this device (localStorage `cs.av`), otherwise camera on, mic on for the teacher and off for students.
+- If the browser blocks the camera or mic, that switch turns off and a note says to allow it in the address bar.
+- Test: `node test/dev-server.mjs` then `python3 /home/claude/tools/lobby.py` (fake camera, desktop + phone sizes).
