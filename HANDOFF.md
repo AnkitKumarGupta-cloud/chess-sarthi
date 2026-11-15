@@ -134,3 +134,10 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - Accuracy on test screenshots: 36 of 36 boards found; 100% of squares on 24 flat boards, 99.9% on 12 wood/marble boards. Works best on flat 2D boards (Lichess, Chess.com, our app); 3D boards, photos and arrows drawn on the board will need fixing by hand. Not yet tried in a real class.
 - Retrain: `tools/boardscan/` (`gen.py` makes squares from Lichess piece sets in a lila checkout, `train.py` trains and writes the .bin, `shots.py` + `run.mjs` test whole screenshots).
 - Test: `npx vite --port 5179` then `python3 test/scan-e2e.py`.
+
+## Speed (15 Nov 2026)
+- One font file served from this site: `public/fonts/instrument-sans.woff2` (30 KB, weights 400–700, Latin; SIL OFL in `public/fonts/OFL.txt`), preloaded on every page. No Google Fonts connections any more. The classroom page dropped Unbounded and JetBrains Mono (design rule: one font).
+- Cache headers in `vercel.json`: `/assets`, `/vendor`, `/fonts` 1 year (file names change when content changes); `/stockfish`, `/mediapipe`, `/scan`, `/voice` 30 days; icons, worlds, backgrounds, sounds 7 days. **When you replace a file in a 30-day/7-day folder, give it a new name or a new `?v=`** (the board-reader model is loaded as `pieces.bin?v=1`).
+- Classroom: the background-blur engine (MediaPipe) loads 3 s after the class opens instead of with the page (class code 306 KB → 263 KB gzipped). When a Join / Start button is on screen (Home tile or Live tab), the classroom code is downloaded in the background (`prefetchClass` in `index.html`).
+- Home "Live class" tile draws last time's list at once (localStorage `cs-classes:<username>`, up to 6 h old), then the fresh one. The same GET sent twice within 4 s shares one request (`liveApi`).
+- Server functions already run in Mumbai (bom1).

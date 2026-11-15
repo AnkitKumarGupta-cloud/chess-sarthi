@@ -5,7 +5,7 @@ let model = null;
 self.onmessage = async (e) => {
   try {
     if (!model) {
-      const r = await fetch("/scan/pieces.bin");
+      const r = await fetch("/scan/pieces.bin?v=1") // change v when the model file is replaced (it is cached for 30 days);
       if (!r.ok) throw new Error("Couldn't load the board reader. Check your internet.");
       model = parseModel(await r.arrayBuffer());
     }

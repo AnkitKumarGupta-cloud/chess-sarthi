@@ -7,7 +7,6 @@ import {
 } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { RoomEvent, Track } from "livekit-client";
-import { BackgroundProcessor, supportsBackgroundProcessors } from "@livekit/track-processors";
 import { usePuzzle, TeacherPuzzle, StudentPuzzle } from "./puzzle.jsx";
 import { Tile } from "./tile.jsx";
 import { usePip, PipWindow, P } from "./pip.jsx";
@@ -99,7 +98,10 @@ const BACKGROUNDS = [
   { id: "night", label: "Night sky", img: "/backgrounds/night.jpg" },
 ];
 // MediaPipe's engine is served from this website, so blockers or a slow CDN can't stop it.
-const makeProcessor = (delegate) => BackgroundProcessor({
+// The background engine (and MediaPipe) is loaded only when needed, a few seconds after the class opens.
+let bgMod = null;
+const loadBg = () => (bgMod = bgMod || import("@livekit/track-processors"));
+const makeProcessor = async (delegate) => (await loadBg()).BackgroundProcessor({
   mode: "disabled",
   assetPaths: { tasksVisionFileSet: location.origin + "/mediapipe" },
   segmenterOptions: { delegate },
@@ -110,7 +112,11 @@ function useBackground(notify) {
   const proc = useRef(null);
   const [bg, setBg] = useState("none");
   const [busy, setBusy] = useState(false);
-  const supported = useMemo(() => { try { return supportsBackgroundProcessors(); } catch { return false; } }, []);
+  const [supported, setSupported] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => loadBg().then((m) => { try { setSupported(m.supportsBackgroundProcessors()); } catch {} }).catch(() => {}), 3000);
+    return () => clearTimeout(t);
+  }, []);
 
   const pick = async (b) => {
     const track = cameraTrack && cameraTrack.track;
@@ -118,11 +124,11 @@ function useBackground(notify) {
     setBusy(true);
     try {
       if (!proc.current) {
-        try { const p = makeProcessor("GPU"); await track.setProcessor(p); proc.current = p; }
+        try { const p = await makeProcessor("GPU"); await track.setProcessor(p); proc.current = p; }
         catch (gpuErr) {
           console.warn("Background on GPU failed, trying CPU", gpuErr);
           try { await track.stopProcessor(); } catch {}
-          const p = makeProcessor("CPU"); await track.setProcessor(p); proc.current = p;
+          const p = await makeProcessor("CPU"); await track.setProcessor(p); proc.current = p;
         }
       }
       if (b.id === "none") await proc.current.switchTo({ mode: "disabled" });

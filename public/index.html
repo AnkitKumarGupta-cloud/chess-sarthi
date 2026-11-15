@@ -15,12 +15,10 @@ try{var th=localStorage.getItem("cs-theme");if(th==="light"||th==="dark")documen
 <meta name="apple-mobile-web-app-title" content="Chess Sathi">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Fonts load in the background (the page draws straight away with system fonts, then swaps). -->
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap"></noscript>
+<!-- One font, served from this site (Instrument Sans, SIL OFL, /fonts/OFL.txt): no extra connections to Google. -->
+<link rel="preload" href="/fonts/instrument-sans.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face{font-family:"Instrument Sans";src:url(/fonts/instrument-sans.woff2) format("woff2");font-weight:400 700;font-style:normal;font-display:swap}
 /* Styles, cleaned Nov 2026 (unused rules removed, overridden layers merged). One rule per line.
    Design rules are in HANDOFF.md: one font, flat cards, red = action, gold = reward, green = correct. */
 @keyframes pulse{0%,to{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 50%,transparent)}50%{box-shadow:0 0 0 6px transparent}}
@@ -1004,12 +1002,18 @@ function afterHome(){
   const go=()=>{pzStart=d.id;location.hash="classic"};
   drawBoard($("#heroBoard"),d.fen,{flip:d.fen.split(" ")[1]==="b",onSquare:go});$("#dailyGo").onclick=go;
   const box=$("#homeLive");if(!box||!AUTH.user)return;
-  liveApi("/classes").then(r=>{const cs=r.classes||[];const live=cs.find(c=>c.live),up=cs.filter(c=>!c.live&&!c.ended).sort((a,b)=>a.startsAt<b.startsAt?-1:1)[0];
+  /* Draw last time's classes at once (saved on this device), then the fresh list when it arrives. */
+  const ck="cs-classes:"+AUTH.user.username;
+  const drawLive=r=>{const cs=r.classes||[];const live=cs.find(c=>c.live),up=cs.filter(c=>!c.live&&!c.ended).sort((a,b)=>a.startsAt<b.startsAt?-1:1)[0];
     if(!$("#homeLive"))return;
+    box.classList.remove("is-live");
+    if(live)prefetchClass();
     if(live)box.innerHTML=`<span class="eyebrow">Live class</span><span class="pill live" style="align-self:flex-start">● Live now</span><h3>${esc(live.title)}</h3><a class="btn" href="/class.html?c=${encodeURIComponent(live.id)}" style="margin-top:auto">${AUTH.user.role==="teacher"?"Rejoin class":"Join now"}</a>`,box.classList.add("is-live");
     else if(up)box.innerHTML=`<span class="eyebrow">Next live class</span><h3>${esc(up.title)}</h3><p class="li-m">${esc(whenText(up.startsAt))}</p><a class="btn ghost" href="#live" style="margin-top:auto">See schedule</a>`;
     else box.innerHTML=`<span class="eyebrow">Live class</span><h3>No class scheduled</h3><p class="li-m">${AUTH.user.role==="teacher"?"Schedule one from the Live tab.":"Your teacher will add the next class soon."}</p><a class="btn ghost" href="#live" style="margin-top:auto">Open Live</a>`;
-  }).catch(()=>{const b=$("#homeLive");if(b)b.innerHTML=`<span class="eyebrow">Live class</span><h3>Live classes</h3><p class="li-m">Couldn't check right now. Open the Live tab to see your classes.</p><a class="btn ghost" href="#live" style="margin-top:auto">Open Live</a>`});
+  };
+  try{const c=JSON.parse(localStorage.getItem(ck)||"null");if(c&&Date.now()-c.at<6*3600e3)drawLive(c.r)}catch(e){}
+  liveApi("/classes").then(r=>{try{localStorage.setItem(ck,JSON.stringify({at:Date.now(),r}))}catch(e){}drawLive(r)}).catch(()=>{const b=$("#homeLive");if(b)b.innerHTML=`<span class="eyebrow">Live class</span><h3>Live classes</h3><p class="li-m">Couldn't check right now. Open the Live tab to see your classes.</p><a class="btn ghost" href="#live" style="margin-top:auto">Open Live</a>`});
 }
 
 function vCourses(){
@@ -1714,7 +1718,16 @@ function afterProgress(){if(AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="teac
 let AUTH={state:S.liveToken?"check":"out",user:null,msg:""};
 let LV={classes:null,users:null,accounts:null,recs:{},player:null,recReady:true,tab:"classes",batch:"",q:""};
 function resetLive(){LV={classes:null,users:null,accounts:null,recs:{},player:null,recReady:true,tab:"classes",batch:"",q:""}}
-async function liveApi(path,opts={}){
+/* Same GET asked again within a few seconds (several screens drawing at once): share one request. */
+const LIVE_GETS=new Map();
+function liveApi(path,opts={}){
+  if(opts.method&&opts.method!=="GET"){LIVE_GETS.clear();return liveApi0(path,opts)}
+  const k=path+"|"+S.liveToken,hit=LIVE_GETS.get(k);
+  if(hit&&Date.now()-hit.at<4000)return hit.p;
+  const p=liveApi0(path,opts);LIVE_GETS.set(k,{p,at:Date.now()});p.catch(()=>LIVE_GETS.delete(k));
+  return p;
+}
+async function liveApi0(path,opts={}){
   let r;
   try{r=await fetch("/api"+path,{method:opts.method||"GET",headers:Object.assign({"Content-Type":"application/json"},S.liveToken?{Authorization:"Bearer "+S.liveToken}:{}),body:opts.body?JSON.stringify(opts.body):undefined})}
   catch(e){throw Object.assign(new Error("offline"),{code:"offline"})}
@@ -1852,6 +1865,12 @@ function openPwDialog(){
 
 /* ----- Live page ----- */
 function vLive(){const u=AUTH.user;if(!u)return `<section class="stack view"><div class="eyebrow">Live classes</div><h1>Coming soon</h1><p class="li-m">Live classes and sign-in are not switched on yet. Lessons, puzzles and the test all work.</p></section><div id="liveRoot"></div>`;return `<section class="stack view"><div class="eyebrow">Live classes</div><h1>${u.role==="teacher"?"Your classroom":u.role==="parent"?`${esc(u.name)}'s classes`:`Hi ${esc(u.name.split(" ")[0])}!`}</h1></section><div id="liveRoot" class="stack"><p class="li-m">Loading…</p></div>`}
+/* When a Join button is on screen, fetch the classroom's code in the background so the class opens fast. */
+function prefetchClass(){
+  if(prefetchClass.done)return;prefetchClass.done=1;
+  const go=()=>fetch("/class.html").then(r=>r.text()).then(t=>{(t.match(/\/assets\/[^"']+\.(?:js|css)/g)||[]).forEach(u=>{const l=document.createElement("link");l.rel="prefetch";l.href=u;document.head.appendChild(l)})}).catch(()=>{prefetchClass.done=0});
+  if(window.requestIdleCallback)requestIdleCallback(go,{timeout:4000});else setTimeout(go,1500);
+}
 async function afterLive(){
   if(!AUTH.user)return;
   const root=$("#liveRoot"),teacher=AUTH.user.role==="teacher";
@@ -1873,6 +1892,7 @@ const waText=a=>a.role==="demo"?`Join our free Chess Sathi demo class\nWebsite: 
 function classCard(c,u){
   const teacher=u.role==="teacher",parent=u.role==="parent";
   const state=c.live?`<span class="pill live">● Live now</span>`:c.ended?`<span class="pill">Finished</span>`:`<span class="pill level">Upcoming</span>`;
+  if(!parent&&(c.live||!c.ended))prefetchClass();
   const join=parent?"":(c.live||!c.ended||teacher)?`<a class="btn ${c.live||(teacher&&!c.ended)?"":"ghost"}" href="/class.html?c=${encodeURIComponent(c.id)}">${teacher?(c.live?"Rejoin class":c.ended?"Open again":"Start class"):(c.live?"Join now":"Enter classroom")}</a>`:"";
   const recs=LV.recs[c.id];
   return `<div class="card stack classcard" data-class="${esc(c.id)}">

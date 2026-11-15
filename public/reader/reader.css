@@ -1,4 +1,5 @@
 /* Score-sheet reader. Self-contained: same look as Chess Sathi (one font, flat cards, red = action). */
+@font-face{font-family:"Instrument Sans";src:url(/fonts/instrument-sans.woff2) format("woff2");font-weight:400 700;font-style:normal;font-display:swap}
 :root{--bg:#F4F2EE;--surface:#fff;--surface-2:#EEEAE3;--ink:#1F2328;--muted:#6B7280;--line:#E3DED5;--accent:#C8323C;--accent-ink:#fff;--good:#2E9E5B;--good-soft:#E3F4EA;--bad-soft:#FBE4E5;--gold:#B7791F;--gold-soft:#FBF0D9;--lt:#F0D9B5;--dk:#B58863}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14171C;--surface:#1D2128;--surface-2:#262B34;--ink:#E9EDF2;--muted:#9AA4B2;--line:#2E3440;--good-soft:#17382A;--bad-soft:#40202A;--gold-soft:#3A2F17}}
 :root[data-theme=dark]{--bg:#14171C;--surface:#1D2128;--surface-2:#262B34;--ink:#E9EDF2;--muted:#9AA4B2;--line:#2E3440;--good-soft:#17382A;--bad-soft:#40202A;--gold-soft:#3A2F17}
