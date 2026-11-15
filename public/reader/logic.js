@@ -70,7 +70,10 @@ export function recheck(session) {
     if (!broken && ply(m) !== expected) broken = true;                 // a move is missing (e.g. page 2 not scanned)
     m.fenBefore = broken ? null : g.fen();
     if (broken) { m.check = "unchecked"; m.san = null; expected = ply(m) + 1; continue; }
-    const key = moveKey(moveText(m)), found = key ? g.moves().find((san) => moveKey(san) === key) : null;
+    const key = moveKey(moveText(m)), legal = g.moves();
+    let found = key ? legal.find((san) => moveKey(san) === key) : null;
+    // A capital B is a bishop. Only when no bishop move fits is it read as the b-pawn (BXC3 -> bxc3, B4 handled by fixCase).
+    if (!found && /^B[a-h]/.test(key)) found = legal.find((san) => moveKey(san) === "b" + key.slice(1)) || null;
     if (found) { m.check = "ok"; m.san = found; g.move(found); } else { m.check = "illegal"; m.san = null; broken = true; }
     expected++;
   }

@@ -14,6 +14,10 @@ assert.equal(L.moveKey("0-0"), "O-O"); assert.equal(L.moveKey("exd6 e.p."), "ed6
 
 // recheck: legal game, illegal move, fixing it, missing ply
 { const s = mk(["E4", "e5", "NF3", "Nc6", "Bb5", "A6", "Ba4", "NF6", "0-0", "Be7", "Re1", "B5"]); assert.ok(s.moves.every((m) => m.check === "ok"), "capital-letter slips are legal"); assert.equal(s.moves[0].written, "E4"); assert.equal(s.moves[0].san, "e4"); assert.equal(s.moves[11].san, "b5"); assert.ok(L.toPGN(s).includes("1. e4 e5 2. Nf3")); }
+// capital B: bishop when a bishop move fits, otherwise the b-pawn
+{ assert.equal(L.fixCase("BXD3"), "Bxd3"); assert.equal(L.fixCase("BXC3"), "Bxc3");
+  const s = mk(["e4", "d5", "Bd3", "dxe4", "BXE4", "Nc6", "Nc3", "Nf6", "d3", "Nd4", "Be3", "Nf5", "Bf3", "Nxe3", "fxe3", "e5", "Nd5", "Bb4+", "c3", "Bc5", "b4", "Bb6", "a4", "a5", "BXA5"]);
+  assert.equal(s.moves[4].san, "Bxe4"); assert.equal(s.moves[24].san, "bxa5", JSON.stringify(s.moves.filter((m) => m.check !== "ok").map((m) => m.written))); assert.ok(s.moves.every((m) => m.check === "ok")); }
 // 0.70 puts a move in the queue; 0.70-0.90 only marks it
 { const s = mk(["e4", "e5", "Nf3"], 0.8); assert.equal(L.reviewReason(s.moves[0]), null); assert.ok(L.isUnsure(s.moves[0])); assert.deepEqual(L.reviewList(s), []); assert.equal(L.summary(s).unsure, 3); assert.equal(L.summary(s).pending, 0); assert.equal(L.summary(s).complete, true);
   const t = mk(["e4", "e5"], 0.69); assert.equal(L.reviewReason(t.moves[0]), "Low confidence"); L.acceptAsWritten(t, 0); assert.ok(!L.isUnsure(t.moves[0])); assert.equal(L.LOW_CONF, 0.7); assert.equal(L.NOTE_CONF, 0.9); }
