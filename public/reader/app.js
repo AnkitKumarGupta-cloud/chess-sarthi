@@ -16,6 +16,9 @@ function h(tag, props, ...kids) {
   for (const c of kids.flat()) if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(String(c)));
   return e;
 }
+// Line icons (Lucide, ISC licence). Fixed strings from this file only, never text from the reader.
+const ICONS = {"camera": "<path d=\"M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z\"/> <circle cx=\"12\" cy=\"13\" r=\"3\"/>", "upload": "<path d=\"M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21\"/> <path d=\"m14 19.5 3-3 3 3\"/> <path d=\"M17 22v-5.5\"/> <circle cx=\"9\" cy=\"9\" r=\"2\"/>", "check": "<path d=\"M13 5h8\"/> <path d=\"M13 12h8\"/> <path d=\"M13 19h8\"/> <path d=\"m3 17 2 2 4-4\"/> <path d=\"m3 7 2 2 4-4\"/>", "board": "<path d=\"M5 20a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z\"/> <path d=\"M16.5 18c1-2 2.5-5 2.5-9a7 7 0 0 0-7-7H6.635a1 1 0 0 0-.768 1.64L7 5l-2.32 5.802a2 2 0 0 0 .95 2.526l2.87 1.456\"/> <path d=\"m15 5 1.425-1.425\"/> <path d=\"m17 8 1.53-1.53\"/> <path d=\"M9.713 12.185 7 18\"/>", "sun": "<circle cx=\"12\" cy=\"12\" r=\"4\"/> <path d=\"M12 2v2\"/> <path d=\"M12 20v2\"/> <path d=\"m4.93 4.93 1.41 1.41\"/> <path d=\"m17.66 17.66 1.41 1.41\"/> <path d=\"M2 12h2\"/> <path d=\"M20 12h2\"/> <path d=\"m6.34 17.66-1.41 1.41\"/> <path d=\"m19.07 4.93-1.41 1.41\"/>", "frame": "<path d=\"M3 7V5a2 2 0 0 1 2-2h2\"/> <path d=\"M17 3h2a2 2 0 0 1 2 2v2\"/> <path d=\"M21 17v2a2 2 0 0 1-2 2h-2\"/> <path d=\"M7 21H5a2 2 0 0 1-2-2v-2\"/>", "page": "<path d=\"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z\"/> <path d=\"M14 2v5a1 1 0 0 0 1 1h5\"/> <path d=\"M10 9H8\"/> <path d=\"M16 13H8\"/> <path d=\"M16 17H8\"/>", "arrow": "<path d=\"M5 12h14\"/> <path d=\"m12 5 7 7-7 7\"/>"};
+function icon(name, cls) { const e = document.createElementNS("http://www.w3.org/2000/svg", "svg"); e.setAttribute("viewBox", "0 0 24 24"); e.setAttribute("class", "rd-ic" + (cls ? " " + cls : "")); e.setAttribute("aria-hidden", "true"); e.innerHTML = ICONS[name] || ""; return e; }
 const $ = (s) => document.querySelector(s);
 const root = $("#app");
 
@@ -172,9 +175,10 @@ function captureCard() {
   const s = st.session, pick = (add) => h("input", { type: "file", accept: "image/jpeg,image/png,image/webp", multiple: true, class: "rd-file", id: add ? "rdAddFile" : "rdFile",
     onchange: (e) => { const f = [...e.target.files]; e.target.value = ""; if (!f.length) return; if (add) return startRead(f, true); st.picked = f; setPreview(f[0]); st.status = null; render(); } });
   const file = pick(false), addFile = pick(true), ta = h("textarea", { class: "rd-ta", id: "rdManual", rows: 4, placeholder: "1. e4 e5 2. Nf3 Nc6 …" });
+  if (!s) return welcomeCard(file, addFile, ta);
   return h("section", { class: "rd-card" },
     h("h2", { text: s ? "Read another sheet" : "Read a score sheet" }),
-    h("p", { class: "rd-m", text: "Take a sharp, straight-on photo of one page. Up to 4 photos (one per page). A read takes about 10–30 seconds." }),
+    h("p", { class: "rd-m", text: "Take a sharp, straight-on photo of one page. Up to 4 photos (one per page). A read takes up to a minute." }),
     file, addFile,
     st.previewUrl ? h("div", { class: "rd-prev" }, h("img", { src: st.previewUrl, alt: "The photo you chose" }), h("span", { class: "rd-m", text: st.picked.length > 1 ? st.picked.length + " photos chosen" : "1 photo chosen" })) : null,
     h("div", { class: "rd-row wrap" },
@@ -182,6 +186,36 @@ function captureCard() {
       h("button", { id: "rdRead", class: "rd-btn big", type: "button", text: "📷 Read score sheet", disabled: st.busy, onclick: () => (st.picked.length ? startRead(st.picked, false) : file.click()) }),
       s && s.pages > 0 && s.pages < L.MAX_PHOTOS ? h("button", { id: "rdAdd", class: "rd-btn ghost", type: "button", text: "Add another page", disabled: st.busy, onclick: () => addFile.click() }) : null),
     h("p", { id: "rdStatus", class: "rd-status" + (st.status && st.status.error ? " err" : st.busy ? " busy" : ""), role: "status", text: st.status ? st.status.text : "" }),
+    st.notice ? h("p", { class: "rd-m", text: st.notice }) : null,
+    st.manual ? h("div", { class: "rd-stack" }, ta, h("button", { class: "rd-btn ghost", type: "button", text: "Check these moves", onclick: () => startManual(ta.value) }))
+      : h("button", { class: "rd-link", type: "button", text: "Or type the moves in by hand", onclick: () => { st.manual = true; render(); } }));
+}
+// First screen: a drop area, a small picture of what happens, and three steps.
+function welcomeCard(file, addFile, ta) {
+  const choose = (files) => { const f = [...files]; if (!f.length || st.busy) return; st.picked = f; setPreview(f[0]); st.status = null; render(); };
+  const drop = h("div", { class: "rd-drop" + (st.picked.length ? " has" : ""), id: "rdDrop",
+    ondragover: (e) => { e.preventDefault(); drop.classList.add("over"); }, ondragleave: () => drop.classList.remove("over"),
+    ondrop: (e) => { e.preventDefault(); drop.classList.remove("over"); choose(e.dataTransfer ? e.dataTransfer.files : []); } },
+    st.previewUrl
+      ? h("div", { class: "rd-prev" }, h("img", { src: st.previewUrl, alt: "The photo you chose" }), h("div", null, h("b", { text: st.picked.length > 1 ? st.picked.length + " photos chosen" : "1 photo chosen" }), h("p", { class: "rd-m", text: "Press Read score sheet to start." })))
+      : h("div", { class: "rd-drop-in" }, h("span", { class: "rd-drop-i" }, icon("upload")), h("b", { text: "Add a photo of the score sheet" }), h("p", { class: "rd-m", text: "Drop it here, or choose it from your camera or gallery. JPG or PNG, up to 4 pages." })),
+    h("div", { class: "rd-row wrap centre" },
+      h("button", { class: "rd-btn ghost", type: "button", text: st.picked.length ? "Choose a different photo" : "Choose photo", disabled: st.busy, onclick: () => file.click() }),
+      h("button", { id: "rdRead", class: "rd-btn big", type: "button", disabled: st.busy, onclick: () => (st.picked.length ? startRead(st.picked, false) : file.click()) }, icon("camera"), "Read score sheet")),
+    h("p", { id: "rdStatus", class: "rd-status" + (st.status && st.status.error ? " err" : st.busy ? " busy" : ""), role: "status", text: st.status ? st.status.text : "" }));
+  const sheet = h("div", { class: "rd-art-sheet", "aria-hidden": "true" }, [1, 2, 3, 4, 5, 6].map((n) => h("i", { class: n === 4 ? "bad" : "" })));
+  const step = (ic, n, title, text) => h("li", null, h("span", { class: "rd-step-i" }, icon(ic)), h("div", null, h("b", { text: n + ". " + title }), h("p", { class: "rd-m", text })));
+  const tip = (ic, text) => h("span", { class: "rd-tip" }, icon(ic), text);
+  return h("section", { class: "rd-card rd-welcome" },
+    h("div", { class: "rd-hero" },
+      h("div", null, h("h2", { text: "From paper to board in a minute" }), h("p", { class: "rd-m", text: "Photograph your tournament score sheet. The reader writes out the moves, the app checks each one against the rules, and the game opens on an analysis board." })),
+      h("div", { class: "rd-art", "aria-hidden": "true" }, sheet, icon("arrow", "rd-art-a"), boardEl("r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4"))),
+    file, addFile, drop,
+    h("ol", { class: "rd-steps" },
+      step("camera", 1, "Take the photo", "One page per photo, the whole page in the frame."),
+      step("check", 2, "Fix what is flagged", "Moves that cannot be played are marked. Fix them while looking at the photo."),
+      step("board", 3, "Analyse and save", "Step through the game, turn on the engine, copy or download the PGN.")),
+    h("div", { class: "rd-tips" }, tip("sun", "Good light, no flash"), tip("frame", "Straight on, not at an angle"), tip("page", "A read takes up to a minute")),
     st.notice ? h("p", { class: "rd-m", text: st.notice }) : null,
     st.manual ? h("div", { class: "rd-stack" }, ta, h("button", { class: "rd-btn ghost", type: "button", text: "Check these moves", onclick: () => startManual(ta.value) }))
       : h("button", { class: "rd-link", type: "button", text: "Or type the moves in by hand", onclick: () => { st.manual = true; render(); } }));
@@ -291,7 +325,7 @@ function renderOutput() { const old = $("#rdOutput"); if (old && st.session) old
 function renderGames() { const old = $("#rdGames"), n = gamesCard(); if (old && n) old.replaceWith(n); else if (old) old.remove(); else if (n) root.append(n); }
 function render() {
   const who = access(), typed = $("#rdMove") ? $("#rdMove").value : "", hadFocus = document.activeElement && document.activeElement.id === "rdMove";
-  const head = h("header", { class: "rd-top" }, h("a", { class: "rd-back", href: "/", text: "← Chess Sathi" }), h("h1", { text: "Score-sheet reader" }));
+  const head = h("header", { class: "rd-top" }, h("a", { class: "rd-back", href: "/", text: "← Chess Sathi" }), h("div", { class: "rd-title" }, h("span", { class: "rd-logo" }, icon("frame")), h("h1", { text: "Score-sheet reader" })));
   document.body.classList.toggle("fs-open", st.full);
   if (who !== "ok") {
     return root.replaceChildren(head, h("section", { class: "rd-card" }, h("h2", { text: who === "demo" ? "For Chess Sathi students" : "Please sign in" }),
