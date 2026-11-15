@@ -1,13 +1,13 @@
 # Chess Sathi: handover notes
 
 Live site: **https://chess-sathi-live.vercel.app**
-Code you deploy from: **https://github.com/kishkishkish123-wq/chess-** (branch `main`)
+Code you deploy from: **https://github.com/AnkitKumarGupta-cloud/chess-sarthi** (branch `main`)
 Backup copy: https://github.com/AnkitKumarGupta-cloud/chess (`main` = same code, `old-main` = the old Gupta Chess Academy site)
 
 ## How the pieces connect
 
 ```
-GitHub kishkishkish123-wq/chess-  ──push to main──►  Vercel project "chess-sathi-live"  ──►  chess-sathi-live.vercel.app
+GitHub AnkitKumarGupta-cloud/chess-sarthi  ──push to main──►  Vercel project "chess-sathi-live"  ──►  chess-sathi-live.vercel.app
                                                           │
                      ┌────────────────────────────────────┼────────────────────────────────┐
                      ▼                                    ▼                                ▼
@@ -58,7 +58,7 @@ Vercel Deployment Protection must stay **off** for `chess-sathi-live`, or studen
 1. Edit the code (main file: `public/index.html`; classroom: `src/class.jsx` + `class.html`; server: `api/*.js`).
 2. `npm test` (checks the server API with fakes) and `npx vite build`.
 3. Optional local demo: `npm run build && node test/dev-server.mjs` → http://localhost:4173 (teacher password `demo-teacher`).
-4. Push to `main` of `kishkishkish123-wq/chess-` → Vercel deploys in ~1 minute.
+4. Push to `main` of `AnkitKumarGupta-cloud/chess-sarthi` → Vercel deploys in ~1 minute.
 
 ## File map
 
@@ -149,3 +149,7 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - Lichess lines use our written note when the same move order appears in the guide; other moves get a plain description ("Black develops the knight to f6").
 - Data: `public/openings/guide.json` (48 KB) and `all.json` (300 KB, 52 KB gzipped, loaded only when searching or listing families). Edit the text in `tools/openings/guide1-3.py`, then run `python3 tools/openings/build.py public/openings` (needs `pip install chess` and a clone of lichess-org/chess-openings in `co/` next to the script). Bump `?v=` in `opLoad` (guide.json is v=2) when the files change.
 - Code: "Openings" block before `const VIEWS` in `public/index.html`.
+
+## Repo moved (15 Nov 2026)
+- Code now lives at **AnkitKumarGupta-cloud/chess-sarthi** (branch main), full history copied. Vercel project chess-sathi-live is connected to it; every push to main deploys.
+- Why: the Vercel account's GitHub sign-in became AnkitKumarGupta-cloud, so the old repo (kishkishkish123-wq/chess-) showed "Project Link not found" and stopped deploying. The old repo still exists but is no longer used; don't push there.
