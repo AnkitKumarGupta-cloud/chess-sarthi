@@ -1,4 +1,4 @@
-import { handler, HttpError, whoIs, mustBeTeacher, kv, kvPipe, getUser, putUser, listUsers, hashPassword, newPassword, slug, normUser, validUsername, RESERVED, cfg } from "./_lib.js";
+import { handler, HttpError, whoIs, mustBeTeacher, kv, kvPipe, getUser, putUser, listUsers, seenTimes, hashPassword, newPassword, slug, normUser, validUsername, RESERVED, cfg } from "./_lib.js";
 
 async function freeUsername(base) {
   let u = base.slice(0, 24);
@@ -18,11 +18,11 @@ async function create(role, name, batch, base) {
 // Teacher only: list accounts, add a student, reset a password, delete an account.
 export default handler(async ({ req, body, query }) => {
   mustBeTeacher(await whoIs(req));
-  if (req.method === "GET") return { users: await listUsers(), demo: cfg().demoPassword ? { username: "demo", password: cfg().demoPassword } : null };
+  if (req.method === "GET") { const users = await listUsers(), seen = await seenTimes(users.map((u) => u.username)); return { users: users.map((u, i) => ({ ...u, seen: seen[i] })), demo: cfg().demoPassword ? { username: "demo", password: cfg().demoPassword } : null }; }
   if (req.method === "DELETE") {
     const u = normUser(query.username);
     if (!(await getUser(u))) throw new HttpError(404, "That account was not found.");
-    await kvPipe([["DEL", "u:" + u], ["SREM", "users", u], ["DEL", "p:" + u], ["DEL", "ps:" + u]]);
+    await kvPipe([["DEL", "u:" + u], ["SREM", "users", u], ["DEL", "p:" + u], ["DEL", "ps:" + u], ["DEL", "seen:" + u]]);
     return { ok: true };
   }
   if (req.method !== "POST") throw new HttpError(405, "Use GET, POST or DELETE.");

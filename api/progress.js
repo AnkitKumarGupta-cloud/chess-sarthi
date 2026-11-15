@@ -1,15 +1,27 @@
-import { handler, HttpError, whoIs, kv, kvPipe, listUsers } from "./_lib.js";
+import { handler, HttpError, whoIs, kv, kvPipe, listUsers, seenTimes } from "./_lib.js";
 
 // Student progress, saved so the teacher can see it and so it follows the student to any device.
 //  POST  (student)  { state, summary }  -> saves both
 //  GET   (student)                      -> { progress: { state, at } | null }   (to restore on a new device)
-//  GET   (teacher)                      -> { students: [{ username, name, batch, batchName, summary, at }] }
+//  GET   (teacher)                      -> { students: [{ username, name, batch, batchName, summary, at, seen }] }
+//         seen = when the student last opened the app (ms), or null if they never signed in
 // Redis keys: p:<username> = full state, ps:<username> = small summary for the teacher's table.
 const MAX_STATE = 200_000; // bytes of JSON; a very active student is well under this
-const STATE_KEYS = ["lessons", "puzzles", "tests", "practice", "days", "lv", "pr"];
+const STATE_KEYS = ["lessons", "puzzles", "tests", "practice", "days", "lv", "pr", "pm"];
 const parse = (s) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
 const num = (v, max = 1e7) => (Number.isFinite(+v) ? Math.max(0, Math.min(max, Math.round(+v))) : 0);
 const str = (v, n = 40) => (typeof v === "string" ? v.slice(0, n) : "");
+
+// What the student gets wrong: first-try counts, per-theme counts and their latest missed puzzles.
+function cleanInsight(x) {
+  if (!x || typeof x !== "object") return null;
+  const arr = (v) => (Array.isArray(v) ? v : []);
+  return {
+    first: [0, 1, 2, 3].map((i) => num(arr(x.first)[i], 99999)),
+    themes: arr(x.themes).slice(0, 24).filter(Array.isArray).map((t) => [str(t[0], 24).replace(/[^A-Za-z0-9]/g, ""), num(t[1], 99999), num(t[2], 99999)]),
+    misses: arr(x.misses).slice(-15).filter(Array.isArray).map((m) => [num(m[0], 999), num(m[1], 99), ["w", "ww", "h", "s"].includes(m[2]) ? m[2] : "w", str(m[3], 10).replace(/[^0-9-]/g, "")]),
+  };
+}
 
 function cleanSummary(s = {}) {
   const lt = s.lastTest && typeof s.lastTest === "object" ? s.lastTest : null;
@@ -25,6 +37,7 @@ function cleanSummary(s = {}) {
     lastActive: str(s.lastActive, 10),
     daysActive: num(s.daysActive, 99999),
     puzzleRating: s.puzzleRating == null ? null : num(s.puzzleRating, 4000), ratedPuzzles: num(s.ratedPuzzles, 99999),
+    insight: cleanInsight(s.insight),
   };
 }
 
@@ -34,8 +47,8 @@ export default handler(async ({ req, body }) => {
     if (me.role === "teacher") {
       const users = (await listUsers()).filter((u) => u.role === "student");
       if (!users.length) return { students: [] };
-      const vals = await kv("MGET", ...users.map((u) => "ps:" + u.username));
-      return { students: users.map((u, i) => { const p = parse(vals[i]); return { ...u, summary: p ? p.summary : null, at: p ? p.at : null }; }) };
+      const [vals, seen] = await Promise.all([kv("MGET", ...users.map((u) => "ps:" + u.username)), seenTimes(users.map((u) => u.username))]);
+      return { students: users.map((u, i) => { const p = parse(vals[i]); return { ...u, summary: p ? p.summary : null, at: p ? p.at : null, seen: seen[i] }; }) };
     }
     return { progress: parse(await kv("GET", "p:" + me.id)) };
   }

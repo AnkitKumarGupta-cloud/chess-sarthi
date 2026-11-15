@@ -153,6 +153,9 @@ export async function whoIs(req) {
   if (!rec) throw new HttpError(401, "This account is not active any more. Please sign in again.", "signin");
   return { ...publicUser(rec), id: rec.username };
 }
+// Remember when a student last opened the app, for the teacher's Progress page. Never blocks sign-in.
+export async function markSeen(user) { if (user && user.role === "student") { try { await kv("SET", "seen:" + (user.id || user.username), Date.now()); } catch {} } }
+export async function seenTimes(usernames) { if (!usernames.length) return []; const v = await kv("MGET", ...usernames.map((n) => "seen:" + n)); return v.map((x) => (+x > 0 ? +x : null)); }
 export function mustBeTeacher(user) { if (user.role !== "teacher") throw new HttpError(403, "Only the teacher can do this."); }
 
 /* ---------- Classes ---------- */

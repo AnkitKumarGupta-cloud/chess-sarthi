@@ -99,15 +99,23 @@ assert.equal((await call("progress", { method: "POST", auth: S, body: { state: {
 assert.equal((await call("progress", { auth: S })).progress, null);   // nothing saved yet
 const saved = await call("progress", { method: "POST", auth: S, body: {
   state: { lv: { unlocked: 3, done: { 1: { stars: 3 } } }, practice: { a: true }, liveToken: "must-not-be-stored", hack: 1 },
-  summary: { xp: 75, rank: "Pawn", puzzlesSolved: 12, puzzleLevel: 3, levelsDone: 1, lastTest: { score: 7, total: 10, tier: "Beginner" }, evil: "<script>" } } });
+  summary: { xp: 75, rank: "Pawn", puzzlesSolved: 12, puzzleLevel: 3, levelsDone: 1, lastTest: { score: 7, total: 10, tier: "Beginner" }, evil: "<script>",
+    insight: { first: [6, 3, 1, 1], themes: [["fork", 4, 1], ["<b>pin", 3, 3], "junk"], misses: [[2, 4, "s", "2026-11-15"], [1, 0, "<x>", "<img>"]], extra: 1 } } } });
 assert.equal(saved.status, 200); assert.ok(saved.at);
 const mine = (await call("progress", { auth: S })).progress;
 assert.deepEqual(Object.keys(mine.state).sort(), ["lv", "practice"], "only progress fields are stored");
 const board = await call("progress", { auth: T });
 const row = board.students.find((x) => x.username === stu.username);
+assert.deepEqual(row.summary.insight.first, [6, 3, 1, 1]); assert.deepEqual(row.summary.insight.themes, [["fork", 4, 1], ["bpin", 3, 3]]);
+assert.deepEqual(row.summary.insight.misses, [[2, 4, "s", "2026-11-15"], [1, 0, "w", ""]]); assert.equal(row.summary.insight.extra, undefined);
 assert.equal(row.summary.puzzlesSolved, 12); assert.equal(row.summary.lastTest.score, 7); assert.equal(row.summary.evil, undefined);
 assert.equal(board.students.some((x) => x.role === "parent"), false, "parents are not listed");
 assert.equal(board.students.find((x) => x.username !== stu.username).summary, null);   // never synced
+// "last opened": set when a student signs in or the app calls /me; null for a student who never signed in
+assert.ok(row.seen > 0); assert.equal(board.students.find((x) => x.username !== stu.username).seen, null);
+{ const before = row.seen; await new Promise((r) => setTimeout(r, 5)); await call("me", { auth: S });
+  const again = (await call("progress", { auth: T })).students.find((x) => x.username === stu.username); assert.ok(again.seen > before);
+  const ul = (await call("users", { auth: T })).users; assert.ok(ul.find((x) => x.username === stu.username).seen > 0); }
 
 // --- demo login (one shared, permanent login; password = DEMO_PASSWORD) ---
 delete process.env.DEMO_PASSWORD;

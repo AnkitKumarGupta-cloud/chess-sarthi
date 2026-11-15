@@ -702,6 +702,16 @@ html{scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent
 @media (max-width:720px){nav.tabs a{position:relative}nav.tabs a[aria-current=page]{background:none;color:var(--accent);font-weight:700}
   nav.tabs a[aria-current=page]::before{content:"";position:absolute;top:-6px;left:50%;width:22px;height:3px;margin-left:-11px;border-radius:0 0 3px 3px;background:var(--accent)}}
 @media (max-width:1099px){.topbar{background:var(--surface)}}@media (max-width:720px){nav.tabs{background:var(--surface)}}
+
+/* Teacher: insight and missed puzzles in a student's row */
+.tp-ins{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.tp-ins h3{font-size:1rem;display:flex;align-items:center;gap:8px}.tp-ins h3 .ic{color:var(--accent)}.tp-ins h3 .li-m{font-weight:400}
+.tp-ins ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.tp-ins ul.tp-miss{list-style:none;padding:0;gap:0}
+.tp-mb{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 0;color:var(--ink);font:inherit;cursor:pointer}
+.tp-miss li:first-child .tp-mb{border-top:0}.tp-mb b{min-width:150px}.tp-mb .li-m:first-of-type{flex:1;min-width:140px}
+.tp-pz{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;padding:4px 0 14px}.tp-pz .board{width:min(260px,100%)}
+@media (max-width:900px){.tp-wrap{position:sticky;left:16px;width:calc(100vw - 66px)}.tp-mb b{min-width:0;width:100%}.tp-grid{grid-template-columns:1fr 1fr}}
 </style>
 
 </head>
@@ -1234,11 +1244,41 @@ function lvPlay(u){const mv=LVS.g.move({from:u.slice(0,2),to:u.slice(2,4),promot
    Starts at 600 (level 1 puzzles are rated about 500). Moves faster for the first puzzles, then settles. */
 const PR_START=600;
 const prState=()=>{S.pr=S.pr||{r:PR_START,n:0,seen:{},hist:[]};return S.pr};
+const THEME_NAME={mateIn1:"Mate in 1",mateIn2:"Mate in 2",mateIn3:"Mate in 3",mateIn4:"Mate in 4",mateIn5:"Mate in 5+",fork:"Fork",pin:"Pin",skewer:"Skewer",sacrifice:"Sacrifice",attraction:"Attraction",deflection:"Deflection",discoveredAttack:"Discovered attack",discoveredCheck:"Discovered check",doubleCheck:"Double check",backRankMate:"Back-rank mate",hangingPiece:"Hanging piece",trappedPiece:"Trapped piece",clearance:"Clearance",quietMove:"Quiet move",defensiveMove:"Defensive move",advancedPawn:"Advanced pawn",promotion:"Promotion",exposedKing:"Exposed king",kingsideAttack:"Kingside attack",queensideAttack:"Queenside attack",attackingF2F7:"Attack on f2/f7",intermezzo:"In-between move",capturingDefender:"Remove the defender",zugzwang:"Zugzwang",xRayAttack:"X-ray",interference:"Interference",rookEndgame:"Rook endgame",pawnEndgame:"Pawn endgame",queenEndgame:"Queen endgame",bishopEndgame:"Bishop endgame",knightEndgame:"Knight endgame",queenRookEndgame:"Queen & rook endgame",anastasiaMate:"Anastasia's mate",arabianMate:"Arabian mate",smotheredMate:"Smothered mate",hookMate:"Hook mate",bodenMate:"Boden's mate",doubleBishopMate:"Two-bishop mate",dovetailMate:"Dovetail mate",operaMate:"Opera mate",epauletteMate:"Epaulette mate",enPassant:"En passant",castling:"Castling",pillsburysMate:"Pillsbury's mate",blindSwineMate:"Blind swine mate",cornerMate:"Corner mate",collinearMove:"Collinear move",killBoxMate:"Kill box mate",balestraMate:"Balestra mate",triangleMate:"Triangle mate",morphysMate:"Morphy's mate",swallowstailMate:"Swallow's tail mate",vukovicMate:"Vukovic mate"};
+const themeName=t=>THEME_NAME[t]||t.replace(/([A-Z])/g," $1").toLowerCase();
+/* Puzzle mistakes, for the teacher's insight. Recorded once per puzzle, on the first attempt.
+   S.pm = { n:[tries, clean, hints, solutions], th:{theme:[tries, clean]}, miss:[[level, index, how, day]] }
+   how: "w" one wrong move, "ww" several wrong moves, "h" used a hint, "s" opened the solution. */
+const pmState=()=>{S.pm=S.pm||{n:[0,0,0,0],th:{},miss:[]};return S.pm};
+function pmRecord(l,k,themes,how){const pm=pmState();pm.n[0]++;if(!how)pm.n[1]++;if(how==="h")pm.n[2]++;if(how==="s")pm.n[3]++;
+  (themes||"").split(" ").filter(Boolean).forEach(t=>{const x=pm.th[t]=pm.th[t]||[0,0];x[0]++;if(!how)x[1]++});
+  if(how){pm.miss.push([l,k,how,dayKey()]);if(pm.miss.length>40)pm.miss=pm.miss.slice(-40)}}
+const PM_HOW={w:"1 wrong move",ww:"Several wrong moves",h:"Used a hint",s:"Opened the solution"};
+// Where to practise each weak theme (Practice topic titles)
+const PM_PRACTICE={fork:"The Fork",pin:"The Pin",skewer:"The Skewer",discoveredAttack:"Discovered Attacks",discoveredCheck:"Discovered Attacks",doubleCheck:"Double Check",deflection:"Deflection",attraction:"Attraction",clearance:"Clearance",interference:"Interference",intermezzo:"Zwischenzug",xRayAttack:"X-Ray",zugzwang:"Zugzwang",capturingDefender:"Undermining",backRankMate:"Checkmate Patterns I",hookMate:"Checkmate Patterns I",smotheredMate:"Checkmate Patterns I",anastasiaMate:"Checkmate Patterns II",arabianMate:"Checkmate Patterns II",bodenMate:"Checkmate Patterns II",operaMate:"Checkmate Patterns III",dovetailMate:"Checkmate Patterns III",epauletteMate:"Checkmate Patterns III",mateIn1:"Piece Checkmates I",mateIn2:"Checkmate Patterns I",rookEndgame:"Basic Rook Endgames",pawnEndgame:"Key Squares",promotion:"Underpromotion"};
+// Turns the numbers into plain sentences. s = {first:[tries,clean,hints,solutions], themes:[[theme,tries,clean]]}
+function pmInsight(s){const n=s&&s.first||[0,0,0,0],out={ready:n[0]>=5,tries:n[0],lines:[],weak:[],strong:[]};
+  if(!out.ready)return out;
+  const th=(s.themes||[]).filter(t=>t[1]>=3).map(t=>({t:t[0],tries:t[1],clean:t[2],rate:t[2]/t[1]}));
+  out.weak=th.filter(x=>x.rate<.6).sort((a,b)=>a.rate-b.rate||b.tries-a.tries).slice(0,3);
+  out.strong=th.filter(x=>x.rate>=.8).sort((a,b)=>b.tries-a.tries).slice(0,2);
+  const pct=Math.round(n[1]/n[0]*100);
+  out.lines.push(`Solves ${pct}% of puzzles on the first try (${n[1]} of ${n[0]}).`);
+  if(out.weak.length)out.lines.push(`Needs work on: ${out.weak.map(x=>`${themeName(x.t)} (${x.clean} of ${x.tries} first try)`).join(", ")}.`);
+  else out.lines.push("No clear weak spot yet. Mistakes are spread across different ideas.");
+  if(out.strong.length)out.lines.push(`Strong at: ${out.strong.map(x=>themeName(x.t)).join(", ")}.`);
+  if(n[3]/n[0]>=.25)out.lines.push("Opens the solution often. Encourage trying a little longer before looking.");
+  else if(n[2]/n[0]>=.4)out.lines.push("Leans on hints a lot. Ask them to name the idea before pressing Hint.");
+  const pr=[...new Set(out.weak.map(x=>PM_PRACTICE[x.t]).filter(Boolean))];
+  if(pr.length)out.lines.push(`Suggested practice: ${pr.join(", ")}.`);
+  return out}
+const pmSummary=()=>{const pm=pmState();return {first:pm.n,themes:Object.entries(pm.th).sort((a,b)=>b[1][0]-a[1][0]).slice(0,24).map(([t,v])=>[t,v[0],v[1]]),misses:pm.miss.slice(-15)}};
 function prRate(id,puzzleRating,score){const pr=prState();if(!id||pr.seen[id])return null;
   const e=1/(1+Math.pow(10,(puzzleRating-pr.r)/400)),k=pr.n<20?40:pr.n<60?24:16,d=Math.round(k*(score-e));
   pr.r=Math.max(100,pr.r+d);pr.n++;pr.seen[id]=1;pr.hist.push(pr.r);if(pr.hist.length>60)pr.hist=pr.hist.slice(-60);return d}
 function lvSolved(){const st=lvState();LVS.state="ok";if(LVS.res[LVS.k]==null)LVS.res[LVS.k]=LVS.miss?"retry":"ok";
-  {const p=LVD&&LVD[LVS.l-1]&&LVD[LVS.l-1][LVS.k];LVS.rd=p?prRate(p[0],p[3],LVS.shown||LVS.wrongs>1?0:LVS.wrongs===1?.35:LVS.hinted?.6:1):null}
+  {const p=LVD&&LVD[LVS.l-1]&&LVD[LVS.l-1][LVS.k];LVS.rd=p?prRate(p[0],p[3],LVS.shown||LVS.wrongs>1?0:LVS.wrongs===1?.35:LVS.hinted?.6:1):null;
+   if(p&&LVS.rd!==null)pmRecord(LVS.l,LVS.k,p[4],LVS.shown?"s":LVS.wrongs>1?"ww":LVS.wrongs===1?"w":LVS.hinted?"h":"")}
   {const pr=prState(),m=Math.floor(pr.r/100)*100;if(pr.mile==null)pr.mile=Math.max(m,Math.floor(PR_START/100)*100);
    if(LVS.rd>0&&m>pr.mile){pr.mile=m;LVS.mile=m}else LVS.mile=0}st.part=st.part||{};st.part[LVS.l]=LVS.res.slice();save();if(LVS.res[LVS.k]==="ok")award(5);setTimeout(()=>sfx("solved"),SOLVED_DELAY);
   if(LVS.res.every(x=>x)){delete st.part[LVS.l];const stars=lvStars(LVS.res),prev=st.done[LVS.l];st.done[LVS.l]={stars:Math.max(stars,prev?prev.stars:0)};if(st.unlocked<=LVS.l)st.unlocked=LVS.l+1;LVS.complete=stars;save();
@@ -1573,7 +1613,7 @@ function vProgressTeacher(){
   const ago=d=>{if(!d)return "–";const t=dayKey(),y=new Date();y.setDate(y.getDate()-1);if(d===t)return "Today";if(d===dayKey(y))return "Yesterday";
     const n=Math.round((new Date(t)-new Date(d))/864e5);return n<30?n+" days ago":new Date(d).toLocaleDateString([], {day:"numeric",month:"short"})};
   const row=u=>{const m=u.summary,open=TPROG.open===u.username;
-    if(!m)return `<tr><td><b>${esc(u.name)}</b><br><span class="li-m">${esc(u.batchName||"")}</span></td><td colspan="7" class="li-m">Not opened the app since this update</td></tr>`;
+    if(!m)return `<tr><td><b>${esc(u.name)}</b><br><span class="li-m">${esc(u.batchName||"")}</span></td><td colspan="6" class="li-m">${u.seen?"Signed in, but no lessons or puzzles done yet":"Has not signed in yet"}</td><td>${u.seen?esc(seenText(u.seen)):"Never"}</td></tr>`;
     return `<tr class="tp-row${open?" open":""}" data-tp="${esc(u.username)}" tabindex="0" aria-expanded="${open}">
       <td><b>${esc(u.name)}</b><br><span class="li-m">${esc(u.batchName||"")}</span></td>
       <td class="num"><b>${m.puzzlesSolved}</b><br><span class="li-m">Level ${m.puzzleLevel}</span></td>
@@ -1582,8 +1622,8 @@ function vProgressTeacher(){
       <td class="num">${m.lessonsDone}<span class="li-m">/${m.lessonsTotal}</span></td>
       <td class="num">${m.bestTest!=null?`${m.bestTest}<span class="li-m">/10</span>`:"–"}${m.lastTest&&m.lastTest.tier?`<br><span class="li-m">${esc(m.lastTest.tier)}</span>`:""}</td>
       <td class="num">${m.xp}<br><span class="li-m">${esc(m.rank)}</span></td>
-      <td>${ago(m.lastActive)}${m.streak?`<br><span class="li-m streak-s">${ico("flame")} ${m.streak} day${m.streak===1?"":"s"}</span>`:""}</td></tr>
-      ${open?`<tr class="tp-more"><td colspan="8"><div class="tp-grid">
+      <td>${u.seen?esc(seenText(u.seen)):ago(m.lastActive)}${m.streak?`<br><span class="li-m streak-s">${ico("flame")} ${m.streak} day${m.streak===1?"":"s"}</span>`:""}</td></tr>
+      ${open?`<tr class="tp-more"><td colspan="8"><div class="tp-wrap"><div class="tp-grid">
         <div><span class="li-m">Puzzle levels finished</span><b>${m.levelsDone} of ${m.levelsTotal}</b></div>
         <div><span class="li-m">Stars</span><b>${m.stars} ★</b></div>
         <div><span class="li-m">Classic puzzles</span><b>${m.classicSolved}</b></div>
@@ -1591,13 +1631,34 @@ function vProgressTeacher(){
         <div><span class="li-m">Last test</span><b>${m.lastTest?`${m.lastTest.score}/${m.lastTest.total}${m.lastTest.tier?" · "+esc(m.lastTest.tier):""}`:"–"}</b></div>
         <div><span class="li-m">Days active</span><b>${m.daysActive||0}</b></div>
         <div class="tp-week"><span class="li-m">Activity, last 7 days</span><div>${(m.week||[]).map(x=>`<i title="${x} XP" style="height:${Math.max(3,Math.min(100,x/Math.max(30,...m.week)*100))}%"></i>`).join("")}</div></div>
-      </div></td></tr>`:""}`};
+      </div>${tpInsight(u)}</div></td></tr>`:""}`};
   return head+`<section class="view"><div class="chips tp-chips">${[["all","All batches"],...batches].map(([k,n])=>`<button class="chip${TPROG.batch===k?" on":""}" data-tpb="${esc(k)}">${esc(n)}</button>`).join("")}</div></section>
-  <section class="card view" style="overflow-x:auto;padding:0"><table class="tp-table"><thead><tr><th>Student</th><th style="text-align:right">Puzzles</th><th style="text-align:right">Rating</th><th style="text-align:right">Practice</th><th style="text-align:right">Lessons</th><th style="text-align:right">Best test</th><th style="text-align:right">XP</th><th>Last active</th></tr></thead>
+  <section class="card view" style="overflow-x:auto;padding:0"><table class="tp-table"><thead><tr><th>Student</th><th style="text-align:right">Puzzles</th><th style="text-align:right">Rating</th><th style="text-align:right">Practice</th><th style="text-align:right">Lessons</th><th style="text-align:right">Best test</th><th style="text-align:right">XP</th><th>Last opened</th></tr></thead>
   <tbody>${list.map(row).join("")}</tbody></table></section>
   <p class="li-m view" style="font-size:.85rem">Tap a student for more. Progress updates a few seconds after a student does something.</p>`;
 }
+// Insight box and missed-puzzle list inside a student's opened row
+// "Today, 6:40 am", "Yesterday, 7:15 pm", "3 days ago", "12 Oct": when a student last opened the app
+function seenText(ms){if(!ms)return "";const d=new Date(ms),t=dayKey(),y=new Date();y.setDate(y.getDate()-1);const k=dayKey(d),tm=d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+  if(k===t)return "Today, "+tm;if(k===dayKey(y))return "Yesterday, "+tm;const n=Math.round((new Date(t)-new Date(k))/864e5);return n<30?n+" days ago":d.toLocaleDateString([], {day:"numeric",month:"short"})}
+function tpInsight(u){const s=u.summary.insight,ins=pmInsight(s),miss=(s&&s.misses||[]).slice().reverse();
+  const pz=(l,k)=>LVD&&LVD[l-1]&&LVD[l-1][k];
+  return `<div class="tp-ins"><h3>${ico("target")} What ${esc(u.name.split(" ")[0])} needs to improve</h3>
+    ${ins.ready?`<ul>${ins.lines.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p class="li-m">Not enough puzzles yet. The insight appears after 5 puzzles (${ins.tries} so far). Only puzzles solved after this update are counted.</p>`}
+    ${miss.length?`<h3>Puzzles they got wrong or needed help with <span class="li-m">latest ${miss.length}</span></h3>
+    <ul class="tp-miss">${miss.map(([l,k,how,day],i)=>{const p=pz(l,k),open=TPROG.pz===u.username+"|"+i;return `<li><button class="tp-mb" data-tpz="${esc(u.username)}|${i}" aria-expanded="${open}">
+        <b>Level ${l} · Puzzle ${k+1}</b><span class="li-m">${p?esc(p[4].split(" ").map(themeName).join(", ")):""}</span>
+        <span class="pill ${how==="s"?"level":""}">${PM_HOW[how]||""}</span><span class="li-m">${day?esc(new Date(day+"T12:00").toLocaleDateString([], {day:"numeric",month:"short"})):""}</span></button>
+        ${open&&p?`<div class="tp-pz"><div class="board" data-tpboard="${l}|${k}"></div><div class="stack" style="gap:6px"><span class="li-m">${p[1].split(" ")[1]==="w"?"Black":"White"} to move · difficulty ${p[3]}</span><b>Answer: ${esc(tpLine(p))}</b><a class="btn ghost sm" href="#plevel?l=${l}" style="text-decoration:none;align-self:flex-start">Open Level ${l}</a></div></div>`:""}</li>`}).join("")}</ul>`
+    :ins.tries?`<p class="li-m">No wrong puzzles recorded.</p>`:""}</div>`}
+// The puzzle's answer in normal chess notation, e.g. "1. Qxf7+ Kh8 2. Qf8#"
+function tpLine(p){try{const g=new Chess(p[1]),mv=p[2].split(" ");g.move({from:mv[0].slice(0,2),to:mv[0].slice(2,4),promotion:mv[0][4]});const out=[];
+  mv.slice(1).forEach((u,i)=>{const m=g.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});if(m)out.push((i%2===0?(i/2+1)+". ":"")+m.san)});return out.join(" ")}catch(e){return ""}}
 function afterProgressTeacher(){
+  if(!LVD)lvLoad().then(()=>{if(route()==="progress")render()}).catch(()=>{});
+  document.querySelectorAll("[data-tpz]").forEach(b=>b.onclick=e=>{e.stopPropagation();TPROG.pz=TPROG.pz===b.dataset.tpz?null:b.dataset.tpz;render()});
+  document.querySelectorAll(".tp-more").forEach(x=>x.onclick=e=>e.stopPropagation());
+  document.querySelectorAll("[data-tpboard]").forEach(el=>{const [l,k]=el.dataset.tpboard.split("|").map(Number),p=LVD[l-1][k];try{const g=new Chess(p[1]),u=p[2].split(" ")[0];g.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});drawBoard(el,g.fen(),{flip:g.turn()==="b"})}catch(e){}});
   const r=$("#tpRefresh");if(r)r.onclick=()=>{TPROG.state="loading";render();loadTeacherProgress()};
   document.querySelectorAll("[data-tpb]").forEach(b=>b.onclick=()=>{TPROG.batch=b.dataset.tpb;render()});
   document.querySelectorAll("[data-tp]").forEach(tr=>{const go=()=>{TPROG.open=TPROG.open===tr.dataset.tp?null:tr.dataset.tp;render()};tr.onclick=go;tr.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}}});
@@ -1686,7 +1747,7 @@ async function authCheck(){
 /* ---------- Progress sync (students) ----------
    Progress lives in this browser (S) and is copied to the server a few seconds after any change,
    so the teacher can see it and it follows the student to another phone or computer. */
-const PROG_KEYS=["lessons","puzzles","tests","practice","days","lv","pr"];
+const PROG_KEYS=["lessons","puzzles","tests","practice","days","lv","pr","pm"];
 let progT=null,progBusy=false;
 const isStudent=()=>AUTH&&AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="student";
 function progQueue(){if(!isStudent()||S.owner!==AUTH.user.username)return;clearTimeout(progT);progT=setTimeout(progPush,3000)}
@@ -1696,7 +1757,7 @@ function progSummary(){const xp=totalXP(),st=lvState(),done=Object.values(st.don
   return {xp,rank:rankOf(xp).cur.n,streak:streak(),todayXP:todayXP(),week:week().map(w=>w.xp),
     lessonsDone:lessonsDone(),lessonsTotal:ALL_LESSONS.length,
     puzzlesSolved:lvSolvedCount(),puzzleLevel:st.unlocked,levelsDone:done.length,levelsTotal:LVD?LVD.length:115,stars:done.reduce((a,d)=>a+(d.stars||0),0),
-    classicSolved:Object.values(S.puzzles||{}).filter(Boolean).length,
+    classicSolved:Object.values(S.puzzles||{}).filter(Boolean).length,insight:pmSummary(),
     practiceSolved:Object.keys(S.practice||{}).length,practiceTotal:PR?PR.topics.reduce((a,t)=>a+t.chapters.length,0):316,
     tests:S.tests.length,bestTest:bestTest(),lastTest:last?{score:last.score,total:testTotal(last),tier:last.tier!=null?TIERS[last.tier]:"",at:last.at||""}:null,
     lastActive:days[days.length-1]||"",daysActive:days.length,puzzleRating:prState().r,ratedPuzzles:prState().n}}
@@ -1711,6 +1772,7 @@ function progMerge(a,b){a=a||{};b=b||{};const o={};
   [la.done||{},lb.done||{}].forEach(d=>Object.entries(d).forEach(([k,v])=>{if(!o.lv.done[k]||(v.stars||0)>(o.lv.done[k].stars||0))o.lv.done[k]=v}));
   [la.part||{},lb.part||{}].forEach(d=>Object.entries(d).forEach(([k,v])=>{if(o.lv.done[k])return;const c=r=>(r||[]).filter(x=>x==="ok").length;if(!o.lv.part[k]||c(v)>c(o.lv.part[k]))o.lv.part[k]=v}));
   const pa=a.pr,pb=b.pr;if(pa||pb){const big=(pa&&pb)?((pa.n||0)>=(pb.n||0)?pa:pb):(pa||pb);o.pr={...big,seen:Object.assign({},(pa||{}).seen||{},(pb||{}).seen||{})}}
+  {const ma=a.pm,mb=b.pm;if(ma||mb)o.pm=(ma&&mb)?(((ma.n||[0])[0]>=(mb.n||[0])[0])?ma:mb):(ma||mb)}
   return o}
 // After a student signs in: bring in their saved progress. A different student's leftovers on this device are cleared first.
 async function progPull(){if(!isStudent())return;const me=AUTH.user.username;
@@ -1865,7 +1927,7 @@ function liveHome(root){
       ${users.length>5?`<input class="adm-q" id="lvQ" type="search" placeholder="Search name" aria-label="Search students" value="${esc(LV.q)}">`:""}</div>
     ${batches.length>1?`<div class="row chips">${["",...batches].map(b=>`<button class="chip ${bf===b?"on":""}" data-batch="${esc(b)}">${b?esc(b):"All batches"}</button>`).join("")}</div>`:""}
     ${shown.length?`<ul class="adm-list">${shown.map(x=>`<li data-name="${esc(x.name.toLowerCase())}"><span class="adm-av" style="--hue:${[4,28,48,140,172,200,226,262,292,330][[...x.username].reduce((a,ch)=>(a*31+ch.charCodeAt(0))>>>0,0)%10]}">${esc((x.name.trim()[0]||"?").toUpperCase())}</span>
-      <div class="adm-who"><b>${esc(x.name)}</b><span class="li-m">${esc(x.username)} · ${esc(x.batchName||x.batch)}${x.role!=="student"?` · ${ROLE_NAME[x.role]}`:""}</span></div>
+      <div class="adm-who"><b>${esc(x.name)}</b><span class="li-m">${esc(x.username)} · ${esc(x.batchName||x.batch)}${x.role!=="student"?` · ${ROLE_NAME[x.role]}`:""} · ${x.seen?"opened "+esc(seenText(x.seen).replace(/^[TY]/,c=>c.toLowerCase())):"never signed in"}</span></div>
       <div class="acts"><button class="btn ghost sm" data-reset="${esc(x.username)}">New password</button><button class="btn ghost sm" data-rm="${esc(x.username)}">Remove</button></div></li>`).join("")}</ul>`
     :`<p class="li-m">${users.length?"No students in this batch.":"No students yet. Add the first one above."}</p>`}
     <p class="li-m">To see how each student is doing, open the <a class="link" href="#progress">Progress</a> tab.</p></section>`

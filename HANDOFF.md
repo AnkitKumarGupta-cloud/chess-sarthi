@@ -91,3 +91,10 @@ Vercel Deployment Protection must stay **off** for `chess-sathi-live`, or studen
 - Milestones call `celebrate(iconName,title,sub)`; keep it for real progress only.
 - The last block in the `<style>` tag is the premium layer; put overrides there.
 - Icons: menu tabs, practice topics (`practice.json` → `icons`) and classroom buttons all use Lucide (ISC licence) paths. Add new ones from lucide.dev so the set stays consistent. The logo pawn lives in `public/icons/icon.svg`; PNG sizes are rendered from it.
+
+## Puzzle mistakes, teacher insight and "last opened" (Nov 2026)
+- `S.pm` records each level puzzle once, on the first attempt: totals, per-theme counts and the latest 40 missed puzzles (`pmRecord` in `lvSolved`). It syncs with the rest of progress (`pm` in `PROG_KEYS` / `STATE_KEYS`).
+- The summary sent to the server carries `insight` (`pmSummary()`); `api/progress.js` cleans it (`cleanInsight`).
+- Teacher → Progress → tap a student: `tpInsight` shows plain-sentence insight (`pmInsight`) and the missed puzzles, each opening a board with the answer.
+- Only level puzzles are counted (not tests, practice or the classic set), and only from this update onward.
+- Redis `seen:<username>` = when a student last opened the app (set in `/api/me` and `/api/login` by `markSeen`). Shown as "Last opened" on Progress and in Live → Students.
