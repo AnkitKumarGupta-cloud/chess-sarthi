@@ -711,6 +711,107 @@ html{scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent
 .tp-pz{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;padding:4px 0 14px}.tp-pz .board{width:min(260px,100%)}
 @media (max-width:900px){.tp-wrap{position:sticky;left:16px;width:calc(100vw - 66px)}.tp-mb b{min-width:0;width:100%}.tp-grid{grid-template-columns:1fr 1fr}}
 .t-scan{display:flex!important;flex-direction:row!important;align-items:center;gap:14px;text-decoration:none;color:var(--ink)}.t-scan:hover{box-shadow:var(--shadow-up)}.scan-i{width:46px;height:46px;flex:none;border-radius:14px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}.scan-i .ic{width:24px;height:24px}
+
+/* ===== Board identity (Nov 2026): the board's own colours and real pieces are the shared language of every page ===== */
+:root{--board-l:#F0DDBA;--board-d:#B98A61;--board-edge:#8A6240}
+body .eyebrow{text-transform:none;letter-spacing:0;font-size:.88rem;font-weight:600;color:var(--muted)}
+/* a piece badge is a tiny 2x2 board with a real piece on it */
+.pbadge{position:relative;flex:none;width:46px;height:46px;border-radius:12px;overflow:hidden;display:grid;place-items:center;
+  background:conic-gradient(var(--board-d) 0 25%,var(--board-l) 0 50%,var(--board-d) 0 75%,var(--board-l) 0) 0 0/50% 50%}
+.pbadge .pc{width:80%;height:80%;background-size:contain}
+.pbadge.gold{box-shadow:0 0 0 2px var(--gold)}
+.pbadge.lg{width:60px;height:60px;border-radius:14px}
+/* Home */
+.hello{display:block!important}
+.hello-greet{color:var(--muted);font-weight:600;margin:0 0 4px}
+.t-continue{display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;min-height:0!important}
+.tc-text{display:flex;flex-direction:column;gap:10px;min-width:0;height:100%}
+.tc-go{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:auto;padding-top:8px}
+.tc-go .btn .ic{width:18px;height:18px;margin-right:6px;vertical-align:-3px}
+.tc-board{width:236px;flex:none;border-radius:10px;overflow:hidden;box-shadow:0 0 0 6px var(--board-edge)}
+.t-journey{padding:0!important;overflow:hidden;display:grid!important;grid-template-columns:minmax(150px,34%) 1fr;gap:0!important}
+.tj-art{background-image:var(--art);background-position:center 88%;background-size:cover;background-repeat:no-repeat;min-height:132px}
+.tj-body{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 22px;flex-wrap:wrap}
+.tj-body h3{margin-bottom:4px}
+.streak-s{display:flex;align-items:center;gap:6px;font-size:.88rem;color:var(--muted);margin:0}
+.streak-s .ic{width:16px;height:16px;color:var(--muted)}
+.streak-s.lit{color:var(--ink);font-weight:600}.streak-s.lit .ic{color:var(--gold)}
+.t-label{font-size:1rem}
+.t-rank{gap:16px}
+.pill.gold{background:var(--gold-soft);color:#7A4E00}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .pill.gold{color:#F0C25A}}
+:root[data-theme=dark] .pill.gold{color:#F0C25A}
+.ccard-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.cards-x{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+@media (min-width:1280px){.cards-x{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+@media (max-width:640px){
+  .cards-x{grid-template-columns:none!important}
+  .t-continue{grid-template-columns:1fr;gap:16px}
+  .tc-board{display:none}
+  .t-journey{grid-template-columns:1fr}.tj-art{min-height:110px}
+}
+@media (min-width:641px) and (max-width:900px){.tc-board{width:190px}}
+
+/* Puzzles map: same cards, type, board colours and red action as the rest of the app; the art stays the game world */
+body .world-sign{flex-direction:row;align-items:center;gap:12px;padding:10px 18px 10px 10px;border:0;border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 3px 0 var(--board-edge),0 10px 24px rgba(0,0,0,.22)}
+body .world-sign b{display:block;font-family:var(--f-body);font-size:1.05rem;font-weight:700;letter-spacing:-.01em}
+body .world-sign span{font-family:var(--f-body);font-size:.8rem;color:var(--muted);opacity:1}
+body .world-sign .pbadge{width:40px;height:40px;border-radius:10px}
+body .mt-top{font-family:var(--f-body);font-weight:700;text-shadow:none;background:var(--board-l);color:var(--board-edge);box-shadow:inset 0 -6px 0 var(--board-d)}
+body .mtile.done .mt-top{background:var(--surface);color:var(--good);box-shadow:inset 0 -6px 0 var(--board-l)}
+body .mtile.cur .mt-top{background:var(--accent);color:#fff;box-shadow:inset 0 -6px 0 #9E2028}
+body .mtile.lock .mt-top{background:#E9D8B8;color:rgba(138,98,64,.6);box-shadow:inset 0 -6px 0 #CDB28B}
+body .mt-stars{color:var(--gold);background:var(--surface);text-shadow:none;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+body .mpawn{display:block;width:48px;height:48px;top:-34px;left:-30px;font-size:0;text-shadow:none;background-size:contain;filter:drop-shadow(0 4px 4px rgba(0,0,0,.35))}
+body .pbar{left:calc(var(--side,0px) + 24px);right:24px;bottom:16px;padding:12px 12px 12px 14px;border-radius:18px;background:var(--surface);backdrop-filter:none;box-shadow:0 10px 30px rgba(0,0,0,.28);justify-content:flex-start}
+body .pbar .pbadge{width:44px;height:44px}
+body .pbar-l{flex:1;min-width:0;color:var(--ink);text-shadow:none}
+body .pbar-l .li-m{color:var(--muted)}
+body .pbar-lv{font-family:var(--f-body);font-weight:700;font-size:1.15rem}
+body .pbar-go{border-radius:14px;padding:14px 26px;font-weight:700;font-size:1.05rem;background:var(--accent);box-shadow:0 3px 0 #9E2028;text-shadow:none}
+body .pbar-go:active{box-shadow:0 1px 0 #9E2028}
+@media (max-width:1099px){body .pbar{left:16px;right:16px}}
+@media (max-width:720px){body .pbar{left:10px;right:10px;bottom:calc(66px + env(safe-area-inset-bottom));padding:10px}body .pbar .pbadge{display:none}body .pbar-go{padding:12px 18px}body .pbar-l .li-m{font-size:.78rem}}
+
+/* Tests: question and answer sheet side by side; the sheet is a little board of the 10 questions */
+.tlay{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:20px 24px;align-items:start;width:100%;max-width:1060px}
+.thead{grid-column:1/-1}
+.tq-card{display:flex;flex-direction:column;gap:10px;min-width:0}
+.tq-h{font-size:1.15rem;margin-bottom:4px}
+.qpz{display:grid!important;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:22px;align-items:start}
+.qopts{display:flex;flex-direction:column;gap:10px;min-width:0}
+.tsheet{display:flex;flex-direction:column;gap:12px;position:sticky;top:24px}
+.tsq{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);border-radius:10px;overflow:hidden;box-shadow:0 0 0 4px var(--board-edge)}
+.tsq li{aspect-ratio:1;display:grid;place-items:center;background:var(--board-l);color:var(--board-edge);font-weight:700;font-size:.95rem}
+.tsq li.dk{background:var(--board-d);color:#FFF6E6}
+.tsq li.now{box-shadow:inset 0 0 0 3px var(--accent)}
+.tsq li .ic{width:20px;height:20px}
+.tsq li.ok .ic{color:var(--good)}.tsq li.dk.ok .ic{color:#E2F3E8}
+.tsq li.no .ic{color:var(--accent)}.tsq li.dk.no .ic{color:#FFE0DE}
+@media (max-width:900px){
+  .tlay{grid-template-columns:1fr;gap:14px}
+  .tsheet{order:-1;position:static;padding:12px!important}.tsheet h3,.tsheet-more{display:none}
+  .tsq{grid-template-columns:repeat(10,1fr)}
+  .tsq li.dk{background:var(--board-l);color:var(--board-edge)}.tsq li:nth-child(even){background:var(--board-d);color:#FFF6E6}
+  .tsq li .ic{width:16px;height:16px}
+  .thead{order:-2}
+  .qpz{grid-template-columns:1fr}
+}
+
+/* Live: classroom setup until there are students and a class */
+.lv-setup{display:flex!important;flex-direction:row!important;gap:20px;align-items:flex-start;padding:26px!important}
+.lv-setup-b{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.lv-steps{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.lv-steps li{display:flex;gap:12px;padding:16px;border-radius:14px;background:var(--surface-2)}
+.lv-steps li>div{display:flex;flex-direction:column;gap:6px;align-items:flex-start;min-width:0}
+.lv-steps li .btn{margin-top:6px}
+.ss-n{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-weight:700;background:var(--board-l);color:var(--board-edge)}
+.ss-n .ic{width:18px;height:18px}
+.lv-steps li.now{background:var(--surface);box-shadow:0 0 0 2px var(--accent)}
+.lv-steps li.now .ss-n{background:var(--accent);color:#fff}
+.lv-steps li.done .ss-n{background:var(--good-soft);color:var(--good)}
+.lv-steps li.done b{color:var(--muted)}
+@media (max-width:900px){.lv-steps{grid-template-columns:1fr}.lv-setup{flex-direction:column!important;padding:20px!important}}
 </style>
 
 </head>
@@ -934,6 +1035,11 @@ const ring=(pct,size=56,stroke=6)=>{const r=(size-stroke)/2,c=2*Math.PI*r;return
 const COURSE_ICON={"Beginner":"♙","Intermediate":"♘","Advanced":"♖","Expert":"♕"};
 
 /* ---------- Views ---------- */
+/* Real chess pieces as the app's badges (same piece set as every board). */
+const LEVEL_PIECE={Beginner:"p",Intermediate:"n",Advanced:"r",Expert:"q"};
+const RANK_PIECE={Pawn:"p",Knight:"n",Bishop:"b",Rook:"r",Queen:"q",King:"k"};
+const pbadge=(k,cls="")=>`<span class="pbadge${cls?" "+cls:""}" aria-hidden="true"><i class="pc w pk-${k}"></i></span>`;
+function worldOf(l){const i=LV_STAGES.findIndex(([,a,b])=>l>=a&&l<=b);return i<0?0:i}
 function vHome(){
   const next=ALL_LESSONS.find(l=>!S.lessons[l.id]);
   const xp=totalXP(),rk=rankOf(xp),st=streak(),tx=todayXP(),wk=week(),maxw=Math.max(DAILY_GOAL,...wk.map(w=>w.xp));
@@ -941,66 +1047,73 @@ function vHome(){
   const name=AUTH.user&&AUTH.user.role!=="teacher"?AUTH.user.name.split(" ")[0]:"";
   const hr=new Date().getHours(),greet=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening";
   const nc=next&&next.course, ni=next?nc.lessons.findIndex(l=>l.id===next.id):0;
+  const lv=lvState(),lvTotal=LVD?LVD.length:115,lvCur=Math.min(lv.unlocked,lvTotal),wi=worldOf(lvCur),solved=lvSolvedCount();
   return `<section class="hello view">
-    <div><div class="eyebrow">${greet}${name?", "+esc(name):""}</div><h1>${st?`You're on a ${st}-day streak. Keep it going!`:"Let's learn one chess idea today."}</h1></div>
-    <div class="hello-chips"><span class="hchip streak${tx>0?" lit":""}" title="Days in a row you practised">${ico("flame")}<b>${st}</b> day streak</span><span class="hchip xp" title="Total experience points">${ico("bolt")}<b>${xp}</b> XP</span><span class="hchip rank" title="Your rank"><b>${rk.cur.g}</b> ${rk.cur.n}</span></div>
+    <p class="hello-greet">${greet}${name?", "+esc(name):""}</p><h1>${st?`You're on a ${st}-day streak. Keep it going!`:"Let's learn one chess idea today."}</h1>
   </section>
   <section class="bento view"><div class="b-col b-main">
     <article class="tile t-continue">
-      ${next?`<div class="tile-top"><span class="pill level">${nc.level}</span><span class="li-m">${esc(nc.title)} · lesson ${ni+1} of ${nc.lessons.length}</span></div>
-      <h2 class="tile-h">${lessonsDone()?"Continue":"Start"}: ${esc(next.title)}</h2>
-      <p class="li-m">${next.minutes} min · +20 XP</p>
-      <div class="row" style="margin-top:auto"><button class="btn big" data-open="${next.id}">▶ ${lessonsDone()?"Continue lesson":"Start learning"}</button>
-        <div class="minibar"><div class="bar"><i style="width:${courseProgress(nc)/nc.lessons.length*100}%"></i></div><span class="li-m mono">${courseProgress(nc)}/${nc.lessons.length}</span></div></div>`
-      :`<div class="tile-top"><span class="pill done">All lessons watched</span></div><h2 class="tile-h">Brilliant! Now test yourself.</h2><p class="li-m">A new test each time, matched to your puzzle level.</p><div class="row" style="margin-top:auto"><a class="btn big" href="#tests">Take the test</a></div>`}
-      <div class="tile-art" aria-hidden="true">${next?COURSE_ICON[nc.level]||"♞":"♛"}</div>
+      <div class="tc-text">
+      ${next?`<div class="tile-top"><span class="pill level">${nc.level}</span><span class="li-m">${esc(nc.title)}, lesson ${ni+1} of ${nc.lessons.length}</span></div>
+      <h2 class="tile-h">${esc(next.title)}</h2>
+      <p class="li-m">${next.minutes} minutes, +20 XP</p>
+      <div class="tc-go"><button class="btn big" data-open="${next.id}">${ico("play")}${lessonsDone()?"Continue lesson":"Start learning"}</button>
+        <div class="minibar"><div class="bar"><i style="width:${courseProgress(nc)/nc.lessons.length*100}%"></i></div><span class="li-m">${courseProgress(nc)}/${nc.lessons.length}</span></div></div>`
+      :`<div class="tile-top"><span class="pill done">All lessons watched</span></div><h2 class="tile-h">Brilliant! Now test yourself.</h2><p class="li-m">A new test each time, matched to your puzzle level.</p><div class="tc-go"><a class="btn big" href="#tests">Take the test</a></div>`}
+      </div>
+      <div class="board tc-board" id="lessonBoard" aria-hidden="true"></div>
     </article>
     <div class="b-pair">
     <article class="tile t-goal">
-      <div class="goal">${ring(tx/DAILY_GOAL*100,72,8)}<div class="goal-n"><b class="mono">${Math.min(tx,DAILY_GOAL)}</b><span>/${DAILY_GOAL}</span></div></div>
-      <div class="stack" style="gap:4px"><h3>Daily goal</h3><p class="li-m">${tx>=DAILY_GOAL?"Done for today. Great work!":`${DAILY_GOAL-tx} XP to go`}</p></div>
+      <div class="goal">${ring(tx/DAILY_GOAL*100,72,8)}<div class="goal-n"><b>${Math.min(tx,DAILY_GOAL)}</b><span>/${DAILY_GOAL}</span></div></div>
+      <div class="stack" style="gap:4px"><h3>Daily goal</h3><p class="li-m">${tx>=DAILY_GOAL?"Done for today. Great work!":`${DAILY_GOAL-tx} XP to go`}</p>
+        <p class="streak-s${st?" lit":""}">${ico("flame")}${st?`${st}-day streak`:"Start a streak today"}</p></div>
       <div class="week" aria-label="XP this week">${wk.map(w=>`<div class="wd${w.today?" today":""}${w.xp?" on":""}" title="${w.k}: ${w.xp} XP"><i style="height:${Math.max(6,w.xp/maxw*100)}%"></i><span>${w.d}</span></div>`).join("")}</div>
     </article>
     <article class="tile t-live" id="homeLive">
-      <span class="eyebrow">Live class</span>
-      ${AUTH.user?`<div class="sk sk-l" style="height:20px"></div><div class="sk sk-l s"></div>`:`<h3>Live classes</h3><p class="li-m">Join your teacher's live class from the Live tab.</p>`}
+      <h3 class="t-label">Live class</h3>
+      ${AUTH.user?`<div class="sk sk-l" style="height:20px"></div><div class="sk sk-l s"></div>`:`<p class="li-m">Join your teacher's live class from the Live tab.</p>`}
       <a class="btn ghost" href="#live" style="margin-top:auto">Open Live</a>
     </article>
     </div>
-    <article class="tile t-stats">
-      <div class="kpi"><b>${lessonsDone()}<small>/${ALL_LESSONS.length}</small></b><span>Lessons watched</span></div>
-      <div class="kpi"><b>${lvSolvedCount()}</b><span>Puzzles solved</span></div>
-      <div class="kpi"><b>${prState().r}</b><span>Puzzle rating</span></div>
-      <div class="kpi"><b>${bestTest()??"–"}${bestTest()!=null?`<small>/${TEST_N}</small>`:""}</b><span>Best test</span></div>
+    <article class="tile t-journey" style="--art:${worldBg(wi,true)}">
+      <div class="tj-art" aria-hidden="true"></div>
+      <div class="tj-body">
+        <div><h3>Puzzle journey</h3><p class="li-m">Level ${lvCur} of ${lvTotal}, ${WORLDS[wi].name}. ${solved} solved, rating ${prState().r}.</p></div>
+        <button class="btn" data-lv="${lvCur}">${solved?`Play level ${lvCur}`:"Start puzzles"}</button>
+      </div>
     </article>
-    <a class="tile t-scan" href="/reader/"><span class="scan-i">${ico("scan")}</span><div><h3>Scan a score sheet</h3><p class="li-m">Photo of your tournament sheet → the game on a board, ready to analyse.</p></div></a>
+    <a class="tile t-scan" href="/reader/"><span class="scan-i">${ico("scan")}</span><div><h3>Scan a score sheet</h3><p class="li-m">Take a photo of your tournament sheet and get the game on a board to analyse.</p></div></a>
   </div><div class="b-col b-side">
     <article class="tile t-rank">
-      <div class="rank-g" aria-hidden="true">${rk.cur.g}</div>
-      <div class="stack" style="gap:6px;min-width:0;flex:1"><span class="eyebrow">Your rank</span><h3>${rk.cur.n}</h3>
+      ${pbadge(RANK_PIECE[rk.cur.n]||"p","gold")}
+      <div class="stack" style="gap:6px;min-width:0;flex:1"><h3>${rk.cur.n}</h3>
         <div class="bar gold"><i style="width:${rk.pct}%"></i></div>
-        <span class="li-m">${rk.nxt?`${rk.nxt.xp-xp} XP to become a ${rk.nxt.n} ${rk.nxt.g}`:"Top rank reached. You're the King!"}</span></div>
+        <span class="li-m">${xp} XP. ${rk.nxt?`${rk.nxt.xp-xp} more to become a ${rk.nxt.n}.`:"Top rank reached. You're the King!"}</span></div>
     </article>
     <article class="tile t-puzzle">
-      <div class="tile-top"><span class="eyebrow">Puzzle of the day</span><span class="pill mono">+${daily.pts} XP</span></div>
+      <div class="tile-top"><h3>Puzzle of the day</h3><span class="pill gold">+${daily.pts} XP</span></div>
       <div class="board" id="heroBoard"></div>
-      <p class="li-m">${label(daily)} · ${daily.fen.split(" ")[1]==="w"?"White":"Black"} to move</p>
-      <button class="btn ghost" id="dailyGo">${S.puzzles[daily.id]?"Solved ✓ · Try more":"Solve it"}</button>
+      <p class="li-m">${label(daily)}. ${daily.fen.split(" ")[1]==="w"?"White":"Black"} to move.</p>
+      <button class="btn ghost" id="dailyGo">${S.puzzles[daily.id]?"Solved. Try more":"Solve it"}</button>
     </article>
   </div>
   </section>
   <section class="stack view">
-    <div class="row" style="justify-content:space-between"><h2>Your lessons</h2><a class="link" href="#courses">See all lessons →</a></div>
+    <div class="row" style="justify-content:space-between"><h2>Your lessons</h2><a class="link" href="#courses">See all lessons</a></div>
     <div class="cards-x">${COURSES.map(c=>{const d=courseProgress(c),n=c.lessons.length;return `<button class="ccard" data-open="${(c.lessons.find(l=>!S.lessons[l.id])||c.lessons[0]).id}">
-      <span class="ccard-icon" aria-hidden="true">${COURSE_ICON[c.level]||"♞"}</span>
-      <span class="pill level">${c.level}</span><b>${esc(c.title)}</b><span class="li-m">${esc(c.blurb)}</span>
-      <span class="ccard-foot">${ring(d/n*100,30,4)}<span class="li-m mono">${d}/${n} lessons</span></span></button>`}).join("")}</div>
+      <span class="ccard-head">${pbadge(LEVEL_PIECE[c.level]||"n")}<span class="pill level">${c.level}</span></span><b>${esc(c.title)}</b><span class="li-m">${esc(c.blurb)}</span>
+      <span class="ccard-foot">${ring(d/n*100,30,4)}<span class="li-m">${d}/${n} lessons</span></span></button>`}).join("")}</div>
   </section>`;
 }
 function afterHome(){
   const d=PUZZLES.filter(p=>p.level==="Advanced")[new Date().getDate()%13];
   const go=()=>{pzStart=d.id;location.hash="classic"};
   drawBoard($("#heroBoard"),d.fen,{flip:d.fen.split(" ")[1]==="b",onSquare:go});$("#dailyGo").onclick=go;
+  /* The next lesson's position on a real board (the first moment in the lesson where a move is shown). */
+  const nl=ALL_LESSONS.find(l=>!S.lessons[l.id]),lb=$("#lessonBoard");
+  if(lb){try{const fr=nl?buildFrames(nl.steps):[];const f=fr.find(x=>x.last)||fr[0];drawBoard(lb,f?f.fen:"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",{hi:f&&f.last})}catch(e){lb.remove()}}
+  document.querySelectorAll(".t-journey [data-lv]").forEach(b=>b.onclick=()=>{LVS=null;location.hash="plevel?l="+b.dataset.lv});
   /* The puzzle map is the likely next stop: fetch the picture of the student's current world while the page is idle. */
   try{const u=lvState().unlocked,wi=LV_STAGES.findIndex(([,a,b])=>u>=a&&u<=b);if(wi>=0){const f=()=>{new Image().src=worldImg(wi)};window.requestIdleCallback?requestIdleCallback(f,{timeout:5000}):setTimeout(f,2000)}}catch(e){}
   const box=$("#homeLive");if(!box||!AUTH.user)return;
@@ -1211,6 +1324,7 @@ const WORLDS=[
 /* Puzzle map art: a tiny blurred preview is drawn at once (inline, ~250 bytes each); the full picture loads for the
    world you are in first and for the others only as they scroll near. Change ?v= when a picture is replaced. */
 const WORLD_TINY=["UklGRtoAAABXRUJQVlA4IM4AAABQBQCdASoQABgAPtFUo0uoJKMhsAgBABoJbACdOUE4CmAepmOUsZWHDm7odWaT0Ynvv4AA++RrVg+LVTPUVcVg3fKfMyYEExiJ3heanRwOQ45g+yqRz3syt0sI8h76RGTclj563uNRKC8beyHj3yjdk8K+YjJjEhg9ogY6Qdt4Wviqmh99i4VlCOSMsRPCch7ukbwO9gsrpnpcH7Z80eL9tz9477as7P158W+emLE9OrGwTeph2Xymd6nPueIu0e9/lkpcuC97RCBlyXkgAA==", "UklGRr4AAABXRUJQVlA4ILIAAABQBACdASoQABgAPtFUo0uoJKMhsAgBABoJbACdAdwA3b7Mx8LOjOeYaJqAAP7doU8Zoe5hpI85EYSsyyMLCgsAxXoprPUf9WyK49itTDIrEVBj5Hip+6oCP3+N5Q7HOS2XMZ+2cb0Sq70luojX6qX13Lrt1bV2/7u2TQespp4O71uc0hQlDLM0usA3nyAcxBYEs7jGGq7klXB+H6QU4SM0/3imlHsQeEkIzmJGWCAqQAAA", "UklGRsgAAABXRUJQVlA4ILwAAABwBACdASoQABgAPtFUo0uoJKMhsAgBABoJbACdMoR3JoAD4id7V95j/C+JgADOOJu96nFrM/WI5ZTnTxE+1nsK5XYXsY+gHn5qvHp6Yv3PvXpnq0u3eymzYHqzonsPx2x0zioRNM6iyw1p4xMVCvDtmo3iZFwABFgW3NBbtU+3pNb/7YHdSpHIeacTRWmyWABD/2VXaHyg4zryFNS/mfUznBFU4LgUiMEi6z7g9TLP50PQjRtsonzNIAAAAA==", "UklGRtQAAABXRUJQVlA4IMgAAACQBACdASoQABgAPtFUo0uoJKMhsAgBABoJbACdMoHgAFOkKfrhO+nO/zsbwjAA/gpkkFjYZJdwmHs8uGmn+/8VAHY1rhtN5PiXgFicVkehjT9uqnWFnE+xYlnE5rGHLuP/YGH9pcczOKPady6bxP5jGD/36Bxw/T09VAhlzfjnH7i2HOuZTAEirE/z0zWlPC3WN0rLaJRn+dnQ3OWY3jK98CkHAvSw0WwqtSUWLDxHSmlJCrAxiKhRfKP+0o2Yk0L8swdMEkUAAA==", "UklGRr4AAABXRUJQVlA4ILIAAADQBACdASoQABgAPtFUo0uoJKMhsAgBABoJbACdMoRwH1/AT/BHzJL+nsg7pFtIAAD+wGQZ2gIUkWshXZpBtxbCqSU77b/G/rG+RC1PhYUsn6EcMCspeLEeuqj/QjLXL7Vpd3UMU1uP4u5F8Z6MSJsPzpIkh0+rm1IE+7ymgFslNC7acZxXNSQWvc+H64t2QGcn8x4xs6HL7s+zgsmPU3kQqb0b1MPO6s6bU4F9S9ePXAAA", "UklGRsAAAABXRUJQVlA4ILQAAADwBACdASoQABgAPtFUo0uoJKMhsAgBABoJbACsLwG4ECADlVm0/e9vTHMoIsUOQwAA/uowlRgBY8XGzramfdlg+s6imKZ0VqzdEWM/oM2yM22IS2pPihkBW+PKNgcth/BF1AwCjiwcx0Qhg/sjD81bLpNhfknhwccjkSlTuozq+AtKaJOuDGNOBQd65pXxkV6r9u8Rnm4KoNlJZGiGVOgP1ZFo9zr3xvCYFQMqKUnnv52AAAA="];
+const WORLD_PIECE=["p","n","b","r","q","k"]; // each world climbs one piece, like the ranks
 const worldImg=wi=>`/worlds/w${wi}.webp?v=2`;
 const worldBg=(wi,full)=>(full?`url(${worldImg(wi)}),`:"")+`url(data:image/webp;base64,${WORLD_TINY[wi]})`;
 function worldScene(wi,from,to,st){
@@ -1225,9 +1339,9 @@ function worldScene(wi,from,to,st){
   const deco="";
   const nodes=pts.map((p,j)=>{const l=from+j,d=st.done[l],cur=l===st.unlocked,lock=l>st.unlocked;
     return `<button class="mtile${d?" done":""}${cur?" cur":""}${lock?" lock":""}" style="left:${p[0]}%;top:${p[1]}px" ${lock?"disabled":""} data-lv="${l}" aria-label="Level ${l}${d?`, ${d.stars} stars`:lock?", locked":cur?", your next level":""}">
-      ${cur?`<span class="mpawn" aria-hidden="true">♟</span>`:""}<span class="mt-top">${d?"✓":l}</span>${d?`<span class="mt-stars">${"★".repeat(d.stars)}${"☆".repeat(3-d.stars)}</span>`:""}</button>`}).join("");
+      ${cur?`<i class="pc w pk-p mpawn" aria-hidden="true"></i>`:""}<span class="mt-top">${d?"✓":l}</span>${d?`<span class="mt-stars">${"★".repeat(d.stars)}${"☆".repeat(3-d.stars)}</span>`:""}</button>`}).join("");
   return `<section class="world" data-w="${wi}" style="--sky1:${W.sky[0]};--sky2:${W.sky[1]};--trail:${W.trail};--edge:${W.edge};height:${H}px;background-image:${worldBg(wi,cur>=from&&cur<=to)}">
-    <div class="world-sign"><b>${W.name}</b><span>Levels ${from}–${to} · difficulty ${lvRating(from)}–${lvRating(to)}</span></div>
+    <div class="world-sign">${pbadge(WORLD_PIECE[wi]||"p")}<div><b>${W.name}</b><span>Levels ${from} to ${to}, difficulty ${lvRating(from)} to ${lvRating(to)}</span></div></div>
     <svg class="trail" viewBox="0 0 1000 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${path}" stroke="var(--edge)" stroke-width="46" fill="none" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><path d="${path}" stroke="var(--trail)" stroke-width="34" fill="none" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><path d="${path}" stroke="rgba(0,0,0,.12)" stroke-width="3" stroke-dasharray="2 16" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>
     ${deco}${nodes}</section>`;
 }
@@ -1236,7 +1350,7 @@ function vPuzzles(){
   const ranges=LV_STAGES.map(([,a,b])=>[a,Math.min(b,total)]).filter(r=>r[0]<=total);
   return `<div class="pmap view">${ranges.map((r,i)=>worldScene(i,r[0],r[1],st)).reverse().join("")}
     </div>
-  <div class="pbar" data-sec="puzzles"><div class="pbar-l"><span class="pbar-lv">Level ${cur}</span><span class="li-m">${WORLDS[ranges.findIndex(r=>cur>=r[0]&&cur<=r[1])]?.name||""} · ${done}/${total} done · ${stars} ★ · Your rating ${prState().r}</span></div>
+  <div class="pbar" data-sec="puzzles">${pbadge(WORLD_PIECE[worldOf(cur)]||"p")}<div class="pbar-l"><span class="pbar-lv">Level ${cur}</span><span class="li-m">${WORLDS[worldOf(cur)]?.name||""}. ${done} of ${total} done, ${stars} stars, rating ${prState().r}</span></div>
     <button class="pbar-go" data-lv="${cur}">${done?"Solve puzzles":"Start puzzles"}</button></div>`;
 }
 let __mapW=0;window.addEventListener("resize",()=>{clearTimeout(window.__mapT);window.__mapT=setTimeout(()=>{const w=document.querySelector("main")?.clientWidth||0;if(route()==="puzzles"&&Math.abs(w-__mapW)>40){__mapW=w;render()}},250)});
@@ -1602,14 +1716,19 @@ function vTests(){
       ${Q.map((q,i)=>`<tr><td>${q.kind==="pz"?`Best move · difficulty ${q.rating}`:esc(q.q)}</td><td class="tans ${tAns[i]===q.a?"ok":"no"}">${ico(tAns[i]===q.a?"check":"cross")}${esc(q.o[tAns[i]])}${tAns[i]!==q.a?`<br><span class="li-m">Answer: ${esc(q.o[q.a])}</span>`:""}</td></tr>`).join("")}
       </tbody></table></div>
       <div class="row"><button class="btn" id="retry">New test</button><a class="btn ghost" href="#puzzles" style="text-decoration:none">Puzzles</a></div></section>`}
-  const q=Q[tq],ans=tAns[tq];
-  return `<section class="stack view tcol" style="max-width:640px"><div class="eyebrow">${tierName} test</div><h1>Question ${tq+1} of ${n}</h1>
-    <div class="bar"><i style="width:${tq/n*100}%"></i></div></section>
-  <section class="card q view tcol" style="max-width:640px">
-    ${q.kind==="pz"?`<h2 style="font-family:var(--f-body);font-size:1.15rem">${q.color==="w"?"White":"Black"} to move. Find the best move.</h2><div class="board" id="tBoard" style="max-width:360px;margin:4px auto 8px"></div>`
-      :`<h2 style="font-family:var(--f-body);font-size:1.15rem">${esc(q.q)}</h2>`}
-    ${q.o.map((o,i)=>`<button class="opt ${ans!=null?(i===q.a?"right":i===ans?"wrong":""):""}" data-opt="${i}" ${ans!=null?"disabled":""}><span class="opt-k">${String.fromCharCode(65+i)}</span>${esc(o)}</button>`).join("")}
-    <div class="row" style="justify-content:flex-end"><button class="btn" id="tnext" ${ans==null?"disabled":""}>${tq===n-1?"See result":"Next question"}</button></div>
+  const q=Q[tq],ans=tAns[tq],next=`<div class="row" style="justify-content:flex-end"><button class="btn" id="tnext" ${ans==null?"disabled":""}>${tq===n-1?"See result":"Next question"}</button></div>`;
+  const opts=q.o.map((o,i)=>`<button class="opt ${ans!=null?(i===q.a?"right":i===ans?"wrong":""):""}" data-opt="${i}" ${ans!=null?"disabled":""}><span class="opt-k">${String.fromCharCode(65+i)}</span>${esc(o)}</button>`).join("");
+  return `<section class="tlay view">
+    <header class="thead"><p class="hello-greet">${tierName} test</p><h1>Question ${tq+1} of ${n}</h1></header>
+    <section class="card q tq-card${q.kind==="pz"?" qpz":""}">
+    ${q.kind==="pz"?`<div class="board" id="tBoard"></div><div class="qopts"><h2 class="tq-h">${q.color==="w"?"White":"Black"} to move. Find the best move.</h2>${opts}${next}</div>`
+      :`<h2 class="tq-h">${esc(q.q)}</h2>${opts}${next}`}
+    </section>
+    <aside class="card tsheet" aria-label="Your answers">
+      <h3>Your answers</h3>
+      <ol class="tsq">${Q.map((x,i)=>`<li class="${(Math.floor(i/5)+i)%2?"dk":""}${i===tq?" now":""}${tAns[i]!=null?(tAns[i]===x.a?" ok":" no"):""}" aria-label="Question ${i+1}${tAns[i]!=null?(tAns[i]===x.a?", correct":", wrong"):i===tq?", now":""}">${tAns[i]!=null?ico(tAns[i]===x.a?"check":"cross"):i+1}</li>`).join("")}</ol>
+      <p class="li-m tsheet-more">This test matches your puzzle level. Each correct answer gives 5 XP, and 7 or more passes.</p>
+    </aside>
   </section>`;
 }
 function afterTests(){
@@ -1938,13 +2057,25 @@ function liveHome(root){
       <button class="btn ghost sm" id="lvRefresh">Refresh</button></div>${lists}${pastG}`;
   }else{
     const tab=LV.tab,bf=LV.batch&&batches.includes(LV.batch)?LV.batch:"",shown=users.filter(x=>!bf||(x.batchName||x.batch)===bf);
-    root.innerHTML=`
+    // Until the classroom has students and a class, show what to do next instead of a row of zeros.
+    const setupDone=[users.length>0,cs.length>0,past.length+now.length>0],setup=!setupDone[0]||!setupDone[1];
+    const step=(i,t,d,btn)=>`<li class="${setupDone[i]?"done":setupDone.indexOf(false)===i?"now":""}"><span class="ss-n">${setupDone[i]?ico("check"):i+1}</span><div><b>${t}</b><p class="li-m">${d}</p>${btn&&!setupDone[i]?btn:""}</div></li>`;
+    root.innerHTML=(setup?`
+  <section class="card lv-setup">
+    ${pbadge("k","lg")}
+    <div class="lv-setup-b"><h2>Set up your classroom</h2><p class="li-m">Three steps and your students can join live classes from any phone.</p>
+    <ol class="lv-steps">
+      ${step(0,"Add your students","Give each student a login. Put them in a batch, like Beginners Saturday.",`<button class="btn" data-goto="students">Add students</button>`)}
+      ${step(1,"Schedule a class","Pick a batch, a date and a time. The class shows up on your students' Live tab.",`<button class="btn${setupDone[0]?"":" ghost"}" data-goto="classes">Schedule a class</button>`)}
+      ${step(2,"Start the class","At class time, press Start on the class. Students press Join.","")}
+    </ol></div>
+  </section>`:`
   <div class="adm-kpis">
     <div class="kpi"><b>${users.length}</b><span>Student${users.length===1?"":"s"}</span></div>
     <div class="kpi"><b>${batches.length}</b><span>Batch${batches.length===1?"":"es"}</span></div>
     <div class="kpi"><b>${next.length}</b><span>Upcoming class${next.length===1?"":"es"}</span></div>
     <div class="kpi${now.length?" hot":""}"><b>${now.length}</b><span>Live now</span></div>
-  </div>
+  </div>`)+`
   <div class="row" style="justify-content:space-between">
     <div class="seg adm-tabs" role="tablist">${[["classes","Classes"],["students","Students"],["share","Share & backup"]].map(([k,t])=>`<button role="tab" aria-selected="${tab===k}" data-tab="${k}">${t}</button>`).join("")}</div>
     <button class="btn ghost sm" id="lvRefresh">Refresh</button></div>
@@ -1985,6 +2116,7 @@ function liveHome(root){
   root.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>{navigator.clipboard.writeText(b.dataset.copy).then(()=>toast("Copied")).catch(()=>toast("Press and hold to copy"))});
   if(teacher){
     root.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{LV.tab=b.dataset.tab;liveHome(root)});
+    root.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>{LV.tab=b.dataset.goto;liveHome(root);const f=$(LV.tab==="students"?"#lvSName":"#lvTitle");if(f){f.scrollIntoView({block:"center",behavior:"smooth"});f.focus({preventScroll:true})}});
     root.querySelectorAll("[data-batch]").forEach(b=>b.onclick=()=>{LV.batch=b.dataset.batch;liveHome(root)});
     const q=$("#lvQ"),filt=()=>{const v=(LV.q||"").toLowerCase().trim();root.querySelectorAll(".adm-list li").forEach(li=>li.hidden=!!v&&!li.dataset.name.includes(v))};
     if(q){q.oninput=()=>{LV.q=q.value;filt()};filt()}
