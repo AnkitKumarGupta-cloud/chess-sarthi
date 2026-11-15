@@ -26,7 +26,7 @@ Vercel environment variables (Settings → Environment Variables of `chess-sathi
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | LiveKit Cloud project | set |
 | `RECORD_S3_ENDPOINT`, `RECORD_S3_BUCKET`, `RECORD_S3_ACCESS_KEY`, `RECORD_S3_SECRET`, `RECORD_PUBLIC_URL` | Cloudflare R2 bucket for recordings | not set (recording is off) |
 
-Accounts used: Vercel team "kishkishkish123-7008's projects", GitHub `kishkishkish123-wq` (Claude can push because `AnkitKumarGupta-cloud` is a collaborator), LiveKit Cloud (account "krishna agarwal"), Upstash via Vercel.
+Accounts used: Vercel team "kishkishkish123-7008's projects", GitHub `AnkitKumarGupta-cloud` (repo chess-sarthi), LiveKit Cloud (account "krishna agarwal"), Upstash via Vercel.
 Vercel Deployment Protection must stay **off** for `chess-sathi-live`, or students get a Vercel login wall.
 
 ## What the app has
