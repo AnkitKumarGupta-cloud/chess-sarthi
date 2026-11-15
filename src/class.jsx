@@ -2,13 +2,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createRoot } from "react-dom/client";
 import {
   LiveKitRoom, RoomAudioRenderer, StartAudio, ConnectionStateToast, LayoutContextProvider,
-  GridLayout, CarouselLayout, FocusLayout, FocusLayoutContainer, ParticipantTile, TrackToggle, MediaDeviceMenu, Chat,
+  GridLayout, CarouselLayout, FocusLayout, FocusLayoutContainer, TrackToggle, MediaDeviceMenu, Chat,
   useTracks, useParticipants, useRoomContext, useLocalParticipant, useLocalParticipantPermissions,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { RoomEvent, Track } from "livekit-client";
 import { BackgroundProcessor, supportsBackgroundProcessors } from "@livekit/track-processors";
 import { usePuzzle, TeacherPuzzle, StudentPuzzle } from "./puzzle.jsx";
+import { Tile } from "./tile.jsx";
 
 // ---------- sign-in and API ----------
 // The sign-in comes from the website (saved in this browser) or from the mobile app (passed after # in the link).
@@ -83,6 +84,12 @@ const BACKGROUNDS = [
   { id: "board", label: "Chessboard", img: "/backgrounds/board.jpg" },
   { id: "sunset", label: "Sunset", img: "/backgrounds/sunset.jpg" },
   { id: "study", label: "Calm", img: "/backgrounds/study.jpg" },
+  { id: "library", label: "Library", img: "/backgrounds/library.jpg" },
+  { id: "chalkboard", label: "Classroom", img: "/backgrounds/chalkboard.jpg" },
+  { id: "room", label: "Cosy room", img: "/backgrounds/room.jpg" },
+  { id: "sky", label: "Sky", img: "/backgrounds/sky.jpg" },
+  { id: "forest", label: "Forest", img: "/backgrounds/forest.jpg" },
+  { id: "night", label: "Night sky", img: "/backgrounds/night.jpg" },
 ];
 // MediaPipe's engine is served from this website, so blockers or a slow CDN can't stop it.
 const makeProcessor = (delegate) => BackgroundProcessor({
@@ -169,7 +176,7 @@ function Stage({ hands }) {
     return (
       <div className="stage stage-share">
         <FocusLayoutContainer>
-          <CarouselLayout tracks={cams}><ParticipantTile /></CarouselLayout>
+          <CarouselLayout tracks={cams}><Tile /></CarouselLayout>
           <FocusLayout trackRef={share} />
         </FocusLayoutContainer>
       </div>
@@ -177,7 +184,7 @@ function Stage({ hands }) {
   }
   return (
     <div className="stage">
-      <GridLayout tracks={cams}><ParticipantTile /></GridLayout>
+      <GridLayout tracks={cams}><Tile /></GridLayout>
     </div>
   );
 }
