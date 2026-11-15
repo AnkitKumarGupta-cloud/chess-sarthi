@@ -109,3 +109,13 @@ Vercel Deployment Protection must stay **off** for `chess-sathi-live`, or studen
 - `test/fixtures/reader-result.json` is a STAND-IN made to match the brief's numbers (60 moves, move 14 read as Qf4 instead of Rfd1). Replace it with the real read when available; the "26 of 60" and "33 of 60" expectations may need adjusting to the real file.
 - Review line (changed 15 Nov 2026 with the owner's OK): a move joins the "left to check" queue below confidence 0.70 (`LOW_CONF`); from 0.70 to 0.90 (`NOTE_CONF`) it only gets a ! on its chip. Reason: on 5 hand-labelled test sheets, 0.90 flagged 74 of 601 moves and 46 of those were correct.
 - `fixCase` also repairs capital-letter slips the model makes: F3 -> f3, KF4 -> Kf4, Exd5 -> exd5, X -> x. `written` still keeps the original text.
+
+## Classroom mini window (picture-in-picture)
+
+Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.pbtn` rules at the end of `class.html`.
+
+- **Mini window** button in the dock, and **Open app** in the class header (opens the website in a new tab and starts the mini window, so the class is never left).
+- Chrome, Edge, Opera, Brave on a computer use Document Picture-in-Picture: a real floating window showing everyone (`PipWindow`, rendered with a React portal; the page's styles are copied into it). It can be moved, resized and closed. It also opens by itself when the user switches tabs (`mediaSession` action `enterpictureinpicture`; Chrome allows this while the camera or microphone is in use, and the user can switch it off in the site settings).
+- Other browsers and phones get one picture-in-picture video with everyone drawn into it on a canvas (`useVideoPip`, `drawEveryone`). It has no buttons, and it has not been tried on a real iPhone, Android phone, Safari or Firefox.
+- `window.open` must come **after** `requestWindow` in the same click (the other order is refused by Chrome).
+- Test without a class: `test/harness/pip.jsx` (see the top of that file). Not tested in a real class with real cameras.

@@ -10,6 +10,7 @@ import { RoomEvent, Track } from "livekit-client";
 import { BackgroundProcessor, supportsBackgroundProcessors } from "@livekit/track-processors";
 import { usePuzzle, TeacherPuzzle, StudentPuzzle } from "./puzzle.jsx";
 import { Tile } from "./tile.jsx";
+import { usePip, PipWindow, P } from "./pip.jsx";
 
 // ---------- sign-in and API ----------
 // The sign-in comes from the website (saved in this browser) or from the mobile app (passed after # in the link).
@@ -239,6 +240,13 @@ function Classroom({ pass, notify, recording }) {
   const shareSupported = canShareScreen();
   const handsUp = Object.keys(hands).length;
   const pz = usePuzzle(isTeacher);
+  const pip = usePip(notify);
+  // Opens the rest of Chess Sathi in a new tab; the class keeps running here and follows along in the mini window.
+  const openApp = async () => {
+    if (pip.kind === "window") { if (!pip.on) pip.open().catch(() => {}); } // must be asked for before the new tab
+    else if (pip.kind === "video" && !pip.on) await pip.open().catch(() => {});
+    if (!window.open("/", "_blank")) notify("Your browser blocked the new tab. Open Chess Sathi in another tab yourself; the class stays on here.", true);
+  };
 
   // Unread chat count while the chat panel is closed.
   useEffect(() => {
@@ -265,6 +273,7 @@ function Classroom({ pass, notify, recording }) {
         <div className="rmeta">
           <span className="live"><i />LIVE <span className="mono">{clock}</span></span>
           {recording ? <span className="rec" title="This class is being recorded">● REC</span> : null}
+          <button className="count appbtn" onClick={openApp} title="Use Chess Sathi in another tab without leaving the class">{P.app}<span>Open app</span></button>
           <button className="count" onClick={() => togglePanel("people")} aria-label={people.length + " people in class"}>{I.people}<span>{people.length}</span></button>
         </div>
       </header>
@@ -328,6 +337,7 @@ function Classroom({ pass, notify, recording }) {
               ) : null}
             </div>
           ) : null}
+          {pip.kind ? <button className={"dbtn" + (pip.on ? " on" : "")} aria-pressed={pip.on} onClick={pip.toggle} title="A small floating window with everyone in the class">{P.pip}<span className="lbl">Mini window</span></button> : null}
           {isTeacher ? <button className={"dbtn" + (panel === "puzzle" ? " on" : "")} aria-pressed={panel === "puzzle"} onClick={() => togglePanel("puzzle")}>{I.puzzle}<span className="lbl">Puzzle</span>{pz.active && !pz.active.ended ? <span className="badge">{Object.values(pz.results).filter((r) => r.status === "ok").length}</span> : null}</button> : null}
           <button className={"dbtn" + (panel === "chat" ? " on" : "")} aria-pressed={panel === "chat"} onClick={() => togglePanel("chat")}>{I.chat}<span className="lbl">Chat</span>{unread ? <span className="badge">{unread}</span> : null}</button>
           <button className={"dbtn hide-sm" + (panel === "people" ? " on" : "")} aria-pressed={panel === "people"} onClick={() => togglePanel("people")}>{I.people}<span className="lbl">People</span>{handsUp ? <span className="badge">{handsUp}</span> : null}</button>
@@ -337,6 +347,7 @@ function Classroom({ pass, notify, recording }) {
         </div>
       </footer>
       {!isTeacher ? <StudentPuzzle pz={pz} /> : null}
+      {pip.win ? <PipWindow win={pip.win} close={pip.close} hands={hands} mine={mine} toggleHand={toggle} isTeacher={isTeacher} /> : null}
       <RoomAudioRenderer />
       <StartAudio label="Tap to turn on sound" className="startaudio" />
       <ConnectionStateToast />
