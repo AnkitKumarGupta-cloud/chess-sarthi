@@ -6,6 +6,8 @@
 //   student -> teacher    { t:"res", id, status:"open"|"wrong"|"ok", tries, ms }
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRoomContext, useParticipants } from "@livekit/components-react";
+import { grabBoardPicture, readBoardPicture } from "./screengrab.js";
+import { placement } from "./boardscan.js";
 import { RoomEvent } from "livekit-client";
 import { Chess } from "chess.js";
 import "./pieces.css";
@@ -130,6 +132,129 @@ function fromLibrary(p, level) {
   return { fen: g.fen(), line: mv.slice(1), title: `Level ${level} · difficulty ${p[3]}`, last: [first.from, first.to] };
 }
 
+// ---------- position from the teacher's screen ----------
+// screen: 64 pieces as seen on the teacher's screen (top-left first; "P" white pawn, "p" black pawn, "" empty).
+// flipped: Black is at the bottom of the teacher's screen.
+const TOOLS = ["K", "Q", "R", "B", "N", "P", "k", "q", "r", "b", "n", "p", ""];
+function castling(fenBoard) {
+  const g = new Chess(fenBoard + " w - - 0 1"), at = (sq) => { const p = g.get(sq); return p ? (p.color === "w" ? p.type.toUpperCase() : p.type) : ""; };
+  let c = "";
+  if (at("e1") === "K") { if (at("h1") === "R") c += "K"; if (at("a1") === "R") c += "Q"; }
+  if (at("e8") === "k") { if (at("h8") === "r") c += "k"; if (at("a8") === "r") c += "q"; }
+  return c || "-";
+}
+export function scanFen(screen, flipped, turn) {
+  const b = placement(screen, flipped);
+  return `${b} ${turn} ${castling(b)} - 0 1`;
+}
+export function scanProblem(screen, flipped, turn) {
+  const n = (p) => screen.filter((x) => x === p).length;
+  if (n("K") !== 1) return n("K") ? "There are two white kings. Fix one of them." : "The white king is missing. Add it.";
+  if (n("k") !== 1) return n("k") ? "There are two black kings. Fix one of them." : "The black king is missing. Add it.";
+  for (let i = 0; i < 64; i++) if ((i < 8 || i >= 56) && (screen[i] === "P" || screen[i] === "p")) return "A pawn can't stand on the first or last row.";
+  const g = new Chess();
+  if (!g.load(scanFen(screen, flipped, turn))) return "That position isn't valid.";
+  const other = new Chess(scanFen(screen, flipped, turn === "w" ? "b" : "w"));
+  if (other.in_check()) return `${sideName(turn === "w" ? "b" : "w")} is in check, so it can't be ${sideName(turn)}'s move. Change who moves.`;
+  if (g.game_over()) return "The game is already over in this position.";
+  return "";
+}
+
+function EditBoard({ screen, conf, flipped, tool, onTap }) {
+  return (
+    <div className="pzb scanb" role="grid" aria-label="Position read from your screen">
+      {screen.map((p, i) => {
+        const r = i >> 3, f = i & 7, light = (r + f) % 2 === 0;
+        const rank = flipped ? r + 1 : 8 - r, file = flipped ? "hgfedcba"[f] : "abcdefgh"[f];
+        const unsure = conf && conf[i] < 0.75;
+        return (
+          <button key={i} className={"pzsq " + (light ? "l" : "d") + (unsure ? " unsure" : "")} onClick={() => onTap(i)}
+            aria-label={file + rank + (p ? " " + (p === p.toUpperCase() ? "White " : "Black ") + p.toLowerCase() : " empty") + (unsure ? ", check this square" : "")}>
+            {p ? <i className={"pc " + (p === p.toUpperCase() ? "w" : "b") + " pk-" + p.toLowerCase()} /> : null}
+            {f === 0 ? <em className="rk">{rank}</em> : null}
+            {r === 7 ? <em className="fl">{file}</em> : null}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ScreenPosition({ onUse, st, setSt }) {
+  const room = useRoomContext();
+  // st.step: start | busy | edit | none (kept by the parent, so "Back to the position" returns here)
+  const [tool, setTool] = useState(null);
+  const read = async () => {
+    setSt({ step: "busy" });
+    try {
+      const { img } = await grabBoardPicture(room);
+      const r = await readBoardPicture(img);
+      if (!r.ok) { setSt({ step: "none" }); return; }
+      setTool(null);
+      setSt({ step: "edit", screen: r.screen, conf: r.conf, flipped: r.flipped, turn: r.flipped ? "b" : "w" });
+    } catch (e) {
+      const m = e && e.name === "NotAllowedError" ? "You didn't pick a window, so nothing was read." : (e && e.message) || "Couldn't read the screen.";
+      setSt({ step: "start", err: m });
+    }
+  };
+  const sharing = !!(room && room.localParticipant.isScreenShareEnabled);
+  if (st.step === "busy") return (
+    <>
+      <div className="pzt-board"><div className="pzb scanb busy" aria-hidden="true">{Array.from({ length: 64 }, (_, i) => <span key={i} className={"pzsq " + (((i >> 3) + (i & 7)) % 2 ? "d" : "l")} />)}</div></div>
+      <p className="pzt-meta" role="status">Reading the board…</p>
+    </>
+  );
+  if (st.step !== "edit") return (
+    <>
+      <p className="pzt-meta">{sharing
+        ? <>Show the puzzle on the screen you are sharing, then press <b>Read the board</b>. Works best with a flat 2D board (Lichess, Chess.com, our app).</>
+        : <>You're not sharing your screen. Press <b>Read the board</b> and pick the window or tab with the puzzle; only one picture is taken.</>}</p>
+      {st.step === "none" ? <p className="pzt-err">No chess board found. Make the board bigger and fully visible, then try again.</p> : null}
+      {st.err ? <p className="pzt-err">{st.err}</p> : null}
+      <button className="btn wide" onClick={read}>Read the board</button>
+    </>
+  );
+  const { screen, conf, flipped, turn } = st;
+  const problem = scanProblem(screen, flipped, turn);
+  const tap = (i) => {
+    if (tool === null) return;
+    const next = screen.slice(); next[i] = next[i] === tool ? "" : tool;
+    const c = conf.slice(); c[i] = 1;
+    setSt({ ...st, screen: next, conf: c });
+  };
+  const unsure = conf.filter((c) => c < 0.75).length;
+  return (
+    <>
+      <div className="pzt-head"><b>Check the position</b><span>{unsure ? `${unsure} square${unsure > 1 ? "s" : ""} with a gold ring: please check.` : "Read from your screen."} To fix a square, pick a piece below, then tap the square.</span></div>
+      <div className="pzt-board"><EditBoard screen={screen} conf={conf} flipped={flipped} tool={tool} onTap={tap} /></div>
+      <div className="scan-tools" role="toolbar" aria-label="Pieces">
+        {TOOLS.map((t) => (
+          <button key={t || "x"} className={"scan-tool" + (tool === t ? " on" : "")} aria-pressed={tool === t} onClick={() => setTool(tool === t ? null : t)}
+            title={t ? (t === t.toUpperCase() ? "White " : "Black ") + ({ k: "king", q: "queen", r: "rook", b: "bishop", n: "knight", p: "pawn" })[t.toLowerCase()] : "Empty square"}>
+            {t ? <i className={"pc " + (t === t.toUpperCase() ? "w" : "b") + " pk-" + t.toLowerCase()} /> : <span className="scan-x" aria-hidden="true" />}
+          </button>))}
+      </div>
+      <div className="pzt-row scan-opts">
+        <span>At the bottom</span>
+        <div className="tabs2" role="radiogroup" aria-label="Side at the bottom of your screen">
+          <button role="radio" aria-checked={!flipped} aria-selected={!flipped} onClick={() => setSt({ ...st, flipped: false })}>White</button>
+          <button role="radio" aria-checked={flipped} aria-selected={flipped} onClick={() => setSt({ ...st, flipped: true })}>Black</button>
+        </div>
+      </div>
+      <div className="pzt-row scan-opts">
+        <span>To move</span>
+        <div className="tabs2" role="radiogroup" aria-label="Side to move">
+          <button role="radio" aria-checked={turn === "w"} aria-selected={turn === "w"} onClick={() => setSt({ ...st, turn: "w" })}>White</button>
+          <button role="radio" aria-checked={turn === "b"} aria-selected={turn === "b"} onClick={() => setSt({ ...st, turn: "b" })}>Black</button>
+        </div>
+      </div>
+      {problem ? <p className="pzt-err">{problem}</p> : null}
+      <button className="btn wide" disabled={!!problem} onClick={() => onUse(scanFen(screen, flipped, turn))}>Use this position</button>
+      <button className="chipbtn" onClick={read}>Read the board again</button>
+    </>
+  );
+}
+
 export function TeacherPuzzle({ pz }) {
   const people = useParticipants();
   const [mode, setMode] = useState("levels");
@@ -139,6 +264,7 @@ export function TeacherPuzzle({ pz }) {
   const [custom, setCustom] = useState(null);   // { fen, line:[], next:[uci from the game], title }
   const [game, setGame] = useState(null);       // a loaded PGN: { fens, sans, ucis, lasts, title, idx }
   const [err, setErr] = useState("");
+  const [scanSt, setScanSt] = useState({ step: "start" });
   const [, tick] = useState(0);
 
   const choose = async (lv = level) => {
@@ -191,20 +317,36 @@ export function TeacherPuzzle({ pz }) {
         </ul>
         {a.ended ? <p className="pzt-ans">Answer: <b>{answer.join(" ")}</b></p> : null}
         <div className="pzt-actions">
-          {!a.ended ? <button className="btn" onClick={pz.end}>Show answer to everyone</button> : <button className="btn" onClick={() => { pz.clear(); setPick(null); setCustom(null); }}>New puzzle</button>}
+          {!a.ended ? <button className="btn" onClick={pz.end}>Show answer to everyone</button> : <button className="btn" onClick={() => { pz.clear(); setPick(null); setCustom(null); setScanSt({ step: "start" }); }}>New puzzle</button>}
         </div>
       </div>
     );
   }
 
+  const customView = custom ? (
+            <>
+              <div className="pzt-board"><Board fen={customFen()} flip={new Chess(custom.fen).turn() === "b"} canMove onMove={customMove} /></div>
+              <p className="pzt-meta">{custom.line.length ? <>Answer: <b>{sanLine(custom.fen, custom.line).join(" ")}</b></> : `Play the answer for ${sideName(new Chess(custom.fen).turn())}. Play the replies too for a longer puzzle.`}</p>
+              <div className="pzt-row">
+                {custom.next && custom.next[custom.line.length] ? <button className="chipbtn" onClick={() => setCustom({ ...custom, line: [...custom.line, custom.next[custom.line.length]] })}>+ Game's next move ({sanLine(customFen(), [custom.next[custom.line.length]])[0]})</button> : null}
+                <button className="chipbtn" disabled={!custom.line.length} onClick={() => setCustom({ ...custom, line: custom.line.slice(0, -1) })}>Undo</button>
+                <button className="chipbtn" onClick={() => setCustom(null)}>{custom.from === "screen" ? "Back to the position" : game ? "Pick another move" : "Change position"}</button>
+              </div>
+              <button className="btn wide" disabled={!custom.line.length || custom.line.length % 2 === 0} onClick={() => pz.start({ fen: custom.fen, line: custom.line, title: custom.title || "Teacher's position" })}>Send to class</button>
+              {custom.line.length && custom.line.length % 2 === 0 ? <p className="pzt-meta">End on your student's move (undo the last reply).</p> : null}
+            </>
+  ) : null;
+
   // ----- choose a puzzle -----
   return (
     <div className="pzt">
-      <div className="tabs2 pzt-tabs" role="tablist">
+      <div className="tabs2 pzt-tabs three" role="tablist">
         <button role="tab" aria-selected={mode === "levels"} onClick={() => setMode("levels")}>Puzzle levels</button>
         <button role="tab" aria-selected={mode === "custom"} onClick={() => setMode("custom")}>PGN / FEN</button>
+        <button role="tab" aria-selected={mode === "screen"} onClick={() => setMode("screen")}>My screen</button>
       </div>
-      {mode === "levels" ? (
+      {mode === "screen" ? (custom && custom.from === "screen" ? customView : <ScreenPosition st={scanSt} setSt={setScanSt} onUse={(fen) => setCustom({ fen, line: [], next: [], title: "From your screen", from: "screen" })} />)
+      : mode === "levels" ? (
         <>
           <div className="pzt-row">
             <label>Level <input type="number" min="1" max="115" value={level} onChange={(e) => setLevel(e.target.value)} onBlur={() => choose()} /></label>
@@ -241,19 +383,7 @@ export function TeacherPuzzle({ pz }) {
               <textarea className="pzt-fen" rows="4" value={fenText} onChange={(e) => setFenText(e.target.value)} placeholder={"1. e4 e5 2. Nf3 Nc6 3. Bc4 …\nor\n6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1"} />
               <button className="btn wide" onClick={loadFen} disabled={!fenText.trim()}>Load</button>
             </>
-          ) : (
-            <>
-              <div className="pzt-board"><Board fen={customFen()} flip={new Chess(custom.fen).turn() === "b"} canMove onMove={customMove} /></div>
-              <p className="pzt-meta">{custom.line.length ? <>Answer: <b>{sanLine(custom.fen, custom.line).join(" ")}</b></> : `Play the answer for ${sideName(new Chess(custom.fen).turn())}. Play the replies too for a longer puzzle.`}</p>
-              <div className="pzt-row">
-                {custom.next && custom.next[custom.line.length] ? <button className="chipbtn" onClick={() => setCustom({ ...custom, line: [...custom.line, custom.next[custom.line.length]] })}>+ Game's next move ({sanLine(customFen(), [custom.next[custom.line.length]])[0]})</button> : null}
-                <button className="chipbtn" disabled={!custom.line.length} onClick={() => setCustom({ ...custom, line: custom.line.slice(0, -1) })}>Undo</button>
-                <button className="chipbtn" onClick={() => setCustom(null)}>{game ? "Pick another move" : "Change position"}</button>
-              </div>
-              <button className="btn wide" disabled={!custom.line.length || custom.line.length % 2 === 0} onClick={() => pz.start({ fen: custom.fen, line: custom.line, title: custom.title || "Teacher's position" })}>Send to class</button>
-              {custom.line.length && custom.line.length % 2 === 0 ? <p className="pzt-meta">End on your student's move (undo the last reply).</p> : null}
-            </>
-          )}
+          ) : customView}
         </>
       )}
       {err ? <p className="pzt-err">{err}</p> : null}

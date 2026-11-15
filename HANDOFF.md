@@ -125,3 +125,12 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - Starting choice: last time's choice on this device (localStorage `cs.av`), otherwise camera on, mic on for the teacher and off for students.
 - If the browser blocks the camera or mic, that switch turns off and a note says to allow it in the address bar.
 - Test: `node test/dev-server.mjs` then `python3 /home/claude/tools/lobby.py` (fake camera, desktop + phone sizes).
+
+## Puzzle from the teacher's screen (Puzzle panel → "My screen", 15 Nov 2026)
+- The teacher shows a puzzle on the shared screen and presses **Read the board**. One picture of the shared screen is read; the teacher checks the position (unsure squares have a gold ring; pick a piece, tap a square to fix), sets which side is at the bottom and who moves, presses **Use this position**, plays the answer as with a FEN, and sends.
+- Not sharing? The browser asks for one window or tab, takes one picture and stops.
+- Sharing the **whole screen**: while the teacher is on another tab, a picture is kept every 1.5 s (`useAwaySnapshots`); the newest one is read, because at the moment of the click the screen shows this class page.
+- Code: `src/boardscan.js` (finds the board, cuts 64 squares, small neural network, chess-rule cleanup), `src/scanworker.js` (runs it off the main thread), `src/screengrab.js` (picture taking), `ScreenPosition` in `src/puzzle.jsx`. Model: `public/scan/pieces.bin` (360 KB, loaded only when used). All on the teacher's device; nothing is sent to a server.
+- Accuracy on test screenshots: 36 of 36 boards found; 100% of squares on 24 flat boards, 99.9% on 12 wood/marble boards. Works best on flat 2D boards (Lichess, Chess.com, our app); 3D boards, photos and arrows drawn on the board will need fixing by hand. Not yet tried in a real class.
+- Retrain: `tools/boardscan/` (`gen.py` makes squares from Lichess piece sets in a lila checkout, `train.py` trains and writes the .bin, `shots.py` + `run.mjs` test whole screenshots).
+- Test: `npx vite --port 5179` then `python3 test/scan-e2e.py`.

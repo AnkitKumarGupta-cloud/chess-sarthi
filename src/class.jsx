@@ -11,6 +11,7 @@ import { BackgroundProcessor, supportsBackgroundProcessors } from "@livekit/trac
 import { usePuzzle, TeacherPuzzle, StudentPuzzle } from "./puzzle.jsx";
 import { Tile } from "./tile.jsx";
 import { usePip, PipWindow, P } from "./pip.jsx";
+import { useAwaySnapshots } from "./screengrab.js";
 
 // ---------- sign-in and API ----------
 // The sign-in comes from the website (saved in this browser) or from the mobile app (passed after # in the link).
@@ -240,6 +241,7 @@ function Classroom({ pass, notify, recording }) {
   const shareSupported = canShareScreen();
   const handsUp = Object.keys(hands).length;
   const pz = usePuzzle(isTeacher);
+  useAwaySnapshots(room, isTeacher);
   const pip = usePip(notify);
   // Opens the rest of Chess Sathi in a new tab; the class keeps running here and follows along in the mini window.
   const openApp = async () => {

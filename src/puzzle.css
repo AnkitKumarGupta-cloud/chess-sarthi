@@ -52,3 +52,22 @@
 .pzt-moves .mn{color:var(--muted);margin-left:4px}
 .pzt-moves button{background:none;border:0;color:var(--ink);padding:3px 5px;border-radius:6px;cursor:pointer;font:inherit}
 .pzt-moves button:hover{background:var(--panel-2)}.pzt-moves button.on{background:var(--accent);color:#fff}
+
+/* "My screen": position read from the teacher's screen */
+.pzt-tabs.three{grid-template-columns:1fr 1fr 1fr}
+.pzt-tabs.three button{padding:6px 4px}
+.scanb .pzsq.unsure::after{content:"";position:absolute;inset:2px;border-radius:4px;box-shadow:inset 0 0 0 3px #F2B544;pointer-events:none}
+.scanb.busy{animation:scanpulse 1.2s ease-in-out infinite}
+.scanb.busy .pzsq{cursor:default}
+@keyframes scanpulse{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.scanb.busy{animation:none;opacity:.7}}
+.scan-tools{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.scan-tool{position:relative;aspect-ratio:1;border:1px solid var(--line);background:var(--panel-2);border-radius:8px;cursor:pointer;padding:0}
+.scan-tool .pc{position:absolute;inset:8%;width:auto;height:auto;background-size:contain;background-repeat:no-repeat;background-position:center}
+.scan-tool.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.scan-tool:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.scan-x{position:absolute;inset:30%;}
+.scan-x::before,.scan-x::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--muted);border-radius:1px;transform:rotate(45deg)}
+.scan-x::after{transform:rotate(-45deg)}
+.scan-opts{justify-content:space-between}
+.scan-opts>span{font-weight:600;font-size:.88rem}
