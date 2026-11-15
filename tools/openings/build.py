@@ -1,11 +1,12 @@
 # Builds public/openings/guide.json (explained openings) and public/openings/all.json (every named Lichess line).
 import json, csv, re, sys, os, chess
 sys.path.insert(0, os.path.dirname(__file__))
+from guide0 import G as Z
 from guide1 import G as A
 from guide2 import G as B
 from guide3 import G as C
 OUT = sys.argv[1]
-G = A + B + C
+G = Z + A + B + C
 def play(moves):
     b = chess.Board()
     for m in moves: b.push_san(m)
@@ -19,7 +20,7 @@ for o in G:
     for l in lines:
         try: play(l["moves"])
         except Exception as e: print("FIX:", o["name"], "/", l["name"], e); raise SystemExit(1)
-    guide.append({k: o[k] for k in ("id", "name", "side", "level", "families", "about", "ideas")} | {"lines": lines})
+    guide.append({k: o[k] for k in ("id", "name", "side", "level", "families", "about", "ideas")} | ({"group": o["group"]} if o.get("group") else {}) | {"lines": lines})
 fam = {}
 for f in "abcde":
     for r in csv.DictReader(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "co", f"{f}.tsv")), delimiter="\t"):

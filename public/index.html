@@ -2043,7 +2043,7 @@ function liveHome(root){
 let OPG=null,OPA=null,OPN=null; // explained openings, all named lines, notes by move sequence
 const opHq=k=>new URLSearchParams((location.hash.split("?")[1]||"")).get(k);
 async function opLoad(all){
-  if(!OPG){const r=await fetch("/openings/guide.json?v=1");if(!r.ok)throw new Error("load");OPG=await r.json();
+  if(!OPG){const r=await fetch("/openings/guide.json?v=2");if(!r.ok)throw new Error("load");OPG=await r.json();
     OPN={};OPG.forEach(o=>o.lines.forEach(l=>l.moves.forEach((m,i)=>{const k=l.moves.slice(0,i+1).join(" ");if(!(k in OPN))OPN[k]=l.notes[i]})))}
   if(all&&!OPA){const r=await fetch("/openings/all.json?v=1");if(!r.ok)throw new Error("load");OPA=(await r.json()).families}
 }
@@ -2075,14 +2075,15 @@ function vOpenings(){
   const card=o=>`<button class="op-card" data-op="${o.id}"><div class="board op-thumb" data-fen="${esc(opBuild(o.lines[0].moves.slice(0,Math.min(8,o.lines[0].moves.length)),o.lines[0].notes).fens.pop())}" data-flip="${o.side==="b"?1:""}" aria-hidden="true"></div>
     <span class="op-card-t"><b>${esc(o.name)}</b><span class="li-m mono">${esc(opMovesText(o.lines[0].moves,4))}</span><span class="row" style="gap:6px"><span class="pill level">${o.level}</span><span class="li-m">${o.lines.length} lines</span></span></span></button>`;
   return `<section class="stack view"><div class="eyebrow">Openings</div><h1>Learn the first moves</h1>
-    <p class="li-m" style="max-width:640px">${OPG.length} openings explained move by move, in simple words. You can also explore every named opening line, 3,865 of them, from the free Lichess openings list.</p></section>
+    <p class="li-m" style="max-width:640px">${OPG.length} openings and traps explained move by move, in simple words. You can also explore every named opening line, 3,865 of them, from the free Lichess openings list.</p></section>
   <section class="stack view">
     <label class="op-search">${ico("search")}<input id="opQ" type="search" placeholder="Search a name or moves, like Najdorf or e4 c5" autocomplete="off" aria-label="Search openings"></label>
     <div id="opRes"></div>
   </section>
   <section class="stack view" id="opMain">
-    <h2>Openings for White</h2><div class="op-grid">${OPG.filter(o=>o.side==="w").map(card).join("")}</div>
-    <h2 style="margin-top:12px">Defences for Black</h2><div class="op-grid">${OPG.filter(o=>o.side==="b").map(card).join("")}</div>
+    <h2>Start here: easy openings and traps</h2><p class="li-m" style="margin-top:-6px">Quick checkmates every beginner should know, and how to stop them.</p><div class="op-grid">${OPG.filter(o=>o.group==="easy").map(card).join("")}</div>
+    <h2 style="margin-top:12px">Openings for White</h2><div class="op-grid">${OPG.filter(o=>o.side==="w"&&!o.group).map(card).join("")}</div>
+    <h2 style="margin-top:12px">Defences for Black</h2><div class="op-grid">${OPG.filter(o=>o.side==="b"&&!o.group).map(card).join("")}</div>
     <h2 style="margin-top:12px">Every named opening</h2>
     <div id="opFams">${OPA?opFamList():`<button class="btn ghost" id="opAll">Show all 149 opening families</button>`}</div>
   </section>`;
