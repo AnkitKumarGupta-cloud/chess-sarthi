@@ -657,6 +657,27 @@ main{gap:32px}
 .ds-goal.ok .ds-goal-i{background:var(--good);color:#fff}
 .drill .ds-about{background:var(--surface-2);border-color:transparent}
 @media (max-width:640px){.t-goal .week{height:44px}}
+
+/* Teacher admin (Live tab) and student report card */
+.adm-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.adm-kpis .kpi{background:var(--surface);border-radius:var(--radius);padding:16px 18px}
+.adm-kpis .kpi.hot{background:var(--accent);color:var(--accent-ink)}.adm-kpis .kpi.hot span{color:inherit;opacity:.9}
+.adm-tabs{display:inline-flex;gap:4px;background:var(--surface-2);border-radius:12px;padding:4px}
+.adm-tabs button{border:0;background:none;cursor:pointer;font-family:inherit;padding:9px 16px;border-radius:9px;font-weight:700;font-size:.92rem;color:var(--muted);min-height:40px}
+.adm-tabs button[aria-selected=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.adm-fields{display:grid;grid-template-columns:2fr 1.5fr 1.5fr .8fr;gap:12px}.adm-fields.two{grid-template-columns:1fr 1fr}
+.adm-form .row{align-items:center}
+.adm-q{font:inherit;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--bg);color:var(--ink);width:min(220px,50%)}
+.adm-list{list-style:none;display:flex;flex-direction:column;padding:0;margin:0}
+.adm-list li{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}.adm-list li:first-child{border-top:0}.adm-list li[hidden]{display:none}
+.adm-av{width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;background:hsl(var(--hue) 55% 45%)}
+.adm-who{flex:1;min-width:0;display:flex;flex-direction:column}.adm-who b{font-weight:600}.adm-who span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adm-list .acts{display:flex;gap:6px;flex:none}
+.soon{color:var(--ink);font-weight:600}
+.classcard .row .btn{min-height:44px}
+.bento-p{align-items:stretch!important}.bento-p .t-stats{grid-column:1/-1!important;grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:760px){.adm-kpis{grid-template-columns:1fr 1fr}.adm-fields,.adm-fields.two{grid-template-columns:1fr}.adm-tabs{display:flex;width:100%}.adm-tabs button{flex:1;padding:9px 4px;font-size:.84rem;white-space:nowrap}
+  .adm-list li{flex-wrap:wrap}.adm-list .acts{width:100%;padding-left:50px}.bento-p .t-stats{grid-template-columns:1fr 1fr 1fr}}
 </style>
 
 </head>
@@ -1567,7 +1588,9 @@ function vProgress(){
     </article>
     <article class="tile t-stats">
       <div class="kpi"><b class="mono">${lessonsDone()}<small>/${ALL_LESSONS.length}</small></b><span>Lessons</span></div>
-      <div class="kpi"><b class="mono">${prState().r}</b><span>Puzzle rating · ${prState().n} rated</span></div>
+      <div class="kpi"><b class="mono">${lvSolvedCount()}</b><span>Puzzles solved</span></div>
+      <div class="kpi"><b class="mono">${prState().r}</b><span>Puzzle rating</span></div>
+      <div class="kpi"><b class="mono">${prAll()}</b><span>Practice positions</span></div>
       <div class="kpi"><b class="mono">${bestTest()??"–"}${bestTest()!=null?`<small>/${TEST_N}</small>`:""}</b><span>Best test · ${S.tests.length} tr${S.tests.length===1?"y":"ies"}</span></div>
     </article>
   </section>
@@ -1576,22 +1599,26 @@ function vProgress(){
       <table><thead><tr><th>Course</th><th>Level</th><th style="text-align:right">Watched</th></tr></thead><tbody>
       ${COURSES.map(c=>`<tr><td>${esc(c.title)}</td><td>${c.level}</td><td class="num">${courseProgress(c)}/${c.lessons.length}</td></tr>`).join("")}
       </tbody></table></div>
-    <div class="card" style="overflow-x:auto"><h2 style="margin-bottom:8px">Puzzles by level</h2>
-      <table><thead><tr><th>Level</th><th>Type</th><th style="text-align:right">Solved</th></tr></thead><tbody>
-      ${LEVELS.map(l=>{const all=PUZZLES.filter(x=>x.level===l);return `<tr><td>${l}</td><td class="li-m">${{Beginner:"Checkmate in 1",Intermediate:"Tricks and patterns",Advanced:"Checkmate in 2",Expert:"Checkmate in 3"}[l]}</td><td class="num">${all.filter(x=>S.puzzles[x.id]).length}/${all.length}</td></tr>`}).join("")}
+    <div class="card" style="overflow-x:auto"><h2 style="margin-bottom:8px">Puzzle levels</h2>
+      <table><thead><tr><th>Stage</th><th>Levels</th><th style="text-align:right">Finished</th></tr></thead><tbody>
+      ${LV_STAGES.map(([n,a,b])=>{const d=Object.keys(lvState().done).filter(k=>+k>=a&&+k<=b).length;return `<tr><td>${n}</td><td class="li-m">${a}–${b}</td><td class="num">${d}/${b-a+1}</td></tr>`}).join("")}
       </tbody></table></div>
+    ${PR?`<div class="card" style="overflow-x:auto"><h2 style="margin-bottom:8px">Practice</h2>
+      <table><thead><tr><th>Topic group</th><th style="text-align:right">Done</th></tr></thead><tbody>
+      ${PR_SEC_ORDER.map(sid=>{const ts=PR.topics.filter(t=>t.section===sid);return `<tr><td>${esc(PR.sections[sid].title)}</td><td class="num">${ts.reduce((a,t)=>a+prDone(t),0)}/${ts.reduce((a,t)=>a+t.chapters.length,0)}</td></tr>`}).join("")}
+      </tbody></table></div>`:""}
   </section>
   ${S.tests.length?`<section class="card view" style="overflow-x:auto"><h2 style="margin-bottom:8px">Test history</h2><table><thead><tr><th>Date</th><th style="text-align:right">Score</th></tr></thead><tbody>
     ${S.tests.slice().reverse().map(t=>`<tr><td>${new Date(t.at).toLocaleString()}</td><td class="num">${t.score}/${testTotal(t)}${t.tier!=null?` · ${TIERS[t.tier]}`:""}</td></tr>`).join("")}</tbody></table></section>`:""}
-  <section class="row view"><button class="btn ghost" id="resetAll">Reset all progress</button></section>`;
+  <section class="row view" style="justify-content:flex-end"><button class="btn ghost sm" id="resetAll">Reset all progress</button></section>`;
 }
-function afterProgress(){if(AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="teacher")return afterProgressTeacher();let armed=false;$("#resetAll").onclick=e=>{if(!armed){armed=true;e.target.textContent="Tap again to erase everything";return}
-  S={lessons:{},puzzles:{},tests:[],days:{},practice:{},liveToken:S.liveToken};save();PZ=null;toast("Progress reset");render()}}
+function afterProgress(){if(AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="teacher")return afterProgressTeacher();if(!PR)prLoad().then(()=>{if(route()==="progress")render()}).catch(()=>{});let armed=false;$("#resetAll").onclick=e=>{if(!armed){armed=true;e.target.textContent="Tap again to erase everything";return}
+  S={lessons:{},puzzles:{},tests:[],days:{},practice:{},liveToken:S.liveToken,liveUser:S.liveUser,owner:S.owner};save();PZ=null;toast("Progress reset");render()}}
 
 /* ---------- Sign-in and live classes (talk to the site's /api) ---------- */
 let AUTH={state:S.liveToken?"check":"out",user:null,msg:""};
-let LV={classes:null,users:null,accounts:null,recs:{},player:null,recReady:true};
-function resetLive(){LV={classes:null,users:null,accounts:null,recs:{},player:null,recReady:true}}
+let LV={classes:null,users:null,accounts:null,recs:{},player:null,recReady:true,tab:"classes",batch:"",q:""};
+function resetLive(){LV={classes:null,users:null,accounts:null,recs:{},player:null,recReady:true,tab:"classes",batch:"",q:""}}
 async function liveApi(path,opts={}){
   let r;
   try{r=await fetch("/api"+path,{method:opts.method||"GET",headers:Object.assign({"Content-Type":"application/json"},S.liveToken?{Authorization:"Bearer "+S.liveToken}:{}),body:opts.body?JSON.stringify(opts.body):undefined})}
@@ -1604,6 +1631,8 @@ async function liveApi(path,opts={}){
   }
   return j;
 }
+// "in 2 hours", "tomorrow", "in 3 days": how long until a class starts
+const inText=iso=>{const m=Math.round((new Date(iso)-Date.now())/60000);if(m<=0)return "starting now";if(m<60)return `in ${m} min`;const h=Math.round(m/60);if(h<24)return `in ${h} hour${h===1?"":"s"}`;const d=Math.round(h/24);return d===1?"tomorrow":`in ${d} days`};
 const whenText=iso=>new Date(iso).toLocaleString([], {weekday:"short",day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});
 const durText=s=>s>=3600?`${Math.floor(s/3600)} hr ${Math.round(s%3600/60)} min`:`${Math.max(1,Math.round(s/60))} min`;
 const ROLE_NAME={teacher:"Teacher",student:"Student",parent:"Parent",demo:"Demo login"};
@@ -1748,12 +1777,12 @@ const waText=a=>a.role==="demo"?`Join our free Chess Sathi demo class\nWebsite: 
 function classCard(c,u){
   const teacher=u.role==="teacher",parent=u.role==="parent";
   const state=c.live?`<span class="pill live">● Live now</span>`:c.ended?`<span class="pill">Finished</span>`:`<span class="pill level">Upcoming</span>`;
-  const join=parent?"":(c.live||!c.ended||teacher)?`<a class="btn ${c.live||teacher?"":"ghost"}" href="/class.html?c=${encodeURIComponent(c.id)}">${teacher?(c.live?"Rejoin class":"Start class"):(c.live?"Join now":"Enter classroom")}</a>`:"";
+  const join=parent?"":(c.live||!c.ended||teacher)?`<a class="btn ${c.live||(teacher&&!c.ended)?"":"ghost"}" href="/class.html?c=${encodeURIComponent(c.id)}">${teacher?(c.live?"Rejoin class":c.ended?"Open again":"Start class"):(c.live?"Join now":"Enter classroom")}</a>`:"";
   const recs=LV.recs[c.id];
   return `<div class="card stack classcard" data-class="${esc(c.id)}">
     <div class="row">${state}<span class="pill">${esc(c.batchName||c.batch)}</span><span class="pill mono">${c.durationMin} min</span></div>
-    <h2>${esc(c.title)}</h2><p class="li-m">${esc(whenText(c.startsAt))}</p>
-    <div class="row">${join}<button class="btn ghost" data-recs="${esc(c.id)}">${recs?"Refresh recordings":"Show recordings"}</button>${teacher?`<button class="btn ghost" data-del="${esc(c.id)}">Delete</button>`:""}</div>
+    <h2>${esc(c.title)}</h2><p class="li-m">${esc(whenText(c.startsAt))}${c.live||c.ended?"":` · <b class="soon">${esc(inText(c.startsAt))}</b>`}</p>
+    <div class="row">${join}${LV.recReady&&new Date(c.startsAt)<=Date.now()?`<button class="btn ghost" data-recs="${esc(c.id)}">${recs?"Refresh recordings":"Show recordings"}</button>`:""}${teacher?`<button class="btn ghost" data-del="${esc(c.id)}">Delete</button>`:""}</div>
     ${recs?(recs.error?`<p class="feedback no">${esc(recs.error)}</p>`:recs.list.length?`<ul class="reclist">${recs.list.map(r=>`<li><button data-play="${esc(c.id)}|${esc(r.id)}">▶ Recording${recs.list.length>1?` part ${r.part}`:""} <span class="li-m">${durText(r.durationSec)}</span></button></li>`).join("")}</ul>`:`<p class="li-m">No recording yet. It appears a few minutes after the class ends.</p>`):""}
     ${LV.player&&LV.player.classId===c.id?`<video class="recvideo" controls autoplay playsinline src="${esc(LV.player.url)}"></video>`:""}
   </div>`;
@@ -1767,49 +1796,77 @@ function liveHome(root){
   const now=cs.filter(c=>c.live),next=cs.filter(c=>!c.live&&!c.ended).reverse(),past=cs.filter(c=>!c.live&&c.ended);
   const group=(t,list,empty)=>`<section class="stack"><h2>${t}</h2>${list.length?`<div class="grid g2">${list.map(c=>classCard(c,u)).join("")}</div>`:`<p class="li-m">${empty}</p>`}</section>`;
   const batches=[...new Set([...cs.map(c=>c.batchName||c.batch),...users.map(x=>x.batchName||x.batch)].filter(Boolean))];
-  root.innerHTML=`
-  <div class="row" style="justify-content:space-between"><p class="li-m">${teacher?"Signed in as teacher.":u.role==="parent"?`Parent view. You can see the schedule and watch recordings of ${esc(u.name)}'s classes.`:(u.role==="demo"?`Demo login for “${esc(u.batchName||u.batch)}”. Join the class when it is live.`:`You're in batch “${esc(u.batchName||u.batch)}”. Join when your class is live.`)}</p>
-    <button class="btn ghost" id="lvRefresh">Refresh</button></div>
-  ${teacher&&!LV.recReady?`<div class="feedback">Recording is off for now, so classes will not be saved for students to watch later. Live classes work normally.</div>`:""}
-  ${teacher?`<div class="grid g2">
-    <form class="card stack" id="lvNew"><h2>Schedule a class</h2>
-      <label class="fld"><span>Class title</span><input id="lvTitle" placeholder="Knight forks practice" required maxlength="80"></label>
-      <label class="fld"><span>Batch</span><input id="lvBatch" placeholder="Beginners Saturday" required maxlength="40" list="lvBatches"></label>
-      <datalist id="lvBatches">${batches.map(b=>`<option value="${esc(b)}">`).join("")}</datalist>
-      <div class="row"><label class="fld" style="flex:2;min-width:180px"><span>Date and time</span><input id="lvAt" type="datetime-local" required></label>
-      <label class="fld" style="flex:1;min-width:110px"><span>Minutes</span><input id="lvDur" type="number" min="15" max="240" step="5" value="60" required></label></div>
-      <button class="btn" type="submit">Add class</button><p class="li-m" id="lvNewMsg" role="status"></p></form>
-    <form class="card stack" id="lvInv"><h2>Add a student</h2>
-      <label class="fld"><span>Student's name</span><input id="lvSName" required maxlength="40"></label>
-      <label class="fld"><span>Batch</span><input id="lvSBatch" required maxlength="40" list="lvBatches"></label>
-      <button class="btn" type="submit">Create logins</button><p class="li-m" id="lvInvMsg" role="status"></p>
-      ${LV.accounts?`<div class="stack codes"><b>Save these now. Passwords are only shown once.</b>${LV.accounts.map(accountCard).join("")}</div>`:""}</form>
+  const lists=`${now.length?group("Live now",now,""):""}
+  ${group("Upcoming classes",next,teacher?"No classes scheduled. Add one below.":"No upcoming classes yet. Your teacher will add them here.")}`;
+  const pastG=group(teacher||!LV.recReady?"Past classes":"Past classes and recordings",past,teacher||!LV.recReady?"Finished classes will show up here.":"Finished classes and their recordings will show up here.");
+  if(!teacher){
+    root.innerHTML=`<div class="row" style="justify-content:space-between"><p class="li-m">${u.role==="parent"?`Parent view. You can see the schedule and watch recordings of ${esc(u.name)}'s classes.`:(u.role==="demo"?`Demo login. Join the class when it is live.`:`Your batch: <b>${esc(u.batchName||u.batch)}</b>. Press Join when your class is live.`)}</p>
+      <button class="btn ghost sm" id="lvRefresh">Refresh</button></div>${lists}${pastG}`;
+  }else{
+    const tab=LV.tab,bf=LV.batch&&batches.includes(LV.batch)?LV.batch:"",shown=users.filter(x=>!bf||(x.batchName||x.batch)===bf);
+    root.innerHTML=`
+  <div class="adm-kpis">
+    <div class="kpi"><b>${users.length}</b><span>Student${users.length===1?"":"s"}</span></div>
+    <div class="kpi"><b>${batches.length}</b><span>Batch${batches.length===1?"":"es"}</span></div>
+    <div class="kpi"><b>${next.length}</b><span>Upcoming class${next.length===1?"":"es"}</span></div>
+    <div class="kpi${now.length?" hot":""}"><b>${now.length}</b><span>Live now</span></div>
   </div>
+  <div class="row" style="justify-content:space-between">
+    <div class="seg adm-tabs" role="tablist">${[["classes","Classes"],["students","Students"],["share","Share & backup"]].map(([k,t])=>`<button role="tab" aria-selected="${tab===k}" data-tab="${k}">${t}</button>`).join("")}</div>
+    <button class="btn ghost sm" id="lvRefresh">Refresh</button></div>
+  <datalist id="lvBatches">${batches.map(b=>`<option value="${esc(b)}">`).join("")}</datalist>
+  ${tab==="classes"?`${!LV.recReady?`<p class="li-m">Recording is off for now, so classes are not saved to watch later. Live classes work normally.</p>`:""}
+  ${lists}
+  <form class="card stack adm-form" id="lvNew"><h2>Schedule a class</h2>
+    <div class="adm-fields"><label class="fld"><span>Class title</span><input id="lvTitle" placeholder="Knight forks practice" required maxlength="80"></label>
+    <label class="fld"><span>Batch</span><input id="lvBatch" placeholder="Beginners Saturday" required maxlength="40" list="lvBatches"></label>
+    <label class="fld"><span>Date and time</span><input id="lvAt" type="datetime-local" required></label>
+    <label class="fld"><span>Minutes</span><input id="lvDur" type="number" min="15" max="240" step="5" value="60" required></label></div>
+    <div class="row"><button class="btn" type="submit">Add class</button><p class="li-m" id="lvNewMsg" role="status"></p></div></form>
+  ${pastG}`
+  :tab==="students"?`
+  <form class="card stack adm-form" id="lvInv"><h2>Add a student</h2>
+    <div class="adm-fields two"><label class="fld"><span>Student's name</span><input id="lvSName" required maxlength="40" placeholder="Aarav Sharma"></label>
+    <label class="fld"><span>Batch</span><input id="lvSBatch" required maxlength="40" list="lvBatches" placeholder="Beginners Saturday"></label></div>
+    <div class="row"><button class="btn" type="submit">Create login</button><p class="li-m" id="lvInvMsg" role="status"></p></div>
+    ${LV.accounts?`<div class="stack codes"><b>Save this now. The password is only shown once.</b>${LV.accounts.map(accountCard).join("")}</div>`:""}</form>
+  <section class="card stack"><div class="row" style="justify-content:space-between;align-items:center"><h2>Students <span class="li-m">${shown.length}</span></h2>
+      ${users.length>5?`<input class="adm-q" id="lvQ" type="search" placeholder="Search name" aria-label="Search students" value="${esc(LV.q)}">`:""}</div>
+    ${batches.length>1?`<div class="row chips">${["",...batches].map(b=>`<button class="chip ${bf===b?"on":""}" data-batch="${esc(b)}">${b?esc(b):"All batches"}</button>`).join("")}</div>`:""}
+    ${shown.length?`<ul class="adm-list">${shown.map(x=>`<li data-name="${esc(x.name.toLowerCase())}"><span class="adm-av" style="--hue:${[4,28,48,140,172,200,226,262,292,330][[...x.username].reduce((a,ch)=>(a*31+ch.charCodeAt(0))>>>0,0)%10]}">${esc((x.name.trim()[0]||"?").toUpperCase())}</span>
+      <div class="adm-who"><b>${esc(x.name)}</b><span class="li-m">${esc(x.username)} · ${esc(x.batchName||x.batch)}${x.role!=="student"?` · ${ROLE_NAME[x.role]}`:""}</span></div>
+      <div class="acts"><button class="btn ghost sm" data-reset="${esc(x.username)}">New password</button><button class="btn ghost sm" data-rm="${esc(x.username)}">Remove</button></div></li>`).join("")}</ul>`
+    :`<p class="li-m">${users.length?"No students in this batch.":"No students yet. Add the first one above."}</p>`}
+    <p class="li-m">To see how each student is doing, open the <a class="link" href="#progress">Progress</a> tab.</p></section>`
+  :`
   ${LV.demo?`<section class="card stack demo-card"><div class="row" style="justify-content:space-between;align-items:center"><h2>Demo login for trial students</h2><span class="pill">Live classes only</span></div>
     <p class="li-m">Share this in any class. Everyone can use it at the same time and types their own name when joining. Lessons, puzzles and practice stay locked.</p>
     <div class="acct-cred"><span class="li-m">Username</span><code>${esc(LV.demo.username)}</code><span class="li-m">Password</span><code>${esc(LV.demo.password)}</code></div>
-    <button class="btn ghost" type="button" data-copy="${esc(waText({...LV.demo,role:"demo"}))}">Copy message for WhatsApp</button></section>`
+    <div class="row"><button class="btn" type="button" data-copy="${esc(waText({...LV.demo,role:"demo"}))}">Copy message for WhatsApp</button></div></section>`
    :`<section class="card stack"><h2>Demo login for trial students</h2><p class="li-m">Not switched on. Add <code>DEMO_PASSWORD</code> in Vercel → Settings → Environment Variables, then redeploy.</p></section>`}
-  <section class="card stack"><div class="row" style="justify-content:space-between;align-items:center"><h2>Students</h2><button class="btn ghost" type="button" id="lvBackup" title="Save a copy of all accounts, classes and progress to this computer">Download backup</button></div>${users.length?`<div class="tablewrap"><table><thead><tr><th>Name</th><th>Batch</th><th>Username</th><th>Who</th><th></th></tr></thead><tbody>${users.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.batchName||x.batch)}</td><td class="mono">${esc(x.username)}</td><td>${ROLE_NAME[x.role]}</td><td class="acts"><button class="btn ghost sm" data-reset="${esc(x.username)}">New password</button><button class="btn ghost sm" data-rm="${esc(x.username)}">Remove</button></td></tr>`).join("")}</tbody></table></div>`:`<p class="li-m">No students yet. Add the first one above.</p>`}</section>`:""}
-  ${now.length?group("Live now",now,""):""}
-  ${group("Upcoming classes",next,teacher?"No classes scheduled. Add one above.":"No upcoming classes yet. Your teacher will add them here.")}
-  ${group(teacher?"Past classes":"Past classes and recordings",past,"Finished classes and their recordings will show up here.")}`;
-  $("#lvRefresh").onclick=()=>{LV.classes=null;LV.users=null;render()};
+  <section class="card stack"><h2>Backup</h2><p class="li-m">Saves a copy of all accounts, classes and student progress to this computer. Do this once a week.</p>
+    <div class="row"><button class="btn ghost" type="button" id="lvBackup">Download backup</button></div></section>`}`;
+  }
+  $("#lvRefresh").onclick=()=>{LV.classes=null;LV.users=null;LV.accounts=null;render()};
   root.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>{navigator.clipboard.writeText(b.dataset.copy).then(()=>toast("Copied")).catch(()=>toast("Press and hold to copy"))});
   if(teacher){
-    const at=$("#lvAt");if(!at.value){const d=new Date(Date.now()+3600000);d.setMinutes(0,0,0);at.value=new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,16)}
-    $("#lvNew").onsubmit=async e=>{e.preventDefault();const m=$("#lvNewMsg");m.textContent="Adding…";
+    root.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{LV.tab=b.dataset.tab;liveHome(root)});
+    root.querySelectorAll("[data-batch]").forEach(b=>b.onclick=()=>{LV.batch=b.dataset.batch;liveHome(root)});
+    const q=$("#lvQ"),filt=()=>{const v=(LV.q||"").toLowerCase().trim();root.querySelectorAll(".adm-list li").forEach(li=>li.hidden=!!v&&!li.dataset.name.includes(v))};
+    if(q){q.oninput=()=>{LV.q=q.value;filt()};filt()}
+    const at=$("#lvAt");if(at&&!at.value){const d=new Date(Date.now()+3600000);d.setMinutes(0,0,0);at.value=new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,16)}
+    if($("#lvNew"))$("#lvNew").onsubmit=async e=>{e.preventDefault();const m=$("#lvNewMsg");m.textContent="Adding…";
       try{const r=await liveApi("/classes",{method:"POST",body:{title:$("#lvTitle").value,batch:$("#lvBatch").value,startsAt:new Date($("#lvAt").value).toISOString(),durationMin:+$("#lvDur").value}});const nc=r.class,end=new Date(nc.startsAt).getTime()+(nc.durationMin+30)*60000;LV.classes=[{...nc,live:false,ended:Date.now()>end},...(LV.classes||[])].sort((a,b)=>new Date(b.startsAt)-new Date(a.startsAt));toast("Class added");render()}catch(err){m.textContent=err.message}};
-    $("#lvInv").onsubmit=async e=>{e.preventDefault();const m=$("#lvInvMsg");m.textContent="Creating…";
+    if($("#lvInv"))$("#lvInv").onsubmit=async e=>{e.preventDefault();const m=$("#lvInvMsg");m.textContent="Creating…";
       try{LV.accounts=(await liveApi("/users",{method:"POST",body:{name:$("#lvSName").value,batch:$("#lvSBatch").value,withParent:false}})).accounts;LV.users=[...(LV.users||[]),...LV.accounts.map(a=>({username:a.username,name:a.name,role:a.role,batch:(a.batch||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""),batchName:a.batch}))];render()}catch(err){m.textContent=err.message}};
-    $("#lvBackup").onclick=async e=>{const b=e.currentTarget,t=b.textContent;b.disabled=true;b.textContent="Preparing…";
+    if($("#lvBackup"))$("#lvBackup").onclick=async e=>{const b=e.currentTarget,t=b.textContent;b.disabled=true;b.textContent="Preparing…";
       try{const data=await liveApi("/backup"),url=URL.createObjectURL(new Blob([JSON.stringify(data,null,1)],{type:"application/json"}));
         const a=document.createElement("a");a.href=url;a.download=`chess-sathi-backup-${dayKey()}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);toast("Backup saved to your Downloads")}
       catch(err){toast(err.message)}finally{b.disabled=false;b.textContent=t}};
     root.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again to delete";return}
       try{await liveApi("/classes?id="+encodeURIComponent(b.dataset.del),{method:"DELETE"});LV.classes=(LV.classes||[]).filter(c=>c.id!==b.dataset.del);toast("Class deleted");render()}catch(err){toast(err.message)}});
     root.querySelectorAll("[data-reset]").forEach(b=>b.onclick=async()=>{if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again";return}
-      try{LV.accounts=[await liveApi("/users",{method:"POST",body:{action:"reset",username:b.dataset.reset}})];render()}catch(err){toast(err.message)}});
+      try{LV.accounts=[await liveApi("/users",{method:"POST",body:{action:"reset",username:b.dataset.reset}})];liveHome(root);window.scrollTo(0,0)}catch(err){toast(err.message)}});
     root.querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again to remove";return}
       try{await liveApi("/users?username="+encodeURIComponent(b.dataset.rm),{method:"DELETE"});LV.users=(LV.users||[]).filter(u=>u.username!==b.dataset.rm);toast("Account removed");render()}catch(err){toast(err.message)}});
   }
