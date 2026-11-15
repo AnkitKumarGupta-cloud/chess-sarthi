@@ -1001,6 +1001,8 @@ function afterHome(){
   const d=PUZZLES.filter(p=>p.level==="Advanced")[new Date().getDate()%13];
   const go=()=>{pzStart=d.id;location.hash="classic"};
   drawBoard($("#heroBoard"),d.fen,{flip:d.fen.split(" ")[1]==="b",onSquare:go});$("#dailyGo").onclick=go;
+  /* The puzzle map is the likely next stop: fetch the picture of the student's current world while the page is idle. */
+  try{const u=lvState().unlocked,wi=LV_STAGES.findIndex(([,a,b])=>u>=a&&u<=b);if(wi>=0){const f=()=>{new Image().src=worldImg(wi)};window.requestIdleCallback?requestIdleCallback(f,{timeout:5000}):setTimeout(f,2000)}}catch(e){}
   const box=$("#homeLive");if(!box||!AUTH.user)return;
   /* Draw last time's classes at once (saved on this device), then the fresh list when it arrives. */
   const ck="cs-classes:"+AUTH.user.username;
@@ -1206,10 +1208,16 @@ const WORLDS=[
  {name:"Fire Mountain",sky:["#5A2430","#2A1218"],trail:"#5A3A33",edge:"#FF8A3D"},
  {name:"Royal Castle",sky:["#3C2A6E","#1B1440"],trail:"#E9D59A",edge:"#9A7A3A"},
 ];
+/* Puzzle map art: a tiny blurred preview is drawn at once (inline, ~250 bytes each); the full picture loads for the
+   world you are in first and for the others only as they scroll near. Change ?v= when a picture is replaced. */
+const WORLD_TINY=["UklGRtoAAABXRUJQVlA4IM4AAABQBQCdASoQABgAPtFUo0uoJKMhsAgBABoJbACdOUE4CmAepmOUsZWHDm7odWaT0Ynvv4AA++RrVg+LVTPUVcVg3fKfMyYEExiJ3heanRwOQ45g+yqRz3syt0sI8h76RGTclj563uNRKC8beyHj3yjdk8K+YjJjEhg9ogY6Qdt4Wviqmh99i4VlCOSMsRPCch7ukbwO9gsrpnpcH7Z80eL9tz9477as7P158W+emLE9OrGwTeph2Xymd6nPueIu0e9/lkpcuC97RCBlyXkgAA==", "UklGRr4AAABXRUJQVlA4ILIAAABQBACdASoQABgAPtFUo0uoJKMhsAgBABoJbACdAdwA3b7Mx8LOjOeYaJqAAP7doU8Zoe5hpI85EYSsyyMLCgsAxXoprPUf9WyK49itTDIrEVBj5Hip+6oCP3+N5Q7HOS2XMZ+2cb0Sq70luojX6qX13Lrt1bV2/7u2TQespp4O71uc0hQlDLM0usA3nyAcxBYEs7jGGq7klXB+H6QU4SM0/3imlHsQeEkIzmJGWCAqQAAA", "UklGRsgAAABXRUJQVlA4ILwAAABwBACdASoQABgAPtFUo0uoJKMhsAgBABoJbACdMoR3JoAD4id7V95j/C+JgADOOJu96nFrM/WI5ZTnTxE+1nsK5XYXsY+gHn5qvHp6Yv3PvXpnq0u3eymzYHqzonsPx2x0zioRNM6iyw1p4xMVCvDtmo3iZFwABFgW3NBbtU+3pNb/7YHdSpHIeacTRWmyWABD/2VXaHyg4zryFNS/mfUznBFU4LgUiMEi6z7g9TLP50PQjRtsonzNIAAAAA==", "UklGRtQAAABXRUJQVlA4IMgAAACQBACdASoQABgAPtFUo0uoJKMhsAgBABoJbACdMoHgAFOkKfrhO+nO/zsbwjAA/gpkkFjYZJdwmHs8uGmn+/8VAHY1rhtN5PiXgFicVkehjT9uqnWFnE+xYlnE5rGHLuP/YGH9pcczOKPady6bxP5jGD/36Bxw/T09VAhlzfjnH7i2HOuZTAEirE/z0zWlPC3WN0rLaJRn+dnQ3OWY3jK98CkHAvSw0WwqtSUWLDxHSmlJCrAxiKhRfKP+0o2Yk0L8swdMEkUAAA==", "UklGRr4AAABXRUJQVlA4ILIAAADQBACdASoQABgAPtFUo0uoJKMhsAgBABoJbACdMoRwH1/AT/BHzJL+nsg7pFtIAAD+wGQZ2gIUkWshXZpBtxbCqSU77b/G/rG+RC1PhYUsn6EcMCspeLEeuqj/QjLXL7Vpd3UMU1uP4u5F8Z6MSJsPzpIkh0+rm1IE+7ymgFslNC7acZxXNSQWvc+H64t2QGcn8x4xs6HL7s+zgsmPU3kQqb0b1MPO6s6bU4F9S9ePXAAA", "UklGRsAAAABXRUJQVlA4ILQAAADwBACdASoQABgAPtFUo0uoJKMhsAgBABoJbACsLwG4ECADlVm0/e9vTHMoIsUOQwAA/uowlRgBY8XGzramfdlg+s6imKZ0VqzdEWM/oM2yM22IS2pPihkBW+PKNgcth/BF1AwCjiwcx0Qhg/sjD81bLpNhfknhwccjkSlTuozq+AtKaJOuDGNOBQd65pXxkV6r9u8Rnm4KoNlJZGiGVOgP1ZFo9zr3xvCYFQMqKUnnv52AAAA="];
+const worldImg=wi=>`/worlds/w${wi}.webp?v=2`;
+const worldBg=(wi,full)=>(full?`url(${worldImg(wi)}),`:"")+`url(data:image/webp;base64,${WORLD_TINY[wi]})`;
 function worldScene(wi,from,to,st){
   // Height follows the artwork (2:3 portrait) on wide screens; phones get extra room so tiles never crowd.
   const mw=document.querySelector("main")?.clientWidth||window.innerWidth;
   // The first world sits behind the bottom bar (and the tab bar on phones), so it gets more room below level 1.
+  const cur=st.unlocked;
   const W=WORLDS[wi],n=to-from+1,PAD=150,PADB=wi===0&&window.innerWidth<=720?250:PAD,STEP=Math.max(98,Math.round((1.5*mw-2*PAD)/Math.max(1,n-1))),H=(n-1)*STEP+PAD+PADB,pts=[];
   for(let j=0;j<n;j++){const x=50+24*Math.sin(j*0.85+wi*1.7),y=H-PADB-j*STEP;pts.push([x,y])}
   const path=pts.map((p,i)=>(i?"L":"M")+(p[0]*10).toFixed(1)+" "+p[1]).join(" ");
@@ -1218,7 +1226,7 @@ function worldScene(wi,from,to,st){
   const nodes=pts.map((p,j)=>{const l=from+j,d=st.done[l],cur=l===st.unlocked,lock=l>st.unlocked;
     return `<button class="mtile${d?" done":""}${cur?" cur":""}${lock?" lock":""}" style="left:${p[0]}%;top:${p[1]}px" ${lock?"disabled":""} data-lv="${l}" aria-label="Level ${l}${d?`, ${d.stars} stars`:lock?", locked":cur?", your next level":""}">
       ${cur?`<span class="mpawn" aria-hidden="true">♟</span>`:""}<span class="mt-top">${d?"✓":l}</span>${d?`<span class="mt-stars">${"★".repeat(d.stars)}${"☆".repeat(3-d.stars)}</span>`:""}</button>`}).join("");
-  return `<section class="world" data-w="${wi}" style="--sky1:${W.sky[0]};--sky2:${W.sky[1]};--trail:${W.trail};--edge:${W.edge};height:${H}px;background-image:url(/worlds/w${wi}.webp)">
+  return `<section class="world" data-w="${wi}" style="--sky1:${W.sky[0]};--sky2:${W.sky[1]};--trail:${W.trail};--edge:${W.edge};height:${H}px;background-image:${worldBg(wi,cur>=from&&cur<=to)}">
     <div class="world-sign"><b>${W.name}</b><span>Levels ${from}–${to} · difficulty ${lvRating(from)}–${lvRating(to)}</span></div>
     <svg class="trail" viewBox="0 0 1000 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${path}" stroke="var(--edge)" stroke-width="46" fill="none" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><path d="${path}" stroke="var(--trail)" stroke-width="34" fill="none" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><path d="${path}" stroke="rgba(0,0,0,.12)" stroke-width="3" stroke-dasharray="2 16" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>
     ${deco}${nodes}</section>`;
@@ -1235,7 +1243,17 @@ let __mapW=0;window.addEventListener("resize",()=>{clearTimeout(window.__mapT);w
 function afterPuzzles(){__mapW=document.querySelector("main")?.clientWidth||0;
   document.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{LVS=null;location.hash="plevel?l="+b.dataset.lv});
   if(!LVD)lvLoad().then(()=>{if(route()==="puzzles")render()}).catch(()=>{});
-  const c=document.querySelector(".mtile.cur");if(c)setTimeout(()=>c.scrollIntoView({block:"center"}),30);
+  const show=el=>{el.style.backgroundImage=worldBg(+el.dataset.w,true)};
+  // Watch only after jumping to the current level, so worlds far above it don't start loading first.
+  let tries=0;
+  const watch=()=>{
+    if(c&&!c.isConnected)return; // the map was drawn again; the new copy does its own watching
+    if(c&&tries++<20){const r=c.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight){c.scrollIntoView({block:"center",behavior:"instant"});setTimeout(watch,60);return}}
+    if(!("IntersectionObserver" in window)){document.querySelectorAll(".world").forEach(show);return}
+    const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){show(e.target);io.unobserve(e.target)}}),{rootMargin:"800px 0px"});
+    document.querySelectorAll(".world").forEach(w=>io.observe(w));
+  };
+  const c=document.querySelector(".mtile.cur");setTimeout(()=>{if(c)c.scrollIntoView({block:"center",behavior:"instant"});requestAnimationFrame(watch)},30);
 }
 
 function lvParam(){const m=location.hash.match(/[?&]l=(\d+)/);return m?+m[1]:lvState().unlocked}
