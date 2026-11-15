@@ -114,7 +114,7 @@ Vercel Deployment Protection must stay **off** for `chess-sathi-live`, or studen
 
 Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.pbtn` rules at the end of `class.html`.
 
-- **Mini window** button in the dock, and **Open app** in the class header (opens the website in a new tab and starts the mini window, so the class is never left).
+- **Mini window** button in the dock (only on browsers that can't open it by themselves; hidden on Chrome/Edge computers since 15 Nov 2026, where it opens automatically on tab switch), and **Open app** in the class header (opens the website in a new tab and starts the mini window, so the class is never left).
 - Chrome, Edge, Opera, Brave on a computer use Document Picture-in-Picture: a real floating window showing everyone (`PipWindow`, rendered with a React portal; the page's styles are copied into it). It can be moved, resized and closed. It also opens by itself when the user switches tabs (`mediaSession` action `enterpictureinpicture`; Chrome allows this while the camera or microphone is in use, and the user can switch it off in the site settings).
 - Other browsers and phones get one picture-in-picture video with everyone drawn into it on a canvas (`useVideoPip`, `drawEveryone`). It has no buttons, and it has not been tried on a real iPhone, Android phone, Safari or Firefox.
 - `window.open` must come **after** `requestWindow` in the same click (the other order is refused by Chrome).
