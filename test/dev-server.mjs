@@ -15,7 +15,7 @@ http.createServer(async (req, res) => {
     res.status = (s) => { res.statusCode = s; return res; }; res.json = (j) => { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(j)); };
     return mod.default(req, res);
   }
-  const f = path.join(dist, u.pathname === "/" ? "index.html" : path.normalize(u.pathname));
+  const f = path.join(dist, u.pathname.endsWith("/") ? path.normalize(u.pathname) + "index.html" : path.normalize(u.pathname));
   if (!f.startsWith(dist) || !fs.existsSync(f)) { res.writeHead(404); return res.end("not found"); }
   res.writeHead(200, { "Content-Type": types[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(res);
 }).listen(4173, () => console.log("Chess Sathi demo on http://localhost:4173"));

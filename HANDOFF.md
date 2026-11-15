@@ -98,3 +98,12 @@ Vercel Deployment Protection must stay **off** for `chess-sathi-live`, or studen
 - Teacher → Progress → tap a student: `tpInsight` shows plain-sentence insight (`pmInsight`) and the missed puzzles, each opening a board with the answer.
 - Only level puzzles are counted (not tests, practice or the classic set), and only from this update onward.
 - Redis `seen:<username>` = when a student last opened the app (set in `/api/me` and `/api/login` by `markSeen`). Shown as "Last opened" on Progress and in Live → Students.
+
+## Score-sheet reader (`/reader/`, Nov 2026)
+- Self-contained page in `public/reader/` (no build step): `logic.js` (pure rules, unit-tested), `api.js` (the three calls to the hosted model, photo checks, draft storage), `viewer.js` (pan/zoom photo), `app.js` (screen), `reader.css`, `pieces.css`.
+- The model is a public Hugging Face Space (`BASE` in `api.js`), called from the user's device, never through our server: its free GPU quota is per IP address.
+- Rules that must not change without asking the owner (they are listed at the top of `logic.js`): `written` is never modified; legality only flags; after the first unplayable move the rest is "unchecked"; everything from the model is untrusted text (the page only uses `textContent`, and has a strict CSP with no inline script or style).
+- Draft: session JSON in localStorage `cs-reader.draft`, photos in IndexedDB `cs-reader`. Saved games: localStorage `cs-reader.games` (this device only).
+- Access: signed-in students and coaches (reads `targetchess.v2` from localStorage); demo logins and signed-out visitors are turned away. This is a screen-level check only, since the model itself is public.
+- Tests: `node test/reader.test.mjs` (part of `npm test`) and `python3 test/reader-e2e.py` (Playwright, reader calls mocked; needs the dev server running).
+- `test/fixtures/reader-result.json` is a STAND-IN made to match the brief's numbers (60 moves, move 14 read as Qf4 instead of Rfd1). Replace it with the real read when available; the "26 of 60" and "33 of 60" expectations may need adjusting to the real file.

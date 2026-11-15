@@ -1,0 +1,555 @@
+{
+ "tournament": "13TH NATIONAL SCHOOLS U-15 OPEN CHESS CHAMPIONSHIP 2025",
+ "white": "Aarav S",
+ "black": "Rohan K",
+ "raw_text": "Tournament: 13TH NATIONAL SCHOOLS U-15 OPEN CHESS CHAMPIONSHIP 2025\nWhite: Aarav S\nBlack: Rohan K\n1. d4 Nf6\n2. c4 e6\n3. nc3 d5\n4. Bg5 Be7\n5. e3 0-0\n6. Nf3 Nbd7\n7. Qc2 c6\n8. Bd3 dc4\n9. Bxc4 Nd5\n10. Bxe7 Qxe7\n11. 0-0 Nxc3\n12. qxc3 e5\n13. Bb3 Re8\n14. Qf4 e4\n15. Nd2 Nf6\n16. Rac1 Bg4\n17. f3 ef4\n18. gxf3 Bh5\n19. kh1 Rad8\n20. Rg1 Kh8\n21. Rg5 Bg6\n22. Rcg1 Nd5\n23. Bxd5 cxd5\n24. h4 f6\n25. R5g2 Bf5\n26. h5 h6\n27. Kh2 Rc8\n28. Qb3 Rc7\n29. Nf1 Bh7\n30. Ng3 Rec8",
+ "moves": [
+  {
+   "move": 1,
+   "colour": "w",
+   "written": "d4",
+   "confidence": 0.93,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 1,
+   "colour": "b",
+   "written": "Nf6",
+   "confidence": 0.967,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 2,
+   "colour": "w",
+   "written": "c4",
+   "confidence": 0.944,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 2,
+   "colour": "b",
+   "written": "e6",
+   "confidence": 0.981,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 3,
+   "colour": "w",
+   "written": "nc3",
+   "confidence": 0.958,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 3,
+   "colour": "b",
+   "written": "d5",
+   "confidence": 0.81,
+   "status": "ok",
+   "suggestions": [],
+   "review": true
+  },
+  {
+   "move": 4,
+   "colour": "w",
+   "written": "Bg5",
+   "confidence": 0.972,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 4,
+   "colour": "b",
+   "written": "Be7",
+   "confidence": 0.949,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 5,
+   "colour": "w",
+   "written": "e3",
+   "confidence": 0.986,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 5,
+   "colour": "b",
+   "written": "0-0",
+   "confidence": 0.963,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 6,
+   "colour": "w",
+   "written": "Nf3",
+   "confidence": 0.94,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 6,
+   "colour": "b",
+   "written": "Nbd7",
+   "confidence": 0.74,
+   "status": "ok",
+   "suggestions": [],
+   "review": true
+  },
+  {
+   "move": 7,
+   "colour": "w",
+   "written": "Qc2",
+   "confidence": 0.954,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 7,
+   "colour": "b",
+   "written": "c6",
+   "confidence": 0.931,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 8,
+   "colour": "w",
+   "written": "Bd3",
+   "confidence": 0.968,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 8,
+   "colour": "b",
+   "written": "dc4",
+   "confidence": 0.945,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 9,
+   "colour": "w",
+   "written": "Bxc4",
+   "confidence": 0.982,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 9,
+   "colour": "b",
+   "written": "Nd5",
+   "confidence": 0.959,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 10,
+   "colour": "w",
+   "written": "Bxe7",
+   "confidence": 0.936,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 10,
+   "colour": "b",
+   "written": "Qxe7",
+   "confidence": 0.88,
+   "status": "ok",
+   "suggestions": [],
+   "review": true
+  },
+  {
+   "move": 11,
+   "colour": "w",
+   "written": "0-0",
+   "confidence": 0.95,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 11,
+   "colour": "b",
+   "written": "Nxc3",
+   "confidence": 0.987,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 12,
+   "colour": "w",
+   "written": "qxc3",
+   "confidence": 0.65,
+   "status": "ok",
+   "suggestions": [],
+   "review": true
+  },
+  {
+   "move": 12,
+   "colour": "b",
+   "written": "e5",
+   "confidence": 0.941,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 13,
+   "colour": "w",
+   "written": "Bb3",
+   "confidence": 0.978,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 13,
+   "colour": "b",
+   "written": "Re8",
+   "confidence": 0.955,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 14,
+   "colour": "w",
+   "written": "Qf4",
+   "confidence": 0.414,
+   "status": "illegal",
+   "suggestions": [
+    "a4",
+    "Qe1",
+    "g4"
+   ],
+   "review": true
+  },
+  {
+   "move": 14,
+   "colour": "b",
+   "written": "e4",
+   "confidence": 0.969,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 15,
+   "colour": "w",
+   "written": "Nd2",
+   "confidence": 0.946,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 15,
+   "colour": "b",
+   "written": "Nf6",
+   "confidence": 0.983,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 16,
+   "colour": "w",
+   "written": "Rac1",
+   "confidence": 0.96,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 16,
+   "colour": "b",
+   "written": "Bg4",
+   "confidence": 0.937,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 17,
+   "colour": "w",
+   "written": "f3",
+   "confidence": 0.974,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 17,
+   "colour": "b",
+   "written": "ef4",
+   "confidence": 0.52,
+   "status": "illegal",
+   "suggestions": [
+    "exf3",
+    "Bf5"
+   ],
+   "review": true
+  },
+  {
+   "move": 18,
+   "colour": "w",
+   "written": "gxf3",
+   "confidence": 0.988,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 18,
+   "colour": "b",
+   "written": "Bh5",
+   "confidence": 0.965,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 19,
+   "colour": "w",
+   "written": "kh1",
+   "confidence": 0.942,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 19,
+   "colour": "b",
+   "written": "Rad8",
+   "confidence": 0.979,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 20,
+   "colour": "w",
+   "written": "Rg1",
+   "confidence": 0.956,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 20,
+   "colour": "b",
+   "written": "Kh8",
+   "confidence": 0.933,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 21,
+   "colour": "w",
+   "written": "Rg5",
+   "confidence": 0.79,
+   "status": "ok",
+   "suggestions": [],
+   "review": true
+  },
+  {
+   "move": 21,
+   "colour": "b",
+   "written": "Bg6",
+   "confidence": 0.947,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 22,
+   "colour": "w",
+   "written": "Rcg1",
+   "confidence": 0.984,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 22,
+   "colour": "b",
+   "written": "Nd5",
+   "confidence": 0.961,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 23,
+   "colour": "w",
+   "written": "Bxd5",
+   "confidence": 0.938,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 23,
+   "colour": "b",
+   "written": "cxd5",
+   "confidence": 0.975,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 24,
+   "colour": "w",
+   "written": "h4",
+   "confidence": 0.952,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 24,
+   "colour": "b",
+   "written": "f6",
+   "confidence": 0.989,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 25,
+   "colour": "w",
+   "written": "R5g2",
+   "confidence": 0.966,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 25,
+   "colour": "b",
+   "written": "Bf5",
+   "confidence": 0.943,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 26,
+   "colour": "w",
+   "written": "h5",
+   "confidence": 0.98,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 26,
+   "colour": "b",
+   "written": "h6",
+   "confidence": 0.957,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 27,
+   "colour": "w",
+   "written": "Kh2",
+   "confidence": 0.934,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 27,
+   "colour": "b",
+   "written": "Rc8",
+   "confidence": 0.971,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 28,
+   "colour": "w",
+   "written": "Qb3",
+   "confidence": 0.948,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 28,
+   "colour": "b",
+   "written": "Rc7",
+   "confidence": 0.985,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 29,
+   "colour": "w",
+   "written": "Nf1",
+   "confidence": 0.962,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 29,
+   "colour": "b",
+   "written": "Bh7",
+   "confidence": 0.939,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 30,
+   "colour": "w",
+   "written": "Ng3",
+   "confidence": 0.976,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  },
+  {
+   "move": 30,
+   "colour": "b",
+   "written": "Rec8",
+   "confidence": 0.953,
+   "status": "ok",
+   "suggestions": [],
+   "review": false
+  }
+ ]
+}
