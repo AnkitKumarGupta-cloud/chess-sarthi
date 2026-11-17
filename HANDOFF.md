@@ -153,3 +153,4 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 ## Repo moved (15 Nov 2026)
 - Code now lives at **AnkitKumarGupta-cloud/chess-sarthi** (branch main), full history copied. Vercel project chess-sathi-live is connected to it; every push to main deploys.
 - Why: the Vercel account's GitHub sign-in became AnkitKumarGupta-cloud, so the old repo (kishkishkish123-wq/chess-) showed "Project Link not found" and stopped deploying. The old repo still exists but is no longer used; don't push there.
+- Plain intros (17 Nov 2026): every explained opening has `short`, `starts`, `why`, `named` (text in `tools/openings/intro.py`). Cards show the short line; the opening page starts with a "What is the …?" box. List is grouped: traps, Playing White, Black vs 1.e4, Black vs 1.d4, with a "What is an opening?" note at the top. guide.json is v=3.

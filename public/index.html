@@ -738,6 +738,16 @@ html{scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent
 .op-moves li.on button{background:var(--accent-soft,rgba(210,55,63,.1))}
 .op-moves li.op-branch{border-top:2px dashed var(--line);padding-top:4px;margin-top:4px}
 .op-play .controls .ctl:disabled{opacity:.4}
+
+.op-short{font-size:.88rem;color:var(--muted);line-height:1.4}
+.op-what{max-width:720px}
+.op-intro{max-width:760px;display:flex;flex-direction:column;gap:8px;padding:18px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+.op-intro h2{font-size:1.15rem;margin:0}
+.op-intro-s{font-size:1.02rem;margin:0;font-weight:600}
+.op-intro dl{margin:4px 0 0;display:grid;grid-template-columns:max-content 1fr;gap:6px 14px}
+.op-intro dt{font-weight:600;color:var(--muted);font-size:.88rem}
+.op-intro dd{margin:0;line-height:1.45}
+@media (max-width:640px){.op-intro dl{grid-template-columns:1fr}.op-intro dd{margin-bottom:6px}}
 </style>
 
 </head>
@@ -2043,7 +2053,7 @@ function liveHome(root){
 let OPG=null,OPA=null,OPN=null; // explained openings, all named lines, notes by move sequence
 const opHq=k=>new URLSearchParams((location.hash.split("?")[1]||"")).get(k);
 async function opLoad(all){
-  if(!OPG){const r=await fetch("/openings/guide.json?v=2");if(!r.ok)throw new Error("load");OPG=await r.json();
+  if(!OPG){const r=await fetch("/openings/guide.json?v=3");if(!r.ok)throw new Error("load");OPG=await r.json();
     OPN={};OPG.forEach(o=>o.lines.forEach(l=>l.moves.forEach((m,i)=>{const k=l.moves.slice(0,i+1).join(" ");if(!(k in OPN))OPN[k]=l.notes[i]})))}
   if(all&&!OPA){const r=await fetch("/openings/all.json?v=1");if(!r.ok)throw new Error("load");OPA=(await r.json()).families}
 }
@@ -2073,17 +2083,18 @@ function opBuild(moves,notes){
 function vOpenings(){
   if(!OPG){opLoad().then(()=>route()==="openings"&&render()).catch(()=>{const a=$("#app");if(a&&route()==="openings")a.innerHTML=`<div class="card"><h2>Couldn't load the openings</h2><p class="li-m">Check your internet and try again.</p></div>`});return skel()}
   const card=o=>`<button class="op-card" data-op="${o.id}"><div class="board op-thumb" data-fen="${esc(opBuild(o.lines[0].moves.slice(0,Math.min(8,o.lines[0].moves.length)),o.lines[0].notes).fens.pop())}" data-flip="${o.side==="b"?1:""}" aria-hidden="true"></div>
-    <span class="op-card-t"><b>${esc(o.name)}</b><span class="li-m mono">${esc(opMovesText(o.lines[0].moves,4))}</span><span class="row" style="gap:6px"><span class="pill level">${o.level}</span><span class="li-m">${o.lines.length} lines</span></span></span></button>`;
+    <span class="op-card-t"><b>${esc(o.name)}</b><span class="op-short">${esc(o.short||"")}</span><span class="row" style="gap:6px"><span class="pill level">${o.level}</span><span class="li-m">${o.lines.length} lines</span></span></span></button>`;
   return `<section class="stack view"><div class="eyebrow">Openings</div><h1>Learn the first moves</h1>
-    <p class="li-m" style="max-width:640px">${OPG.length} openings and traps explained move by move, in simple words. You can also explore every named opening line, 3,865 of them, from the free Lichess openings list.</p></section>
+    <div class="keypoint op-what"><p><b>What is an opening?</b> It is the first 10 or so moves of a game. Each popular way to start has a name, like a recipe. You don't need to know them all: pick one for White and one for Black, and learn why each move is played.</p><p class="li-m" style="margin-top:6px">New to chess? Start with the traps, then the Italian Game as White, and the Caro-Kann or Scandinavian as Black.</p></div></section>
   <section class="stack view">
     <label class="op-search">${ico("search")}<input id="opQ" type="search" placeholder="Search a name or moves, like Najdorf or e4 c5" autocomplete="off" aria-label="Search openings"></label>
     <div id="opRes"></div>
   </section>
   <section class="stack view" id="opMain">
     <h2>Start here: easy openings and traps</h2><p class="li-m" style="margin-top:-6px">Quick checkmates every beginner should know, and how to stop them.</p><div class="op-grid">${OPG.filter(o=>o.group==="easy").map(card).join("")}</div>
-    <h2 style="margin-top:12px">Openings for White</h2><div class="op-grid">${OPG.filter(o=>o.side==="w"&&!o.group).map(card).join("")}</div>
-    <h2 style="margin-top:12px">Defences for Black</h2><div class="op-grid">${OPG.filter(o=>o.side==="b"&&!o.group).map(card).join("")}</div>
+    <h2 style="margin-top:12px">Playing White</h2><p class="li-m" style="margin-top:-6px">You move first. Pick one of these and use it every game.</p><div class="op-grid">${OPG.filter(o=>o.side==="w"&&!o.group).map(card).join("")}</div>
+    <h2 style="margin-top:12px">Playing Black, when White starts 1.e4</h2><p class="li-m" style="margin-top:-6px">White moved the king's pawn two squares. Pick one of these answers.</p><div class="op-grid">${OPG.filter(o=>o.side==="b"&&!o.group&&o.lines[0].moves[0]==="e4").map(card).join("")}</div>
+    <h2 style="margin-top:12px">Playing Black, when White starts 1.d4</h2><p class="li-m" style="margin-top:-6px">White moved the queen's pawn two squares. Pick one of these answers.</p><div class="op-grid">${OPG.filter(o=>o.side==="b"&&!o.group&&o.lines[0].moves[0]==="d4").map(card).join("")}</div>
     <h2 style="margin-top:12px">Every named opening</h2>
     <div id="opFams">${OPA?opFamList():`<button class="btn ghost" id="opAll">Show all 149 opening families</button>`}</div>
   </section>`;
@@ -2139,7 +2150,10 @@ function vOpening(){
   const o=L.guide;
   return `<section class="stack view"><button class="back" data-go="${L.family?"ofam?f="+encodeURIComponent(L.family):"openings"}">← ${esc(L.family||"Openings")}</button>
     <div class="row">${L.level?`<span class="pill level">${L.level}</span>`:""}${o?`<span class="pill">${o.side==="w"?"For White":"For Black"}</span>`:""}${L.eco?`<span class="pill mono">${L.eco}</span>`:""}<span class="pill mono">${L.moves.length} moves</span></div>
-    <h1>${esc(L.title)}</h1><p class="li-m" style="margin-top:-6px">${esc(L.sub)}</p></section>
+    <h1>${esc(L.title)}</h1><p class="li-m" style="margin-top:-6px">${esc(L.sub)}</p>
+      ${o&&o.short?`<div class="op-intro"><h2>What is the ${esc(o.name)}?</h2><p class="op-intro-s">${esc(o.short)}</p>
+        <dl><dt>How it starts</dt><dd>${esc(o.starts)}</dd><dt>Who should play it</dt><dd>${esc(o.why)}</dd><dt>Why this name</dt><dd>${esc(o.named)}</dd></dl></div>`:""}
+    </section>
   <section class="lesson view op-play">
     <div class="player">
       <div class="screen"><div class="board" id="opBoard"></div></div>
@@ -2156,7 +2170,7 @@ function vOpening(){
       </div>
     </div>
     <div class="stack">
-      ${o&&L.guide&&(L.li!=null)?`<div class="keypoint"><div class="eyebrow">About the ${esc(o.name)}</div><p style="margin-top:4px">${esc(o.about)}</p><ul class="op-ideas">${o.ideas.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+      ${o&&L.guide&&(L.li!=null)?`<div class="keypoint"><div class="eyebrow">More about it</div><p style="margin-top:4px">${esc(o.about)}</p><ul class="op-ideas">${o.ideas.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
       <div class="eyebrow" style="margin-top:4px">Lines in this opening</div>
       <div class="op-lines">${o.lines.map((l,i)=>`<button class="chip${i===L.li?" on":""}" data-line="${i}" aria-pressed="${i===L.li}">${esc(l.name)}</button>`).join("")}</div>
       <button class="link op-allfam" data-fam="${esc(o.families[0])}">See all ${esc(o.families[0])} lines</button>`
