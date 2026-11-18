@@ -18,10 +18,12 @@ import { handler, HttpError, whoIs, kv, kvPipe } from "./_lib.js";
 //   AI_GLOBAL_LIMIT   questions for the whole app per day (default 900, to stay inside the free tiers)
 // Redis keys: ai:<user>:<day> and ai:all:<day> (counters), aic:<hash> (cached explanations, 14 days).
 
+// Default models checked against Groq and Cerebras deprecation pages on 19 Nov 2026 (Llama 3.3 70B was retired).
+// If Sathi stops answering again, read the Vercel function logs: each failed provider is logged below.
 const PROVIDERS = {
-  groq: { url: "https://api.groq.com/openai/v1/chat/completions", key: "GROQ_API_KEY", model: "GROQ_MODEL", def: "llama-3.3-70b-versatile" },
-  cerebras: { url: "https://api.cerebras.ai/v1/chat/completions", key: "CEREBRAS_API_KEY", model: "CEREBRAS_MODEL", def: "llama-3.3-70b" },
-  openrouter: { url: "https://openrouter.ai/api/v1/chat/completions", key: "OPENROUTER_API_KEY", model: "OPENROUTER_MODEL", def: "meta-llama/llama-3.3-70b-instruct:free" },
+  groq: { url: "https://api.groq.com/openai/v1/chat/completions", key: "GROQ_API_KEY", model: "GROQ_MODEL", def: "openai/gpt-oss-120b" },
+  cerebras: { url: "https://api.cerebras.ai/v1/chat/completions", key: "CEREBRAS_API_KEY", model: "CEREBRAS_MODEL", def: "gpt-oss-120b" },
+  openrouter: { url: "https://openrouter.ai/api/v1/chat/completions", key: "OPENROUTER_API_KEY", model: "OPENROUTER_MODEL", def: "openai/gpt-oss-120b:free" },
 };
 
 const SYSTEM = `You are Sathi, a warm, patient chess coach for school students in India (ages 8 to 17).
@@ -109,15 +111,20 @@ const tidy = (s) => String(s || "").replace(/<[^>]*>?/g, " ").replace(/[*_#`<>]/
 async function generate(list, user) {
   for (const p of list) {
     try {
+      const model = process.env[p.model] || p.def;
+      // gpt-oss models "think" first; keep that short so the 600-token budget is left for the answer.
+      const body = { model, temperature: 0.3, max_tokens: 600, messages: [{ role: "system", content: SYSTEM }, { role: "user", content: user }] };
+      if (/gpt-oss/i.test(model)) body.reasoning_effort = "low";
       const r = await fetch(p.url, {
-        method: "POST", signal: AbortSignal.timeout(12000),
+        method: "POST", signal: AbortSignal.timeout(15000),
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + process.env[p.key] },
-        body: JSON.stringify({ model: process.env[p.model] || p.def, temperature: 0.3, max_tokens: 220, messages: [{ role: "system", content: SYSTEM }, { role: "user", content: user }] }),
+        body: JSON.stringify(body),
       });
-      if (!r.ok) continue;
+      if (!r.ok) { console.error(`coach: ${p.name} ${model} HTTP ${r.status}`, (r.text ? await r.text().catch(() => "") : "").slice(0, 200)); continue; }
       const j = await r.json(), out = tidy(j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content);
       if (out) return out;
-    } catch { /* try the next provider */ }
+      console.error(`coach: ${p.name} ${model} returned an empty answer`);
+    } catch (e) { console.error(`coach: ${p.name} failed:`, e && e.name, e && e.message); }
   }
   throw new HttpError(502, "Sathi is busy right now. Try again in a minute.", "busy");
 }

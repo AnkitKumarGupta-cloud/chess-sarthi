@@ -44,7 +44,7 @@ assert.equal(calls.length, 0, "bad requests never reach the model");
 const r1 = await call("coach", { auth: S, body: mistake() });
 assert.equal(r1.status, 200); assert.match(r1.text, /knight/);
 assert.equal(calls.length, 1); assert.equal(calls[0].host, "api.groq.com"); assert.equal(calls[0].auth, "Bearer gk");
-assert.equal(calls[0].body.model, "llama-3.3-70b-versatile"); assert.ok(calls[0].body.max_tokens <= 300);
+assert.equal(calls[0].body.model, "openai/gpt-oss-120b"); assert.ok(calls[0].body.max_tokens <= 800);
 const sent = calls[0].body.messages.map((m) => m.content).join("\n");
 assert.ok(sent.includes(FEN) && sent.includes("Nc6") && sent.includes("Bb5"), "facts reach the model");
 assert.ok(!/Winning line/.test(calls[0].body.messages[1].content), "winning move is not sent unless shown");
