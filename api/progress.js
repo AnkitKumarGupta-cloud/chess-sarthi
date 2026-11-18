@@ -7,7 +7,7 @@ import { handler, HttpError, whoIs, kv, kvPipe, listUsers, seenTimes } from "./_
 //         seen = when the student last opened the app (ms), or null if they never signed in
 // Redis keys: p:<username> = full state, ps:<username> = small summary for the teacher's table.
 const MAX_STATE = 200_000; // bytes of JSON; a very active student is well under this
-const STATE_KEYS = ["lessons", "puzzles", "tests", "practice", "days", "lv", "pr", "pm"];
+const STATE_KEYS = ["puzzles", "tests", "practice", "days", "lv", "pr", "pm"];
 const parse = (s) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
 const num = (v, max = 1e7) => (Number.isFinite(+v) ? Math.max(0, Math.min(max, Math.round(+v))) : 0);
 const str = (v, n = 40) => (typeof v === "string" ? v.slice(0, n) : "");
@@ -28,7 +28,6 @@ function cleanSummary(s = {}) {
   return {
     xp: num(s.xp), rank: str(s.rank, 12), streak: num(s.streak, 9999), todayXP: num(s.todayXP),
     week: Array.isArray(s.week) ? s.week.slice(0, 7).map((x) => num(x)) : [],
-    lessonsDone: num(s.lessonsDone, 999), lessonsTotal: num(s.lessonsTotal, 999),
     puzzlesSolved: num(s.puzzlesSolved, 99999), puzzleLevel: num(s.puzzleLevel, 999), levelsDone: num(s.levelsDone, 999),
     levelsTotal: num(s.levelsTotal, 999), stars: num(s.stars, 9999), classicSolved: num(s.classicSolved, 9999),
     practiceSolved: num(s.practiceSolved, 9999), practiceTotal: num(s.practiceTotal, 9999),

@@ -1,6 +1,6 @@
 # Chess Sathi website: setup
 
-The website has the lessons, puzzles and test, a **sign-in with username and password**, and **live classes**
+The website has puzzles, practice, openings and tests, a **sign-in with username and password**, and **live classes**
 (video call, chat, screen share, raise hand, backgrounds, recording). Parents can watch recordings.
 
 Everything runs on free plans to start. You need 4 small accounts' worth of settings. Never paste these keys into a chat or into GitHub.
@@ -38,12 +38,19 @@ the students of that batch and their parents.
 **Note:** LiveKit's free plan includes only about 60 minutes of recording a month. After that, recording is a few
 rupees per hour on LiveKit's paid plan. Live classes themselves stay within the 5,000 free minutes.
 
-## 5. Deploy
+## 5. Sathi, the AI puzzle coach (optional) — free
+Sathi explains a student's wrong move in plain English and answers questions on the level puzzles. It uses a free open model (Llama) hosted by a provider. Without a key the puzzles still work: Sathi just shows a short built-in message instead.
+1. Make a free key at https://console.groq.com (the first choice). Optionally also make one at https://cloud.cerebras.ai as a backup.
+2. In Vercel -> Settings -> Environment Variables add `GROQ_API_KEY` (and `CEREBRAS_API_KEY` if you made one). Redeploy.
+3. Optional settings: `AI_PROVIDERS` (order to try, default `groq,cerebras,openrouter`), `GROQ_MODEL` / `CEREBRAS_MODEL` / `OPENROUTER_MODEL` (model names; free model lists change, so check the provider's list if Sathi stops answering), `AI_DAILY_LIMIT` (questions per student per day, default 40), `AI_GLOBAL_LIMIT` (whole app per day, default 900, to stay inside the free limits).
+Only the position and moves are sent to the provider, never a student's name.
+
+## 6. Deploy
 - Vercel project settings: Framework **Vite**, build command `vite build`, output `dist` (already in `vercel.json`).
 - If your GitHub repo keeps the website on its own branch, set **Settings → Git → Production Branch** to that branch.
 - After adding settings, click **Redeploy**.
 
-## 6. First test
+## 7. First test
 1. Open the website, sign in as `teacher` with your `TEACHER_PASSWORD`.
 2. **Live** tab → **Add a student** → send the username and password to the family (there is a copy button for WhatsApp).
 3. **Schedule a class** for that batch, press **Start class**, then join from a second phone as the student.

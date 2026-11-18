@@ -163,7 +163,6 @@ td.num{text-align:right;font-family:var(--f-mono)}
 .sq.moving{z-index:5}
 .pc.slide{transition:transform .24s cubic-bezier(.3,.7,.3,1)}
 @media (prefers-reduced-motion:reduce){.pc.slide{transition:none}}
-.voice-note{font-size:.8rem;color:var(--muted)}
 .fld{display:flex;flex-direction:column;gap:5px;font-size:.85rem;font-weight:600;min-width:0}
 .fld input{font:inherit;font-weight:400;background:var(--bg);min-width:0;width:100%}
 .fld input:focus-visible{outline:3px solid var(--sq-sel);outline-offset:1px}
@@ -748,6 +747,15 @@ html{scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent
 .op-intro dt{font-weight:600;color:var(--muted);font-size:.88rem}
 .op-intro dd{margin:0;line-height:1.45}
 @media (max-width:640px){.op-intro dl{grid-template-columns:1fr}.op-intro dd{margin-bottom:6px}}
+/* Sathi coach card (puzzle levels) */
+.coach{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:12px;background:var(--surface-2)}
+.coach-m{margin:0;line-height:1.45;font-weight:500;min-height:2.9em}
+.coach-b{display:flex;align-items:center;gap:8px;font-size:.85rem}
+.coach-f{display:flex;gap:8px}
+.coach-f input{flex:1;min-width:0;font:inherit;font-size:16px;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.coach-f .btn{padding:9px 16px}
+.drill.view .coach{order:5}
+@media (min-width:900px){.drill.view .coach{order:6}}
 </style>
 
 </head>
@@ -759,7 +767,6 @@ html{scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent
   </a>
   <nav class="tabs" id="tabs">
     <a href="#home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/> <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</a>
-    <a href="#courses"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v16"/> <path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"/></svg>Lessons</a>
     <a href="#openings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>Openings</a>
     <a href="#live"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/> <rect x="2" y="6" width="14" height="12" rx="2"/></svg>Live</a>
     <a href="#practice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.596 12.768a2 2 0 1 0 2.829-2.829l-1.768-1.767a2 2 0 0 0 2.828-2.829l-2.828-2.828a2 2 0 0 0-2.829 2.828l-1.767-1.768a2 2 0 1 0-2.829 2.829z"/> <path d="m2.5 21.5 1.4-1.4"/> <path d="m20.1 3.9 1.4-1.4"/> <path d="M5.343 21.485a2 2 0 1 0 2.829-2.828l1.767 1.768a2 2 0 1 0 2.829-2.829l-6.364-6.364a2 2 0 1 0-2.829 2.829l1.768 1.767a2 2 0 0 0-2.828 2.829z"/> <path d="m9.6 14.4 4.8-4.8"/></svg>Practice</a>
@@ -777,7 +784,7 @@ html{scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent
 /* ---------- Storage (safe) ---------- */
 const KEY="targetchess.v2";
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}}
-let S=Object.assign({lessons:{},puzzles:{},tests:[],practice:{},liveToken:""},load());
+let S=Object.assign({puzzles:{},tests:[],practice:{},liveToken:""},load());
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}try{progQueue()}catch(e){}}
 function themeGet(){const t=document.documentElement.dataset.theme;return t==="light"||t==="dark"?t:"auto"}
 function themeSet(t){const r=document.documentElement;if(t==="light"||t==="dark")r.dataset.theme=t;else delete r.dataset.theme;
@@ -787,8 +794,8 @@ function themeSet(t){const r=document.documentElement;if(t==="light"||t==="dark"
 delete S.sound;delete S.voice; /* old on/off settings, no longer used */
 
 /* ---------- Content ---------- */
-const DATA={"puzzles":[{"id":"p1","fen":"6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1","line":["d1d8"],"mate":true,"theme":"Back-rank checkmate","level":"Beginner","hint":"Black's king is stuck behind its own pawns.","pts":10},{"id":"p2","fen":"6k1/5ppp/8/8/8/8/5PPP/4Q1K1 w - - 0 1","line":["e1e8"],"mate":true,"theme":"Queen to the back row","level":"Beginner","hint":"Your queen can reach Black's back row in one move.","pts":10},{"id":"p3","fen":"1r4k1/8/8/8/8/8/5PPP/6K1 b - - 0 1","line":["b8b1"],"mate":true,"theme":"Back-rank checkmate","level":"Beginner","hint":"White's king is stuck behind its own pawns too.","pts":10},{"id":"p4","fen":"r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1","line":["h5f7"],"mate":true,"theme":"Attack the weak f7 pawn","level":"Beginner","hint":"Only the king guards f7, and your bishop on c4 helps your queen.","pts":10},{"id":"p5","fen":"rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1","line":["d8h4"],"mate":true,"theme":"Fastest checkmate","level":"Beginner","hint":"White's pawn moves opened a path straight to the king.","pts":10},{"id":"p6","fen":"k7/8/1K6/8/8/8/7Q/8 w - - 0 1","line":["h2h8"],"mate":true,"theme":"King and queen team-up","level":"Beginner","hint":"Your king already guards a7 and b7. Give check on the back row.","pts":10},{"id":"p7","fen":"k7/2P5/1K6/8/8/8/8/8 w - - 0 1","line":["c7c8q"],"mate":true,"theme":"New queen, checkmate","level":"Beginner","hint":"Push the pawn and make a new queen.","pts":10},{"id":"p8","fen":"k7/7R/8/8/8/8/8/2R3K1 w - - 0 1","line":["c1c8"],"mate":true,"theme":"Two-rook ladder","level":"Beginner","hint":"One rook blocks the 7th row. Use the other rook on the 8th row.","pts":10},{"id":"p9","fen":"7k/8/6K1/8/8/8/Q7/8 w - - 0 1","line":["a2a8"],"mate":true,"theme":"Queen finishes the job","level":"Beginner","hint":"Your king guards g7 and h7. Slide the queen all the way up.","pts":10},{"id":"p10","fen":"2q3k1/5ppp/8/3N4/8/8/5PPP/6K1 w - - 0 1","line":["d5e7"],"mate":false,"theme":"Knight fork","level":"Intermediate","hint":"Find a knight move that attacks the king and the queen together.","pts":15},{"id":"p11","fen":"q7/8/2k5/8/8/8/8/1B4K1 w - - 0 1","line":["b1e4"],"mate":false,"theme":"Skewer: check, then win the queen","level":"Intermediate","hint":"Give check on the same diagonal as the queen.","pts":15},{"id":"p12","fen":"r3k3/8/8/8/8/8/8/1Q2K3 w - - 0 1","line":["b1e4"],"mate":false,"theme":"Queen fork: check and win the rook","level":"Intermediate","hint":"Give a check that also attacks the rook in the corner.","pts":15},{"id":"p13","fen":"6rk/6pp/8/4N3/8/8/8/6K1 w - - 0 1","line":["e5f7"],"mate":true,"theme":"Smothered mate (king boxed in)","level":"Intermediate","hint":"Black's king has no room. Its own pieces block it in.","pts":15},{"id":"p14","fen":"7k/4N1p1/8/8/8/2R5/8/6K1 w - - 0 1","line":["c3h3"],"mate":true,"theme":"Rook and knight team-up","level":"Intermediate","hint":"Your knight guards g8, and the h-file is open for your rook.","pts":15},{"id":"p15","fen":"7k/1R6/5N2/8/8/8/8/6K1 w - - 0 1","line":["b7h7"],"mate":true,"theme":"Rook and knight corner mate","level":"Intermediate","hint":"Your knight guards g8 and can protect a rook on h7.","pts":15},{"id":"p16","fen":"5rk1/5p2/6P1/8/8/8/8/6KQ w - - 0 1","line":["h1h7"],"mate":true,"theme":"Queen guarded by a pawn","level":"Intermediate","hint":"Your pawn on g6 can protect your queen right next to the king.","pts":15},{"id":"p17","fen":"6k1/8/8/8/8/5b1q/7P/6K1 b - - 0 1","line":["h3g2"],"mate":true,"theme":"Queen and bishop team-up","level":"Intermediate","hint":"Your bishop on f3 can protect your queen right next to the king.","pts":15},{"id":"p18","fen":"3rkr2/8/8/8/8/1Q6/8/6K1 w - - 0 1","line":["b3e6"],"mate":true,"theme":"King blocked by its own rooks","level":"Intermediate","hint":"Black's rooks block their own king on both sides.","pts":15},{"id":"p19","fen":"r6k/6pp/7N/8/8/1Q6/6PP/6K1 w - - 0 1","line":["b3g8","a8g8","h6f7"],"mate":true,"theme":"Smothered mate in 2 (king boxed in)","level":"Advanced","hint":"Start with a check. Your queen moves first.","pts":25},{"id":"p20","fen":"1r4k1/q4ppp/8/8/8/8/1Q3PPP/1R4K1 w - - 0 1","line":["b2b8","a7b8","b1b8"],"mate":true,"theme":"Pull the defender away","level":"Advanced","hint":"Start with a check. Your queen moves first.","pts":25},{"id":"p21","fen":"rn1qkbnr/ppp2p1p/3p2p1/4N3/2B1P3/2N5/PPPP1PPP/R1BbK2R w KQkq - 0 6","line":["c4f7","e8e7","c3d5"],"mate":true,"theme":"Opening trap: punish a greedy move","level":"Advanced","hint":"Start with a check. Your bishop moves first.","pts":25},{"id":"p22","fen":"2k5/ppp2R2/3q2Q1/7R/8/8/PPP5/2K5 w - - 0 1","line":["g6d6","c8b8","f7f8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"The first move is not a check, but it sets up a checkmate. Your queen moves first.","pts":25},{"id":"p23","fen":"7k/6p1/1p5p/6Q1/8/2R5/6PP/7K w - - 0 1","line":["g5g6","h8g8","c3c8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"The first move is not a check, but it sets up a checkmate. Your queen moves first.","pts":25},{"id":"p24","fen":"7k/n5pp/8/8/2R5/RQ6/5PPP/6K1 w - - 0 1","line":["b3b8","a7c8","b8c8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your queen moves first.","pts":25},{"id":"p25","fen":"6k1/6pp/Q4p2/2r5/3B4/1N6/6PP/7K w - - 0 1","line":["a6e6","g8h8","e6e8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your queen moves first.","pts":25},{"id":"p26","fen":"6k1/6pp/R4p1p/8/1B4B1/8/PPP5/2K5 w - - 0 1","line":["g4e6","g8h8","a6a8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your bishop moves first.","pts":25},{"id":"p27","fen":"2k5/ppp3r1/3Q4/1Br1q3/8/8/6PP/7K w - - 0 1","line":["d6f8","e5e8","f8e8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your queen moves first.","pts":25},{"id":"p28","fen":"1k6/ppp5/3R4/7R/2b1N3/8/3r1PPP/6K1 w - - 0 1","line":["h5h8","c4g8","h8g8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your rook moves first.","pts":25},{"id":"p29","fen":"2k5/ppp5/4r3/8/R7/7B/3R2PP/7K w - - 0 1","line":["h3e6","c8b8","d2d8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your bishop moves first.","pts":25},{"id":"p30","fen":"6k1/3N1ppp/4r3/rQ6/8/8/5PPP/6K1 w - - 0 1","line":["b5b8","e6e8","b8e8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your queen moves first.","pts":25},{"id":"p31","fen":"2k5/ppp2B2/3R4/8/1p6/R7/6PP/7K w - - 0 1","line":["f7e6","c8b8","d6d8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your bishop moves first.","pts":25},{"id":"p32","fen":"6k1/5pp1/8/2Q1B3/3R4/1r6/6PP/7K w - - 0 1","line":["c5c8","g8h7","d4h4","h7g6","c8g4"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"Start with a check. Your queen moves first.","pts":40},{"id":"p33","fen":"6kn/5p1p/6p1/8/5Q1p/3R4/6PP/7K w - - 0 1","line":["f4f6","h7h6","d3d8","g8h7","d8h8"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"The first move is not a check, but it sets up a checkmate. Your queen moves first.","pts":40},{"id":"p34","fen":"7k/6pp/4N3/3B4/8/1p1R4/PPP5/2K5 w - - 0 1","line":["d5e4","h8g8","d3f3","g8h8","f3f8"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"The first move is not a check, but it sets up a checkmate. Your bishop moves first.","pts":40},{"id":"p35","fen":"2k5/ppp5/2r3R1/b7/8/8/PP5R/1K6 w - - 0 1","line":["h2h8","c8d7","h8h7","d7e8","g6g8"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"Start with a check. Your rook moves first.","pts":40},{"id":"p36","fen":"6k1/5pp1/8/8/p1Q1N3/8/PPP5/2K5 w - - 0 1","line":["e4g5","g7g6","c4f7","g8h8","f7f8"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"The first move is not a check, but it sets up a checkmate. Your knight moves first.","pts":40},{"id":"p37","fen":"2k5/ppp5/1Q6/4b3/1N6/1N6/6PP/7K w - - 0 1","line":["b6e6","c8d8","b3c5","e5h8","e6d7"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"Start with a check. Your queen moves first.","pts":40},{"id":"p38","fen":"6k1/rRr2ppp/8/8/8/1N6/3q2PP/7K w - - 0 1","line":["b7b8","c7c8","b8c8","d2d8","c8d8"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"Start with a check. Your rook moves first.","pts":40},{"id":"p39","fen":"7k/6pp/4r3/1R6/8/6r1/B1q3PP/7K w - - 0 1","line":["b5b8","c2c8","b8c8","e6e8","c8e8"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"Start with a check. Your rook moves first.","pts":40}],"courses":[{"id":"found","title":"Chess Basics","level":"Beginner","blurb":"Learn how each piece moves, how to win a game, and three special moves.","lessons":[{"id":"f1","title":"Meet the Board and the Pieces","minutes":8,"videoUrl":null,"key":"Piece points to remember: pawn 1, knight 3, bishop 3, rook 5, queen 9. The king can never be traded, so keep it safe.","steps":[{"fen":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1","say":"This is the starting position. White always moves first, and each player has a light square in the right-hand corner."},{"say":"Columns are called files, a to h. Rows are ranks, 1 to 8. Every square has a name, like e4."},{"move":"e4","say":"Pawns move straight forward. On its first move a pawn may go two squares."},{"move":"e5","say":"Black answers the same way. Both sides now have a pawn in the centre."},{"move":"Nf3","say":"The knight moves in an L shape and is the only piece that can jump over others."},{"move":"Nc6","say":"Black develops a knight too, defending the e5 pawn."},{"move":"Bb5","say":"Bishops move diagonally and stay on one colour for the whole game."},{"move":"a6","say":"Pawns capture diagonally, so this pawn now attacks the bishop."},{"move":"Ba4","say":"The bishop steps back but keeps its diagonal. Rooks, the queen and the king join the game soon."}]},{"id":"f2","title":"Check and Checkmate: How to Win","minutes":10,"videoUrl":null,"key":"Before every move, ask yourself two questions: Is my king safe? Can my opponent give check?","steps":[{"fen":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1","say":"A king under attack is in check. You must escape by moving the king, blocking, or capturing the attacker."},{"move":"f3","say":"Watch the shortest possible game. White weakens the squares around the king."},{"move":"e5","say":"Black opens a path for the queen."},{"move":"g4","say":"Another weakening move. The diagonal from h4 to e1 is now wide open."},{"move":"Qh4#","say":"Checkmate. The king is attacked and has no way to escape, block or capture. The game is over."},{"fen":"6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1","say":"Here is a second pattern. Black's king is trapped behind its own pawns."},{"move":"Rd8#","say":"The rook reaches the back rank. This is called a back-rank mate."},{"say":"Stalemate is different: the side to move has no legal move but is not in check. Stalemate is a draw."}]},{"id":"f3","title":"3 Special Moves: Castling, En Passant, Promotion","minutes":12,"videoUrl":null,"key":"Castle early. It hides your king and brings your rook into the game.","steps":[{"fen":"r3k2r/pppq1ppp/2n2n2/2bpp3/2B1P3/2NP1N2/PPPQ1PPP/R3K2R w KQkq - 0 1","say":"Castling moves the king two squares toward a rook, and the rook jumps over to the other side."},{"move":"O-O","say":"White castles short. The king lands on g1 and the rook on f1."},{"move":"O-O-O","say":"Black castles long. The king goes to c8 and the rook to d8."},{"say":"You can't castle out of check, through an attacked square, or after the king or that rook has moved."},{"fen":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1","say":"Now en passant, the rule most beginners have never heard of."},{"move":"e4","say":"White pushes the e-pawn."},{"move":"Nf6","say":"Black develops."},{"move":"e5","say":"The pawn advances to the fifth rank."},{"move":"d5","say":"Black's pawn jumps two squares and lands right beside White's pawn."},{"move":"exd6","say":"White captures en passant, as if the black pawn had moved only one square. This is only allowed immediately."},{"fen":"8/4P1k1/8/8/8/8/6K1/8 w - - 0 1","say":"Last, promotion. A pawn that reaches the final rank becomes a new piece."},{"move":"e8=Q","say":"White chooses a queen, which is almost always the best choice."}]}]},{"id":"tac","title":"Winning Tricks","level":"Intermediate","blurb":"Simple tricks to win your opponent's pieces: forks, pins and back-rank traps.","lessons":[{"id":"t1","title":"Knight Fork: Attack Two Pieces at Once","minutes":9,"videoUrl":null,"key":"Look for a square where your knight attacks the king and another piece at the same time.","steps":[{"fen":"2q3k1/5ppp/8/3N4/8/8/5PPP/6K1 w - - 0 1","say":"A fork is one piece attacking two targets at once. Look at the black king and queen."},{"move":"Ne7+","say":"The knight gives check and attacks the queen at the same time."},{"move":"Kf8","say":"Black must deal with the check first."},{"move":"Nxc8","say":"White collects the queen. That is a gain of nine points of material."}]},{"id":"t2","title":"Pins: Freeze a Piece in Place","minutes":8,"videoUrl":null,"key":"A pinned piece can't run away, so attack it with a pawn.","steps":[{"fen":"4k3/7p/2n5/1B6/8/8/3P4/4K3 w - - 0 1","say":"The bishop on b5, the knight on c6 and the king on e8 sit on one diagonal."},{"say":"The knight is pinned. Moving it would expose the king, so it is not allowed."},{"move":"d4","say":"White brings a pawn forward to attack the pinned piece."},{"move":"h6","say":"Black has nothing useful to do."},{"move":"d5","say":"The pawn attacks the knight, and the knight cannot step away."},{"move":"h5","say":"Black waits again."},{"move":"dxc6","say":"White wins the knight with a pawn."}]},{"id":"t3","title":"Back-Rank Mate: Trap the King at Home","minutes":7,"videoUrl":null,"key":"Push one pawn in front of your castled king (like h3) so your king has an escape square.","steps":[{"fen":"6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1","say":"Black's king is castled, but all three pawns in front of it are still at home."},{"move":"Rd8#","say":"The rook arrives and it is mate. The king has no breathing room."},{"fen":"6k1/5pp1/7p/8/8/8/5PPP/3R2K1 w - - 0 1","say":"Same position, but Black played h6 earlier. This escape square is called a luft."},{"move":"Rd8+","say":"Now the check is harmless."},{"move":"Kh7","say":"The king walks to safety through the luft."}]}]},{"id":"open","title":"Starting the Game","level":"Intermediate","blurb":"How to play your first 10 moves well, without memorising anything.","lessons":[{"id":"o1","title":"3 Golden Rules for the Start","minutes":10,"videoUrl":null,"key":"By move 10, check: are your knights and bishops out, and is your king castled?","steps":[{"fen":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1","say":"Three principles: control the centre, develop your pieces, and castle early."},{"move":"e4","say":"A centre pawn takes space and opens lines for the queen and bishop."},{"move":"e5","say":"Black claims an equal share of the centre."},{"move":"Nf3","say":"Knights first. This one attacks e5 and prepares castling."},{"move":"Nc6","say":"Black defends e5 while developing."},{"move":"Bc4","say":"The bishop aims at f7, the weakest square near Black's king."},{"move":"Bc5","say":"Black mirrors the idea."},{"move":"c3","say":"A quiet pawn move that prepares d4 to take the centre."},{"move":"Nf6","say":"Black develops the last knight and hits e4."},{"move":"d3","say":"White calmly defends e4."},{"move":"d6","say":"Black does the same."},{"move":"O-O","say":"White castles. King safe, rook connected."},{"move":"O-O","say":"Black castles too. Both sides followed all three principles."}]},{"id":"o2","title":"Starting with the d-Pawn","minutes":9,"videoUrl":null,"key":"When you start with the d-pawn, push your c-pawn to c4 to fight for the centre.","steps":[{"fen":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1","say":"Now a slower, more strategic start with the queen's pawn."},{"move":"d4","say":"The d-pawn is protected by the queen from the beginning."},{"move":"d5","say":"Black blocks the pawn's advance."},{"move":"c4","say":"White offers a wing pawn to pull Black's central pawn away."},{"move":"e6","say":"Black keeps the centre solid instead of taking."},{"move":"Nc3","say":"More pressure on d5."},{"move":"Nf6","say":"Black defends d5 again."},{"move":"Bg5","say":"The bishop pins the knight to the queen."},{"move":"Be7","say":"Black breaks the pin and gets ready to castle."}]},{"id":"o3","title":"Don't Bring Your Queen Out Too Early","minutes":8,"videoUrl":null,"key":"If your opponent brings out pieces while chasing your queen, she came out too early.","steps":[{"fen":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1","say":"What happens when the queen comes out on move two?"},{"move":"e4","say":"A normal first move."},{"move":"e5","say":"Black mirrors it."},{"move":"Qh5","say":"White's queen jumps out and attacks e5, with ideas against f7."},{"move":"Nc6","say":"Black defends e5 and develops a piece."},{"move":"Bc4","say":"Now White threatens Qxf7, which would be checkmate."},{"move":"g6","say":"Black blocks the queen's path and attacks her at the same time."},{"move":"Qf3","say":"The queen moves again, renewing the threat on f7."},{"move":"Nf6","say":"Black blocks with a developing move. White's queen has made three moves while Black built a solid position."}]}]},{"id":"end","title":"Finishing the Game","level":"Advanced","blurb":"When only a few pieces are left, learn how to turn your advantage into a win.","lessons":[{"id":"e1","title":"Checkmate with King and Queen","minutes":11,"videoUrl":null,"key":"Before a quiet queen move, check the other king still has a move. If it doesn't, the game is a draw.","steps":[{"fen":"k7/8/2K5/8/8/8/8/1Q6 w - - 0 1","say":"The black king is on the edge, and the white king stands close by."},{"say":"Careful: Qb6 here would leave Black with no legal moves and no check. That is stalemate, a draw."},{"say":"Look for a check where your king protects the queen."},{"move":"Qb7#","say":"Checkmate. The white king defends the queen on b7, and every escape square is covered."}]},{"id":"e2","title":"King Face-Off (The Opposition)","minutes":9,"videoUrl":null,"key":"Keep your king in front of your pawn and win the face-off with the other king. Then your pawn can usually become a queen.","steps":[{"fen":"8/8/4k3/8/4K3/4P3/8/8 b - - 0 1","say":"The kings face each other with one square between. Black must move, so White holds the opposition."},{"move":"Kd6","say":"Black has to give way."},{"move":"Kf5","say":"White's king advances to the side."},{"move":"Ke7","say":"Black tries to stay in front of the pawn."},{"move":"Ke5","say":"White takes the opposition again."},{"move":"Kf7","say":"Black must step aside once more."},{"move":"Kd6","say":"White's king moves forward. The pawn will follow and promote."}]},{"id":"e3","title":"Rook Wall: Cut Off the King","minutes":10,"videoUrl":null,"key":"Use your rook from far away to block the enemy king's path. Don't put it in front of your own pawn.","steps":[{"fen":"8/8/2k5/8/8/4K3/4P3/7R w - - 0 1","say":"White has an extra pawn. Black's king wants to get in front of it."},{"move":"Rd1","say":"The rook slides to the d-file and builds a wall. Black's king cannot cross it."},{"move":"Kc5","say":"Black's king looks for a way around."},{"move":"Kf4","say":"White's king steps up first, making room for the pawn."},{"move":"Kc6","say":"Black has nothing better than to wait."},{"move":"e4","say":"The pawn advances behind its king."},{"move":"Kc5","say":"The black king is still stuck on the wrong side of the wall."},{"move":"e5","say":"King and pawn march on together. The rook keeps the door shut from far away."}]}]}]};
-const COURSES=DATA.courses, PUZZLES=DATA.puzzles;
+const DATA={"puzzles":[{"id":"p1","fen":"6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1","line":["d1d8"],"mate":true,"theme":"Back-rank checkmate","level":"Beginner","hint":"Black's king is stuck behind its own pawns.","pts":10},{"id":"p2","fen":"6k1/5ppp/8/8/8/8/5PPP/4Q1K1 w - - 0 1","line":["e1e8"],"mate":true,"theme":"Queen to the back row","level":"Beginner","hint":"Your queen can reach Black's back row in one move.","pts":10},{"id":"p3","fen":"1r4k1/8/8/8/8/8/5PPP/6K1 b - - 0 1","line":["b8b1"],"mate":true,"theme":"Back-rank checkmate","level":"Beginner","hint":"White's king is stuck behind its own pawns too.","pts":10},{"id":"p4","fen":"r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1","line":["h5f7"],"mate":true,"theme":"Attack the weak f7 pawn","level":"Beginner","hint":"Only the king guards f7, and your bishop on c4 helps your queen.","pts":10},{"id":"p5","fen":"rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1","line":["d8h4"],"mate":true,"theme":"Fastest checkmate","level":"Beginner","hint":"White's pawn moves opened a path straight to the king.","pts":10},{"id":"p6","fen":"k7/8/1K6/8/8/8/7Q/8 w - - 0 1","line":["h2h8"],"mate":true,"theme":"King and queen team-up","level":"Beginner","hint":"Your king already guards a7 and b7. Give check on the back row.","pts":10},{"id":"p7","fen":"k7/2P5/1K6/8/8/8/8/8 w - - 0 1","line":["c7c8q"],"mate":true,"theme":"New queen, checkmate","level":"Beginner","hint":"Push the pawn and make a new queen.","pts":10},{"id":"p8","fen":"k7/7R/8/8/8/8/8/2R3K1 w - - 0 1","line":["c1c8"],"mate":true,"theme":"Two-rook ladder","level":"Beginner","hint":"One rook blocks the 7th row. Use the other rook on the 8th row.","pts":10},{"id":"p9","fen":"7k/8/6K1/8/8/8/Q7/8 w - - 0 1","line":["a2a8"],"mate":true,"theme":"Queen finishes the job","level":"Beginner","hint":"Your king guards g7 and h7. Slide the queen all the way up.","pts":10},{"id":"p10","fen":"2q3k1/5ppp/8/3N4/8/8/5PPP/6K1 w - - 0 1","line":["d5e7"],"mate":false,"theme":"Knight fork","level":"Intermediate","hint":"Find a knight move that attacks the king and the queen together.","pts":15},{"id":"p11","fen":"q7/8/2k5/8/8/8/8/1B4K1 w - - 0 1","line":["b1e4"],"mate":false,"theme":"Skewer: check, then win the queen","level":"Intermediate","hint":"Give check on the same diagonal as the queen.","pts":15},{"id":"p12","fen":"r3k3/8/8/8/8/8/8/1Q2K3 w - - 0 1","line":["b1e4"],"mate":false,"theme":"Queen fork: check and win the rook","level":"Intermediate","hint":"Give a check that also attacks the rook in the corner.","pts":15},{"id":"p13","fen":"6rk/6pp/8/4N3/8/8/8/6K1 w - - 0 1","line":["e5f7"],"mate":true,"theme":"Smothered mate (king boxed in)","level":"Intermediate","hint":"Black's king has no room. Its own pieces block it in.","pts":15},{"id":"p14","fen":"7k/4N1p1/8/8/8/2R5/8/6K1 w - - 0 1","line":["c3h3"],"mate":true,"theme":"Rook and knight team-up","level":"Intermediate","hint":"Your knight guards g8, and the h-file is open for your rook.","pts":15},{"id":"p15","fen":"7k/1R6/5N2/8/8/8/8/6K1 w - - 0 1","line":["b7h7"],"mate":true,"theme":"Rook and knight corner mate","level":"Intermediate","hint":"Your knight guards g8 and can protect a rook on h7.","pts":15},{"id":"p16","fen":"5rk1/5p2/6P1/8/8/8/8/6KQ w - - 0 1","line":["h1h7"],"mate":true,"theme":"Queen guarded by a pawn","level":"Intermediate","hint":"Your pawn on g6 can protect your queen right next to the king.","pts":15},{"id":"p17","fen":"6k1/8/8/8/8/5b1q/7P/6K1 b - - 0 1","line":["h3g2"],"mate":true,"theme":"Queen and bishop team-up","level":"Intermediate","hint":"Your bishop on f3 can protect your queen right next to the king.","pts":15},{"id":"p18","fen":"3rkr2/8/8/8/8/1Q6/8/6K1 w - - 0 1","line":["b3e6"],"mate":true,"theme":"King blocked by its own rooks","level":"Intermediate","hint":"Black's rooks block their own king on both sides.","pts":15},{"id":"p19","fen":"r6k/6pp/7N/8/8/1Q6/6PP/6K1 w - - 0 1","line":["b3g8","a8g8","h6f7"],"mate":true,"theme":"Smothered mate in 2 (king boxed in)","level":"Advanced","hint":"Start with a check. Your queen moves first.","pts":25},{"id":"p20","fen":"1r4k1/q4ppp/8/8/8/8/1Q3PPP/1R4K1 w - - 0 1","line":["b2b8","a7b8","b1b8"],"mate":true,"theme":"Pull the defender away","level":"Advanced","hint":"Start with a check. Your queen moves first.","pts":25},{"id":"p21","fen":"rn1qkbnr/ppp2p1p/3p2p1/4N3/2B1P3/2N5/PPPP1PPP/R1BbK2R w KQkq - 0 6","line":["c4f7","e8e7","c3d5"],"mate":true,"theme":"Opening trap: punish a greedy move","level":"Advanced","hint":"Start with a check. Your bishop moves first.","pts":25},{"id":"p22","fen":"2k5/ppp2R2/3q2Q1/7R/8/8/PPP5/2K5 w - - 0 1","line":["g6d6","c8b8","f7f8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"The first move is not a check, but it sets up a checkmate. Your queen moves first.","pts":25},{"id":"p23","fen":"7k/6p1/1p5p/6Q1/8/2R5/6PP/7K w - - 0 1","line":["g5g6","h8g8","c3c8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"The first move is not a check, but it sets up a checkmate. Your queen moves first.","pts":25},{"id":"p24","fen":"7k/n5pp/8/8/2R5/RQ6/5PPP/6K1 w - - 0 1","line":["b3b8","a7c8","b8c8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your queen moves first.","pts":25},{"id":"p25","fen":"6k1/6pp/Q4p2/2r5/3B4/1N6/6PP/7K w - - 0 1","line":["a6e6","g8h8","e6e8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your queen moves first.","pts":25},{"id":"p26","fen":"6k1/6pp/R4p1p/8/1B4B1/8/PPP5/2K5 w - - 0 1","line":["g4e6","g8h8","a6a8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your bishop moves first.","pts":25},{"id":"p27","fen":"2k5/ppp3r1/3Q4/1Br1q3/8/8/6PP/7K w - - 0 1","line":["d6f8","e5e8","f8e8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your queen moves first.","pts":25},{"id":"p28","fen":"1k6/ppp5/3R4/7R/2b1N3/8/3r1PPP/6K1 w - - 0 1","line":["h5h8","c4g8","h8g8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your rook moves first.","pts":25},{"id":"p29","fen":"2k5/ppp5/4r3/8/R7/7B/3R2PP/7K w - - 0 1","line":["h3e6","c8b8","d2d8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your bishop moves first.","pts":25},{"id":"p30","fen":"6k1/3N1ppp/4r3/rQ6/8/8/5PPP/6K1 w - - 0 1","line":["b5b8","e6e8","b8e8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your queen moves first.","pts":25},{"id":"p31","fen":"2k5/ppp2B2/3R4/8/1p6/R7/6PP/7K w - - 0 1","line":["f7e6","c8b8","d6d8"],"mate":true,"theme":"Mate in 2","level":"Advanced","hint":"Start with a check. Your bishop moves first.","pts":25},{"id":"p32","fen":"6k1/5pp1/8/2Q1B3/3R4/1r6/6PP/7K w - - 0 1","line":["c5c8","g8h7","d4h4","h7g6","c8g4"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"Start with a check. Your queen moves first.","pts":40},{"id":"p33","fen":"6kn/5p1p/6p1/8/5Q1p/3R4/6PP/7K w - - 0 1","line":["f4f6","h7h6","d3d8","g8h7","d8h8"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"The first move is not a check, but it sets up a checkmate. Your queen moves first.","pts":40},{"id":"p34","fen":"7k/6pp/4N3/3B4/8/1p1R4/PPP5/2K5 w - - 0 1","line":["d5e4","h8g8","d3f3","g8h8","f3f8"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"The first move is not a check, but it sets up a checkmate. Your bishop moves first.","pts":40},{"id":"p35","fen":"2k5/ppp5/2r3R1/b7/8/8/PP5R/1K6 w - - 0 1","line":["h2h8","c8d7","h8h7","d7e8","g6g8"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"Start with a check. Your rook moves first.","pts":40},{"id":"p36","fen":"6k1/5pp1/8/8/p1Q1N3/8/PPP5/2K5 w - - 0 1","line":["e4g5","g7g6","c4f7","g8h8","f7f8"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"The first move is not a check, but it sets up a checkmate. Your knight moves first.","pts":40},{"id":"p37","fen":"2k5/ppp5/1Q6/4b3/1N6/1N6/6PP/7K w - - 0 1","line":["b6e6","c8d8","b3c5","e5h8","e6d7"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"Start with a check. Your queen moves first.","pts":40},{"id":"p38","fen":"6k1/rRr2ppp/8/8/8/1N6/3q2PP/7K w - - 0 1","line":["b7b8","c7c8","b8c8","d2d8","c8d8"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"Start with a check. Your rook moves first.","pts":40},{"id":"p39","fen":"7k/6pp/4r3/1R6/8/6r1/B1q3PP/7K w - - 0 1","line":["b5b8","c2c8","b8c8","e6e8","c8e8"],"mate":true,"theme":"Mate in 3","level":"Expert","hint":"Start with a check. Your rook moves first.","pts":40}]};
+const PUZZLES=DATA.puzzles;
 /* Test knowledge questions, 4 tiers (Beginner → Expert). Answer index a is for the order written here; options are shuffled per test. */
 const QBANK=[
  [
@@ -823,7 +830,6 @@ const QBANK=[
  {q:"In chess, a fortress is…",o:["A setup the stronger side can't break, so the game is a draw","Castling on both sides","A king left in the centre","Two rooks on one file"],a:0}
  ]];
 const TIERS=["Beginner","Intermediate","Advanced","Expert"];
-const ALL_LESSONS=COURSES.flatMap(c=>c.lessons.map(l=>({...l,course:c})));
 const LEVELS=["Beginner","Intermediate","Advanced","Expert"];
 const HAS_CHESS=typeof Chess==="function";
 
@@ -860,27 +866,6 @@ const SOLVED_DELAY=380; /* after the ~200ms knock has finished, so the two never
 function moveSound(m,g){if(!m)return;if(g&&g.in_checkmate())return sfx("mate");if(g&&g.in_check())return sfx("check");
   if(m.flags&&(m.flags.includes("k")||m.flags.includes("q")))return sfx("castle");sfx(m.captured?"capture":"move")}
 function sanSound(san){if(!san)return;if(san.includes("#"))sfx("mate");else if(san.includes("+"))sfx("check");else if(san.startsWith("O-O"))sfx("castle");else if(san.includes("x"))sfx("capture");else sfx("move")}
-
-/* ---------- Voiceover (browser speech) ---------- */
-const TTS="speechSynthesis" in window;
-let VOICE=null;
-// Fallback only: prefer the natural-sounding neural voices browsers ship, Indian English first.
-function pickVoice(){if(!TTS)return;const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));
-  const score=v=>(/natural|neural|online/i.test(v.name)?40:0)+(/google/i.test(v.name)?25:0)+(/en-IN/i.test(v.lang)?12:/en-GB/i.test(v.lang)?6:/en-US/i.test(v.lang)?4:0)-(v.localService&&!/google/i.test(v.name)?5:0);
-  VOICE=vs.sort((a,b)=>score(b)-score(a))[0]||null}
-if(TTS){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
-const PW={K:"King",Q:"Queen",R:"Rook",B:"Bishop",N:"Knight"};
-function sanWords(san){if(!san)return"";if(san.startsWith("O-O-O"))return"Castles long.";if(san.startsWith("O-O"))return"Castles short.";
-  let s=san.replace(/[+#]/g,""),out=[];const promo=s.match(/=([QRBN])/);s=s.replace(/=[QRBN]/,"");
-  if(PW[s[0]]){out.push(PW[s[0]]);s=s.slice(1)}else if(!s.includes("x"))out.push("Pawn");const sq=s.slice(-2);const pre=s.slice(0,-2);
-  if(pre.includes("x"))out.push(out.length?"takes":pre[0]+" takes");out.push(sq.split("").join(" "));
-  if(promo)out.push("promotes to "+PW[promo[1]].toLowerCase());if(san.includes("#"))out.push("checkmate");else if(san.includes("+"))out.push("check");
-  return out.join(" ")+"."}
-function speak(text,rate,onend){if(!TTS){onend&&onend(false);return}
-  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);if(VOICE)u.voice=VOICE;u.lang=VOICE?VOICE.lang:"en-IN";u.rate=Math.min(2,.95*rate);
-  let done=false;const fin=()=>{if(!done){done=true;onend&&onend(true)}};u.onend=fin;u.onerror=fin;speechSynthesis.speak(u);
-  setTimeout(fin,Math.max(6000,text.length*120/rate));}
-function hush(){if(TTS)speechSynthesis.cancel()}
 
 /* ---------- Board ---------- */
 const FILES="abcdefgh";
@@ -947,10 +932,8 @@ function celeNext(){const it=CELEQ.shift();if(!it){celeOn=false;return}celeOn=tr
   d.innerHTML=`<div class="cele-bits" aria-hidden="true">${bits}</div><div class="cele-card"><em class="cele-ic">${ico(icon)}</em><b>${esc(title)}</b>${sub?`<span>${esc(sub)}</span>`:""}</div>`;
   document.body.appendChild(d);setTimeout(()=>sfx("cheer"),SOLVED_DELAY+550);
   setTimeout(()=>d.classList.add("out"),2700);setTimeout(()=>{d.remove();celeNext()},3150)}
-const lessonsDone=()=>ALL_LESSONS.filter(l=>S.lessons[l.id]).length;
 const points=()=>PUZZLES.reduce((a,p)=>a+(S.puzzles[p.id]?p.pts:0),0);
 const bestTest=()=>S.tests.length?Math.max(...S.tests.map(t=>t.score)):null;
-const courseProgress=c=>c.lessons.filter(l=>S.lessons[l.id]).length;
 const movesLeft=p=>Math.ceil(p.line.length/2);
 const label=p=>p.line.length===1?(p.mate?"Checkmate in 1":"Win a piece"):`Checkmate in ${movesLeft(p)}`;
 const fmt=ms=>{const s=Math.round(ms/1000);return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`};
@@ -959,7 +942,7 @@ const fmt=ms=>{const s=Math.round(ms/1000);return `${Math.floor(s/60)}:${String(
 const RANKS=[{n:"Pawn",xp:0,g:"♟"},{n:"Knight",xp:150,g:"♞"},{n:"Bishop",xp:450,g:"♝"},{n:"Rook",xp:1000,g:"♜"},{n:"Queen",xp:2000,g:"♛"},{n:"King",xp:3500,g:"♚"}];
 const DAILY_GOAL=30;
 const dayKey=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-const totalXP=()=>lessonsDone()*20+points()+(bestTest()||0)*5+Object.keys(S.practice||{}).length*10+Object.values((S.lv||{}).done||{}).reduce((a,d)=>a+d.stars*10,0);
+const totalXP=()=>points()+(bestTest()||0)*5+Object.keys(S.practice||{}).length*10+Object.values((S.lv||{}).done||{}).reduce((a,d)=>a+d.stars*10,0);
 function rankOf(xp){let i=0;RANKS.forEach((r,j)=>{if(xp>=r.xp)i=j});const cur=RANKS[i],nxt=RANKS[i+1];return{cur,nxt,i,pct:nxt?Math.round((xp-cur.xp)/(nxt.xp-cur.xp)*100):100}}
 const todayXP=()=>(S.days&&S.days[dayKey()])||0;
 function streak(){const d=S.days||{};let n=0;const t=new Date();if(!d[dayKey(t)])t.setDate(t.getDate()-1);while(d[dayKey(t)]){n++;t.setDate(t.getDate()-1)}return n}
@@ -970,29 +953,25 @@ function award(x){if(!x)return;S.days=S.days||{};const k=dayKey(),before=S.days[
   if(before<DAILY_GOAL&&before+x>=DAILY_GOAL)setTimeout(()=>toast("Daily goal done! Streak: "+streak()+" day"+(streak()===1?"":"s")),900)}
 function week(){const out=[],t=new Date();t.setDate(t.getDate()-6);for(let i=0;i<7;i++){out.push({k:dayKey(t),d:t.toLocaleDateString([], {weekday:"narrow"}),xp:(S.days||{})[dayKey(t)]||0,today:i===6});t.setDate(t.getDate()+1)}return out}
 const ring=(pct,size=56,stroke=6)=>{const r=(size-stroke)/2,c=2*Math.PI*r;return `<svg class="ring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><circle cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${stroke}" class="ring-bg"/><circle cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${stroke}" class="ring-fg" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-Math.min(1,pct/100))}" transform="rotate(-90 ${size/2} ${size/2})"/></svg>`};
-const COURSE_ICON={"Beginner":"♙","Intermediate":"♘","Advanced":"♖","Expert":"♕"};
 
 /* ---------- Views ---------- */
 function vHome(){
-  const next=ALL_LESSONS.find(l=>!S.lessons[l.id]);
   const xp=totalXP(),rk=rankOf(xp),st=streak(),tx=todayXP(),wk=week(),maxw=Math.max(DAILY_GOAL,...wk.map(w=>w.xp));
   const daily=PUZZLES.filter(p=>p.level==="Advanced")[new Date().getDate()%13];
   const name=AUTH.user&&AUTH.user.role!=="teacher"?AUTH.user.name.split(" ")[0]:"";
   const hr=new Date().getHours(),greet=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening";
-  const nc=next&&next.course, ni=next?nc.lessons.findIndex(l=>l.id===next.id):0;
+  const lu=lvState().unlocked,lstage=(LV_STAGES.find(([,x,y])=>lu>=x&&lu<=y)||LV_STAGES[LV_STAGES.length-1])[0];
   return `<section class="hello view">
     <div><div class="eyebrow">${greet}${name?", "+esc(name):""}</div><h1>${st?`You're on a ${st}-day streak. Keep it going!`:"Let's learn one chess idea today."}</h1></div>
     <div class="hello-chips"><span class="hchip streak${tx>0?" lit":""}" title="Days in a row you practised">${ico("flame")}<b>${st}</b> day streak</span><span class="hchip xp" title="Total experience points">${ico("bolt")}<b>${xp}</b> XP</span><span class="hchip rank" title="Your rank"><b>${rk.cur.g}</b> ${rk.cur.n}</span></div>
   </section>
   <section class="bento view"><div class="b-col b-main">
     <article class="tile t-continue">
-      ${next?`<div class="tile-top"><span class="pill level">${nc.level}</span><span class="li-m">${esc(nc.title)} · lesson ${ni+1} of ${nc.lessons.length}</span></div>
-      <h2 class="tile-h">${lessonsDone()?"Continue":"Start"}: ${esc(next.title)}</h2>
-      <p class="li-m">${next.minutes} min · +20 XP</p>
-      <div class="row" style="margin-top:auto"><button class="btn big" data-open="${next.id}">▶ ${lessonsDone()?"Continue lesson":"Start learning"}</button>
-        <div class="minibar"><div class="bar"><i style="width:${courseProgress(nc)/nc.lessons.length*100}%"></i></div><span class="li-m mono">${courseProgress(nc)}/${nc.lessons.length}</span></div></div>`
-      :`<div class="tile-top"><span class="pill done">All lessons watched</span></div><h2 class="tile-h">Brilliant! Now test yourself.</h2><p class="li-m">A new test each time, matched to your puzzle level.</p><div class="row" style="margin-top:auto"><a class="btn big" href="#tests">Take the test</a></div>`}
-      <div class="tile-art" aria-hidden="true">${next?COURSE_ICON[nc.level]||"♞":"♛"}</div>
+      <div class="tile-top"><span class="pill level">${lstage}</span><span class="li-m">Puzzle map · level ${lu} of 115</span></div>
+      <h2 class="tile-h">${lvSolvedCount()?"Continue":"Start"}: Level ${lu}</h2>
+      <p class="li-m">10 puzzles · earn stars and XP</p>
+      <div class="row" style="margin-top:auto"><a class="btn big" href="#puzzles">▶ ${lvSolvedCount()?"Continue puzzles":"Start puzzles"}</a></div>
+      <div class="tile-art" aria-hidden="true">♞</div>
     </article>
     <div class="b-pair">
     <article class="tile t-goal">
@@ -1007,7 +986,7 @@ function vHome(){
     </article>
     </div>
     <article class="tile t-stats">
-      <div class="kpi"><b>${lessonsDone()}<small>/${ALL_LESSONS.length}</small></b><span>Lessons watched</span></div>
+      <div class="kpi"><b>${prAll()}</b><span>Practice positions</span></div>
       <div class="kpi"><b>${lvSolvedCount()}</b><span>Puzzles solved</span></div>
       <div class="kpi"><b>${prState().r}</b><span>Puzzle rating</span></div>
       <div class="kpi"><b>${bestTest()??"–"}${bestTest()!=null?`<small>/${TEST_N}</small>`:""}</b><span>Best test</span></div>
@@ -1027,13 +1006,6 @@ function vHome(){
       <button class="btn ghost" id="dailyGo">${S.puzzles[daily.id]?"Solved ✓ · Try more":"Solve it"}</button>
     </article>
   </div>
-  </section>
-  <section class="stack view">
-    <div class="row" style="justify-content:space-between"><h2>Your lessons</h2><a class="link" href="#courses">See all lessons →</a></div>
-    <div class="cards-x">${COURSES.map(c=>{const d=courseProgress(c),n=c.lessons.length;return `<button class="ccard" data-open="${(c.lessons.find(l=>!S.lessons[l.id])||c.lessons[0]).id}">
-      <span class="ccard-icon" aria-hidden="true">${COURSE_ICON[c.level]||"♞"}</span>
-      <span class="pill level">${c.level}</span><b>${esc(c.title)}</b><span class="li-m">${esc(c.blurb)}</span>
-      <span class="ccard-foot">${ring(d/n*100,30,4)}<span class="li-m mono">${d}/${n} lessons</span></span></button>`}).join("")}</div>
   </section>`;
 }
 function afterHome(){
@@ -1055,20 +1027,6 @@ function afterHome(){
   };
   try{const c=JSON.parse(localStorage.getItem(ck)||"null");if(c&&Date.now()-c.at<6*3600e3)drawLive(c.r)}catch(e){}
   liveApi("/classes").then(r=>{try{localStorage.setItem(ck,JSON.stringify({at:Date.now(),r}))}catch(e){}drawLive(r)}).catch(()=>{const b=$("#homeLive");if(b)b.innerHTML=`<span class="eyebrow">Live class</span><h3>Live classes</h3><p class="li-m">Couldn't check right now. Open the Live tab to see your classes.</p><a class="btn ghost" href="#live" style="margin-top:auto">Open Live</a>`});
-}
-
-function vCourses(){
-  const nextId=(ALL_LESSONS.find(l=>!S.lessons[l.id])||{}).id;
-  return `<section class="stack view"><div class="eyebrow">Lessons</div><h1>From first moves to checkmate</h1></section>
-  <section class="path view">${COURSES.map((c,ci)=>{const d=courseProgress(c),n=c.lessons.length;return `<div class="unit${d===n?" unit-done":""}">
-    <header class="unit-h"><span class="unit-icon" aria-hidden="true">${COURSE_ICON[c.level]||"♞"}</span><div class="stack" style="gap:2px;min-width:0"><span class="eyebrow">Unit ${ci+1} · ${c.level}</span><h2>${esc(c.title)}</h2><span class="li-m">${esc(c.blurb)}</span></div>
-      <div class="unit-prog">${ring(d/n*100,44,5)}<span class="mono">${d}/${n}</span></div></header>
-    <ol class="stops">${c.lessons.map((l,i)=>{const done=S.lessons[l.id],cur=l.id===nextId;return `<li class="stop${done?" done":""}${cur?" cur":""}" style="--x:${[0,1,0,-1][i%4]}">
-      <button data-open="${l.id}" aria-label="${esc(l.title)}${done?", watched":cur?", up next":""}"><span class="node" aria-hidden="true">${done?"✓":cur?"▶":i+1}</span>
-      <span class="stop-t"><b>${esc(l.title)}</b><span class="li-m mono">${l.minutes} min${done?" · watched":cur?" · up next":""}</span></span></button></li>`}).join("")}</ol>
-  </div>`}).join("")}
-  <div class="unit unit-end"><header class="unit-h"><span class="unit-icon" aria-hidden="true">${ico("trophy")}</span><div class="stack" style="gap:2px"><span class="eyebrow">Finish line</span><h2>Take the test</h2></div><a class="btn" href="#tests">Start test</a></header></div>
-  </section>`;
 }
 
 /* ---------- Practice (positions from Lichess practice, CC0 database; explanations are our own) ---------- */
@@ -1349,6 +1307,91 @@ function lvSolved(){const st=lvState();LVS.state="ok";if(LVS.res[LVS.k]==null)LV
     celebrate("trophy",`Level ${LVS.l} complete!`,"★".repeat(stars)+"☆".repeat(3-stars)+(stars===3?" Perfect!":" Well played!"))}
   if(LVS.mile)celebrate("trend",`Your rating hit ${LVS.mile}!`,"A new best. Your puzzle skills are growing.");
   render()}
+/* ---------- Sathi, the puzzle coach ----------
+   Stockfish (in this browser) checks every wrong move: what the opponent can answer and how much the move lost.
+   Those FACTS get a plain template message at once, and /api/coach (a free open model on Groq/Cerebras) turns them
+   into friendly English. The model never calculates and is never given the winning move before the student has seen it. */
+const PIECE_N={p:"pawn",n:"knight",b:"bishop",r:"rook",q:"queen",k:"king"};
+const THEME_SKIP=/^(short|long|veryLong|oneMove|middlegame|endgame|opening|advantage|crushing|equality|master|masterVsMaster|superGM|mate)$/;
+const themesOf=p=>(p&&p[4]||"").split(" ").filter(t=>t&&!THEME_SKIP.test(t));
+const HINT1={mateIn1:"There is a checkmate in one move. Which of your pieces can give check?",mateIn2:"You can force checkmate in two moves. Start by looking at every check you have.",mateIn3:"A forced checkmate is hiding here. Start with your checks, even the ones that look risky.",
+  fork:"One of your pieces can attack two enemy pieces at the same time. Can you find it?",pin:"An enemy piece is stuck in front of something more valuable. How can you use that?",skewer:"A strong enemy piece is lined up with a weaker one behind it. Attack along that line.",
+  discoveredAttack:"Moving one piece can open a line for another piece behind it. What is hiding there?",discoveredCheck:"Moving one piece can uncover a check from another piece. Look for it.",doubleCheck:"Is there one move that gives check with two pieces at once?",
+  backRankMate:"Their king is trapped behind its own pawns. Look at the back row.",hangingPiece:"One of their pieces is not protected. Which one?",trappedPiece:"One of their pieces has no safe square to go. Can you attack it?",
+  sacrifice:"Giving up a piece can win more later. Think about what the sacrifice opens up.",deflection:"One enemy piece is guarding something important. Can you force it to leave?",attraction:"Can you lure the enemy king or a piece onto a bad square?",
+  capturingDefender:"One defender holds their position together. What happens if you take it away?",promotion:"One of your pawns is close to becoming a queen. Can you help it get there?",
+  zugzwang:"Every move they make can make things worse. Can you wait with a useful move?",xRayAttack:"Look along the line, through the first piece. What is behind it?"};
+const HINT_GENERIC="Before you move, look at all checks, captures and threats, for you and for your opponent. What is your opponent trying to do?";
+let AI_OFF=false;
+const cs=()=>LVS.coach||(LVS.coach={msg:"",busy:false,log:[],seq:0,last:null});
+function coachHtml(){const c=cs(),def="Play your move. If you get stuck, press Hint or ask me a question.";
+  return `<div class="coach-h"><span class="eyebrow">Sathi, your coach</span></div>
+  <p class="coach-m" aria-live="polite">${esc(c.msg||def)}</p>${c.busy?`<span class="coach-b li-m"><span class="spin sm" aria-hidden="true"></span> Sathi is thinking…</span>`:""}
+  ${AI_OFF?"":`<form class="coach-f" id="lvAsk" autocomplete="off"><input id="lvQ" maxlength="160" placeholder="Ask Sathi a question" aria-label="Ask Sathi a question"><button class="btn ghost" type="submit"${c.busy?" disabled":""}>Ask</button></form>`}`}
+function coachPaint(){const el=$("#lvCoach");if(!el)return;el.innerHTML=coachHtml();coachBind()}
+function coachSay(msg,busy){const c=cs();c.msg=msg;c.busy=!!busy;coachPaint()}
+function coachBind(){const f=$("#lvAsk");if(f)f.onsubmit=e=>{e.preventDefault();const q=$("#lvQ").value;if(q.trim())coachAsk(q)}}
+async function coachCall(body){if(AI_OFF)return null;
+  try{return await liveApi("/coach",{method:"POST",body})}
+  catch(e){if(e&&(e.code==="setup"||e.code==="role"||e.status===404))AI_OFF=true;
+    if(e&&(e.code==="limit"||e.code==="busy"))return {error:e.message,limit:true};return null}}
+// Stockfish check of one move: { san, cpLoss, hangs, reply:{san,captures,check,mate}, pieceMoved, to }
+async function lvAnalyse(fenBefore,uci){
+  const g=new Chess(fenBefore),mover=g.turn(),mv=g.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||undefined});if(!mv)return null;
+  const fenAfter=g.fen(),sign=mover==="w"?1:-1,cp=x=>Math.max(-1500,Math.min(1500,x.white*sign));
+  const a=await sfAsk(fenBefore,{depth:12});
+  if(g.game_over())return {san:mv.san,cpLoss:0,hangs:false,reply:null,pieceMoved:PIECE_N[mv.piece],to:mv.to};
+  const b=await sfAsk(fenAfter,{depth:12});
+  let reply=null,hangs=false;
+  if(b.best&&b.best!=="(none)"){const rm=g.move({from:b.best.slice(0,2),to:b.best.slice(2,4),promotion:b.best[4]||undefined});
+    if(rm){reply={san:rm.san,captures:rm.captured?PIECE_N[rm.captured]:"",check:/\+/.test(rm.san),mate:/#/.test(rm.san)};hangs=!!rm.captured&&rm.to===mv.to}}
+  return {san:mv.san,cpLoss:Math.max(0,Math.min(1000,Math.round(cp(a)-cp(b)))),hangs,reply,pieceMoved:PIECE_N[mv.piece],to:mv.to}}
+function coachLocal(m,opp){const r=m.reply;
+  if(r&&r.mate)return `After ${m.san}, ${opp} can play ${r.san}. That is checkmate.`;
+  if(m.hangs&&r)return `Your ${m.pieceMoved} on ${m.to} can be captured by ${r.san}. Always check that the square you move to is safe.`;
+  if(r&&r.captures&&m.cpLoss>=150)return `That lets ${opp} play ${r.san} and take your ${r.captures}.`;
+  if(m.cpLoss>=300)return `That move gives ${opp} a big advantage. Check what ${opp} is threatening before you move.`;
+  if(m.cpLoss>=100)return `That helps ${opp}. There is a stronger move here.`;
+  return "That is not the move this puzzle wants, but it is not a blunder. Look for a more forcing move: a check, a capture or a threat."}
+async function coachMistake(fenBefore,uci,p){
+  const tok=LVS,c=cs(),my=++c.seq,opp=LVS.color==="w"?"Black":"White";
+  coachSay("Checking your move…",true);
+  let m=null;try{m=await lvAnalyse(fenBefore,uci)}catch(e){}
+  if(LVS!==tok||c.seq!==my)return;
+  if(!m){coachSay("Not quite. Try another move!");return}
+  c.last={fen:fenBefore,played:m};
+  coachSay(coachLocal(m,opp),!AI_OFF);
+  if(AI_OFF)return;
+  const r=await coachCall({kind:"mistake",fen:fenBefore,themes:themesOf(p).map(themeName),hintLevel:LVS.hl||0,played:m});
+  if(LVS!==tok||c.seq!==my)return;
+  coachSay(r&&r.text?r.text:c.msg,false)}
+function coachFindMove(q,fen){const toks=q.match(/\b(?:O-O-O|O-O|[KQRBNkqrbn]?[a-hA-H]?[1-8]?x?[a-hA-H][1-8](?:=[QRBNqrbn])?[+#]?)\b/g)||[];
+  for(let t of toks){const tries=[t,t[0]&&/[a-h]/.test(t[0])&&/[a-h]/.test(t[1]||"")?t:t[0].toUpperCase()+t.slice(1)];
+    for(const x of tries){const g=new Chess(fen),m=g.move(x,{sloppy:true});if(m)return m.from+m.to+(m.promotion||"")}}return null}
+async function coachAsk(q){
+  const tok=LVS,c=cs();q=q.trim().slice(0,160);if(!q||c.busy)return;
+  if(LVS.state==="think"){coachSay("Wait for your opponent's move, then ask me.");return}
+  const my=++c.seq,p=LVD[LVS.l-1][LVS.k],over=LVS.state==="ok"||LVS.shown;
+  coachSay("",true);
+  let fen=LVS.g.fen(),winning=[],asked=null;
+  if(over){const g=new Chess(p[1]),mv=p[2].split(" ");g.move({from:mv[0].slice(0,2),to:mv[0].slice(2,4),promotion:mv[0][4]});fen=g.fen();
+    for(const u of mv.slice(1)){const m=g.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});if(m)winning.push(m.san)}}
+  else{const u=coachFindMove(q,fen);if(u){try{asked=await lvAnalyse(fen,u)}catch(e){}}}
+  if(LVS!==tok||c.seq!==my)return;
+  const hist=c.log.filter(h=>h.a).slice(-3);
+  const r=await coachCall({kind:"chat",fen,themes:themesOf(p).map(themeName),hintLevel:LVS.hl||0,question:q,history:hist,winning,asked,
+    played:c.last&&c.last.fen===fen?c.last.played:null});
+  if(LVS!==tok||c.seq!==my)return;
+  if(r&&r.text){c.log.push({q,a:r.text});coachSay(r.text,false)}
+  else coachSay(r&&r.limit?r.error:"I could not answer that right now. Try the Hint button.",false)}
+function coachHint(p){const l=LVS.hl=Math.min(4,(LVS.hl||0)+1),mv=LVS.moves[LVS.ply],from=mv.slice(0,2),pc=LVS.g.get(from),th=themesOf(p),c=cs();c.seq++;
+  let msg;
+  if(l===1){msg=(th.map(t=>HINT1[t]).find(Boolean))||HINT_GENERIC}
+  else if(l===2){LVS.hint=from;msg="Look at the highlighted piece. It is the one that does the job."}
+  else if(l===3){LVS.hint=from;msg=`The highlighted ${pc?PIECE_N[pc.type]:"piece"} is the key.${th.length?` The idea is: ${themeName(th[0])}.`:""} Where should it go?`}
+  else{LVS.hl=4;LVS.hint=from;msg="No more hints. If you are really stuck, press Solution and I will show you why it works."}
+  c.msg=msg;c.busy=false;render()}
+
 function vPlevel(){
   if(!LVD)return skel("board");
   const st=lvState(),l=Math.max(1,Math.min(lvParam(),st.unlocked,LVD.length)),list=LVD[l-1];
@@ -1371,11 +1414,12 @@ function vPlevel(){
     <div class="lvdots" aria-label="Puzzles in this level">${list.map((_,i)=>`<span class="${LVS.res[i]||""}${i===LVS.k?" cur":""}" title="Puzzle ${i+1}">${LVS.res[i]==="ok"?"✓":LVS.res[i]==="retry"?"•":i+1}</span>`).join("")}</div>
     <div class="ds-status ${scls}" role="status">${stat}</div>
     <div class="ds-tools">
-      <button class="tbtn" id="lvHint" ${s==="idle"||s==="no"?"":"disabled"}><svg viewBox="0 0 24 24"><path d="M9 21h6M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5v1h6v-1c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg><span>Hint</span></button>
+      <button class="tbtn" id="lvHint" ${s==="idle"||s==="no"?"":"disabled"}><svg viewBox="0 0 24 24"><path d="M9 21h6M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5v1h6v-1c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg><span>Hint${LVS.hl?` ${Math.min(3,LVS.hl)}/3`:""}</span></button>
       <button class="tbtn" id="lvShow" ${s==="idle"||s==="no"?"":"disabled"}><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span>Solution</span></button>
       <button class="tbtn" id="lvRetry"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>Retry</span></button>
     </div>
     <button class="btn big ds-next${canNext?" pulse":""}" id="lvNext" ${canNext?"":"disabled"}>${nextBtn}</button>
+    <div class="coach" id="lvCoach">${coachHtml()}</div>
   </aside></section>`;
 }
 function afterPlevel(){
@@ -1389,151 +1433,21 @@ function afterPlevel(){
       if(!LVS.sel)return;ac();const cand=g.moves({square:LVS.sel,verbose:true}).filter(m=>m.to===sq);if(!cand.length){LVS.sel=null;return render()}
       if(cand.some(m=>m.promotion)){LVS.promo={from:LVS.sel,to:sq};LVS.sel=null;return render()}
       lvUser({from:LVS.sel,to:sq})}:null});
-  function lvUser(m){const mv=g.move(m);LVS.sel=null;LVS.hint=null;if(!mv)return render();
+  function lvUser(m){const fenBefore=g.fen(),mv=g.move(m);LVS.sel=null;LVS.hint=null;if(!mv)return render();
     const want=LVS.moves[LVS.ply],last=LVS.ply===LVS.moves.length-1;
     if(mv.from+mv.to+(mv.promotion&&want[4]?mv.promotion:"")===want||(mv.from+mv.to===want.slice(0,4)&&!want[4])||(last&&g.in_checkmate())){
       moveSound(mv,g);LVS.anim=[mv.from,mv.to];LVS.last=[mv.from,mv.to];LVS.bad=[];LVS.ply++;
       if(LVS.ply>=LVS.moves.length)return lvSolved();
       LVS.state="think";render();const tok=LVS;setTimeout(()=>{if(LVS!==tok)return;lvPlay(LVS.moves[LVS.ply]);LVS.ply++;LVS.state="idle";render()},500);return}
-    g.undo();LVS.miss=true;LVS.wrongs=(LVS.wrongs||0)+1;LVS.state="no";LVS.bad=[mv.from,mv.to];LVS.last=[];sfx("wrong");render()}
+    g.undo();LVS.miss=true;LVS.wrongs=(LVS.wrongs||0)+1;LVS.state="no";LVS.bad=[mv.from,mv.to];LVS.last=[];sfx("wrong");render();coachMistake(fenBefore,mv.from+mv.to+(mv.promotion||""),list[LVS.k])}
   document.querySelectorAll("[data-promo]").forEach(b=>b.onclick=()=>{const p=LVS.promo;LVS.promo=null;lvUser({...p,promotion:b.dataset.promo})});
-  $("#lvHint").onclick=()=>{LVS.miss=true;LVS.hinted=true;LVS.hint=LVS.moves[LVS.ply].slice(0,2);render()};
+  $("#lvHint").onclick=()=>{LVS.miss=true;LVS.hinted=true;coachHint(list[LVS.k])};
   $("#lvShow").onclick=()=>{LVS.miss=true;LVS.shown=true;LVS.state="think";render();const tok=LVS;
     const step=()=>{if(LVS!==tok)return;if(LVS.ply>=LVS.moves.length)return lvSolved();lvPlay(LVS.moves[LVS.ply]);LVS.ply++;render();setTimeout(step,700)};setTimeout(step,300)};
   $("#lvRetry").onclick=()=>{const k=LVS.k;LVS.complete=null;lvOpen(l,k);render()};
+  coachBind();
   $("#lvNext").onclick=()=>{if(LVS.complete){LVS=null;if(l<LVD.length)location.hash="plevel?l="+(l+1);else location.hash="puzzles";return}
     if(LVS.k<list.length-1){lvOpen(l,LVS.k+1);render()}else{const miss=LVS.res.findIndex(x=>!x);if(miss>=0){lvOpen(l,miss);render()}}};
-}
-
-/* ---------- Lesson video player ---------- */
-let curLesson=null, LP=null;
-function buildFrames(steps){
-  let g=new Chess(); const out=[];
-  for(const s of steps){let last=null;if(s.fen)g=new Chess(s.fen);if(s.move){const m=g.move(s.move);if(m)last=[m.from,m.to]}
-    out.push({fen:g.fen(),last,say:s.say,move:s.move,ms:s.ms||Math.max(3000,s.say.length*68+(s.move?900:0)+500)})}
-  return out;
-}
-function vLesson(){
-  const l=ALL_LESSONS.find(x=>x.id===curLesson)||ALL_LESSONS[0];
-  const idx=l.course.lessons.findIndex(x=>x.id===l.id), nxt=l.course.lessons[idx+1];
-  return `<section class="stack view"><button class="back" data-go="courses">← ${esc(l.course.title)}</button>
-    <div class="row"><span class="pill level">${l.course.level}</span><span class="pill mono">Lesson ${idx+1} of ${l.course.lessons.length}</span><span class="pill mono">${l.minutes} min</span>${S.lessons[l.id]?`<span class="pill done">Watched</span>`:""}</div>
-    <h1>${esc(l.title)}</h1></section>
-  <section class="lesson view">
-    <div class="player">
-      <div class="screen"><div class="board" id="lessonBoard"></div></div>
-      <div class="subtitle" id="lpSay" aria-live="polite"></div>
-      <div class="scrub" id="lpScrub"></div>
-      <div class="controls">
-        <span class="mono li-m" id="lpTime">0:00</span>
-        <div class="row" style="gap:8px">
-          <button class="ctl" id="lpRestart">${ico("restart")}<small>Restart</small></button>
-          <button class="ctl" id="lpPrev">${ico("prev")}<small>Back</small></button>
-          <button class="ctl big" id="lpPlay">${ico("play")}<small>Play</small></button>
-          <button class="ctl" id="lpNext">${ico("next")}<small>Next</small></button>
-        </div>
-        <button class="ctl txt" id="lpSpeed" aria-label="Playback speed">1×</button>
-      </div>
-      ${!VOICE_T[l.id]&&!TTS?`<p class="voice-note">No voice in this browser. Read the subtitles.</p>`:""}
-    </div>
-    <div class="stack">
-      <div class="keypoint"><div class="eyebrow">Remember this</div><p style="margin-top:4px">${esc(l.key)}</p></div>
-      <div class="eyebrow" style="margin-top:8px">Lesson steps · tap one to jump there</div>
-      <ol class="transcript" id="lpTx">${l.steps.map((s,i)=>`<li><button data-step="${i}">${s.move?`<b class="mono">${esc(s.move)}</b> `:""}${esc(s.say)}</button></li>`).join("")}</ol>
-      <div class="row">
-        <button class="btn ${S.lessons[l.id]?"ghost":""}" id="doneBtn">${S.lessons[l.id]?"Watched ✓":"Mark as watched"}</button>
-        ${nxt?`<button class="btn ghost" data-open="${nxt.id}">Next: ${esc(nxt.title)}</button>`:`<a class="btn ghost" href="#puzzles" style="text-decoration:none">Practise with puzzles</a>`}
-      </div>
-    </div>
-  </section>`;
-}
-/* Recorded ElevenLabs voiceover (voice: Tripti). starts = second each step begins in the clip. */
-const VOICE_T={"f1": {"dur": 70.35, "starts": [0.0, 8.11, 18.39, 26.49, 33.86, 41.62, 47.97, 54.87, 61.69]}, "f2": {"dur": 59.17, "starts": [0.0, 7.68, 14.94, 19.81, 27.61, 37.85, 43.81, 51.43]}, "f3": {"dur": 77.09, "starts": [0.0, 6.45, 14.68, 22.72, 29.82, 34.88, 39.03, 42.71, 47.49, 54.12, 63.92, 70.05]}, "t1": {"dur": 24.76, "starts": [0.0, 6.16, 12.9, 17.89]}, "t2": {"dur": 38.35, "starts": [0.0, 7.31, 13.96, 19.7, 24.24, 30.03, 33.96]}, "t3": {"dur": 29.31, "starts": [0.0, 5.58, 13.15, 20.21, 24.86]}, "o1": {"dur": 72.91, "starts": [0.0, 6.25, 13.18, 18.24, 25.08, 30.25, 36.84, 41.04, 47.11, 52.69, 57.15, 61.02, 66.78]}, "o2": {"dur": 45.79, "starts": [0.0, 4.76, 10.64, 15.48, 21.65, 27.1, 31.41, 36.03, 40.93]}, "o3": {"dur": 52.11, "starts": [0.0, 3.47, 7.47, 11.35, 18.9, 24.39, 30.84, 36.99, 43.01]}, "e1": {"dur": 26.67, "starts": [0.0, 4.74, 13.85, 17.6]}, "e2": {"dur": 36.68, "starts": [0.0, 7.33, 11.7, 16.57, 21.47, 26.07, 30.62]}, "e3": {"dur": 48.77, "starts": [0.0, 5.16, 13.21, 18.28, 24.53, 29.88, 35.04, 41.21]}};
-function afterLesson(){
-  const l=ALL_LESSONS.find(x=>x.id===curLesson)||ALL_LESSONS[0];
-  stopLesson();
-  const T=VOICE_T[l.id];
-  if(!T)return afterLessonTTS();
-  const frames=buildFrames(l.steps), starts=T.starts, n=frames.length;
-  const audio=new Audio(`voice/${l.id}.mp3`);audio.preload="auto";
-  LP={i:0,playing:false,speed:1,frames,audio,timer:null,clockTimer:null,token:0,dur:T.dur,failed:false};
-  $("#lpScrub").innerHTML=frames.map((_,k)=>`<button data-seg="${k}" aria-label="Jump to step ${k+1}"><i></i></button>`).join("");
-  const stepAt=t=>{let k=0;for(let x=0;x<n;x++)if(starts[x]<=t+0.05)k=x;return k};
-  const endOf=k=>k+1<n?starts[k+1]:LP.dur;
-  const drawClock=()=>{const el=$("#lpTime");if(!el)return;const t=audio.currentTime||0;
-    el.textContent=`${fmt(t*1000)} / ${fmt(LP.dur*1000)}`;
-    const seg=document.querySelectorAll("#lpScrub button")[LP.i];
-    if(seg)seg.querySelector("i").style.setProperty("--p",Math.max(0,Math.min(1,(t-starts[LP.i])/(endOf(LP.i)-starts[LP.i]))));};
-  const paint=(animate)=>{const f=frames[LP.i];
-    drawBoard($("#lessonBoard"),f.fen,{hi:f.last||[],anim:animate&&f.last?f.last:null});
-    if(animate&&f.move)sanSound(f.move);
-    $("#lpSay").innerHTML=(f.move?`<b class="mono">${esc(f.move)}</b>`:"")+`<span>${esc(f.say)}</span>`;
-    document.querySelectorAll("#lpScrub button").forEach((b,k)=>b.classList.toggle("on",k<LP.i));
-    document.querySelectorAll("#lpTx button").forEach((b,k)=>b.classList.toggle("cur",k===LP.i));
-    const cur=document.querySelector("#lpTx button.cur");if(cur&&LP.playing)cur.scrollIntoView({block:"nearest"});
-    $("#lpPlay").innerHTML=ico(LP.playing?"pause":"play")+`<small>${LP.playing?"Pause":"Play"}</small>`;drawClock();};
-  // The audio is the clock: every 100ms read its position and move the board to the matching step.
-  LP.clockTimer=setInterval(()=>{if(!$("#lpTime"))return stopLesson();
-    const k=stepAt(audio.currentTime);if(k!==LP.i){const fwd=k===LP.i+1;LP.i=k;paint(fwd)}else drawClock()},100);
-  const finish=()=>{LP.playing=false;LP.i=n-1;paint(false);document.querySelectorAll("#lpScrub button").forEach(b=>b.classList.add("on"));
-    if(!S.lessons[l.id]){S.lessons[l.id]=true;save();award(20);toast("Lesson watched");const b=$("#doneBtn");b.textContent="Watched ✓";b.classList.add("ghost")}};
-  audio.addEventListener("ended",finish);
-  audio.addEventListener("error",()=>{if(LP.audio!==audio||LP.failed)return;LP.failed=true;if(!$("#lpTime")){stopLesson();return}toast("Couldn't load the recorded voice. Using the browser voice instead.");stopLesson();afterLessonTTS()});
-  const play=()=>{ac();audio.playbackRate=LP.speed;const p=audio.play();LP.playing=true;paint(false);
-    if(p&&p.catch)p.catch(()=>{LP.playing=false;paint(false)})};
-  const pause=()=>{audio.pause();LP.playing=false;paint(false)};
-  const go=k=>{k=Math.max(0,Math.min(n-1,k));const fwd=k===LP.i+1;LP.i=k;try{audio.currentTime=starts[k]+0.01}catch(e){}paint(fwd)};
-  $("#lpPlay").onclick=()=>{if(LP.playing)return pause();if(audio.ended||audio.currentTime>=LP.dur-0.1){go(0)}play()};
-  $("#lpPrev").onclick=()=>go(LP.i-1); $("#lpNext").onclick=()=>go(LP.i+1);
-  $("#lpRestart").onclick=()=>{pause();go(0)};
-  $("#lpSpeed").onclick=e=>{LP.speed=LP.speed===1?1.5:LP.speed===1.5?2:1;e.target.textContent=LP.speed+"×";audio.playbackRate=LP.speed};
-  document.querySelectorAll("[data-seg]").forEach(b=>b.onclick=()=>go(+b.dataset.seg));
-  document.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>go(+b.dataset.step));
-  $("#doneBtn").onclick=()=>{S.lessons[l.id]=!S.lessons[l.id];save();if(S.lessons[l.id])award(20);toast(S.lessons[l.id]?"Marked as watched":"Marked as not watched");render()};
-  paint(false);
-}
-function stopLesson(){if(!LP)return;clearTimeout(LP.timer);clearInterval(LP.clockTimer);LP.token++;LP.playing=false;if(LP.audio){LP.audio.pause();LP.audio.src=""}hush()}
-
-function afterLessonTTS(){
-  const l=ALL_LESSONS.find(x=>x.id===curLesson)||ALL_LESSONS[0];
-  stopLesson();
-  const frames=buildFrames(l.steps);
-  if(LP&&LP.clockTimer)clearInterval(LP.clockTimer);
-  LP={i:0,playing:false,speed:1,timer:null,frames,token:0,clock:0,lastT:0};
-  const total=frames.reduce((a,x)=>a+x.ms,0);
-  const starts=frames.map((_,k)=>frames.slice(0,k).reduce((a,x)=>a+x.ms,0));
-  // Real playback clock: ticks while playing, snaps to each step's start when the step changes.
-  const drawClock=()=>{const st=starts[LP.i],end=st+frames[LP.i].ms;const c=Math.min(LP.clock,end-1);
-    const el=$("#lpTime");if(!el){clearInterval(LP.clockTimer);return}
-    el.textContent=`${fmt(c)} / ${fmt(total)}`;
-    const seg=document.querySelectorAll("#lpScrub button")[LP.i];if(seg)seg.querySelector("i").style.setProperty("--p",Math.max(0,Math.min(1,(c-st)/frames[LP.i].ms)));};
-  LP.clockTimer=setInterval(()=>{const now=performance.now();if(LP.playing)LP.clock+=(now-LP.lastT)*LP.speed;LP.lastT=now;drawClock()},200);
-  $("#lpScrub").innerHTML=frames.map((_,k)=>`<button data-seg="${k}" aria-label="Jump to step ${k+1}"><i></i></button>`).join("");
-  const paint=(animate)=>{const f=frames[LP.i];
-    drawBoard($("#lessonBoard"),f.fen,{hi:f.last||[],anim:animate&&f.last?f.last:null});
-    if(animate&&f.move)sanSound(f.move);
-    $("#lpSay").innerHTML=(f.move?`<b class="mono">${esc(f.move)}</b>`:"")+`<span>${esc(f.say)}</span>`;
-    document.querySelectorAll("#lpScrub button").forEach((b,k)=>b.classList.toggle("on",k<=LP.i));
-    document.querySelectorAll("#lpTx button").forEach((b,k)=>b.classList.toggle("cur",k===LP.i));
-    const cur=document.querySelector("#lpTx button.cur");if(cur&&LP.playing)cur.scrollIntoView({block:"nearest"});
-    LP.clock=Math.max(starts[LP.i],Math.min(LP.clock,starts[LP.i]+frames[LP.i].ms-1));if(LP.clock<starts[LP.i]||LP.clock>=starts[LP.i]+frames[LP.i].ms)LP.clock=starts[LP.i];LP.lastT=performance.now();drawClock();
-    $("#lpPlay").innerHTML=ico(LP.playing?"pause":"play")+`<small>${LP.playing?"Pause":"Play"}</small>`;};
-  const finish=()=>{LP.playing=false;LP.clock=total;paint(false);$("#lpTime").textContent=`${fmt(total)} / ${fmt(total)}`;if(!S.lessons[l.id]){S.lessons[l.id]=true;save();award(20);toast("Lesson watched");const b=$("#doneBtn");b.textContent="Watched ✓";b.classList.add("ghost")}};
-  // Narrate the current step, then advance when the voice finishes (or after a timer when voice is off).
-  const run=()=>{clearTimeout(LP.timer);const tok=++LP.token;if(!LP.playing){hush();return}
-    const f=frames[LP.i];
-    const advance=()=>{if(tok!==LP.token||!LP.playing)return;if(LP.i>=frames.length-1)return finish();LP.i++;LP.clock=starts[LP.i];paint(true);LP.timer=setTimeout(run,450/LP.speed)};
-    if(TTS){speak((f.move?sanWords(f.move)+" ":"")+f.say,LP.speed,()=>{if(tok===LP.token)LP.timer=setTimeout(advance,500/LP.speed)})}
-    else LP.timer=setTimeout(advance,f.ms/LP.speed)};
-  const go=k=>{const fwd=k===LP.i+1;LP.i=Math.max(0,Math.min(frames.length-1,k));LP.clock=starts[LP.i];paint(fwd);run()};
-  $("#lpPlay").onclick=()=>{ac();if(!LP.playing&&LP.i>=frames.length-1){LP.i=0;LP.clock=0}LP.lastT=performance.now();LP.playing=!LP.playing;paint(false);run()};
-  $("#lpPrev").onclick=()=>go(LP.i-1); $("#lpNext").onclick=()=>go(LP.i+1);
-  $("#lpRestart").onclick=()=>{LP.playing=false;go(0)};
-  $("#lpSpeed").onclick=e=>{LP.speed=LP.speed===1?1.5:LP.speed===1.5?2:1;e.target.textContent=LP.speed+"×";run()};
-  document.querySelectorAll("[data-seg]").forEach(b=>b.onclick=()=>go(+b.dataset.seg));
-  document.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>go(+b.dataset.step));
-  $("#doneBtn").onclick=()=>{S.lessons[l.id]=!S.lessons[l.id];save();if(S.lessons[l.id])award(20);toast(S.lessons[l.id]?"Marked as watched":"Marked as not watched");render()};
-  paint(false);
 }
 
 /* ---------- Puzzles ---------- */
@@ -1663,7 +1577,7 @@ function afterTests(){
 /* ---------- Progress ---------- */
 function vLocked(){return `<section class="card stack view lockcard" style="max-width:560px;margin:40px auto;text-align:center;align-items:center">
   <div class="lock-i" aria-hidden="true">♞</div><h1>More fun is waiting for you!</h1>
-  <p class="li-m">You're on a free demo, so you can join our live classes right now. When you become a Chess Sathi student, you'll also get video lessons, over 1,000 puzzles, practice games and your own progress report.</p>
+  <p class="li-m">You're on a free demo, so you can join our live classes right now. When you become a Chess Sathi student, you'll also get over 1,000 puzzles, practice games and your own progress report.</p>
   <button class="btn" id="lkGo">Join a live class</button>
   <p class="li-m" style="font-size:.85rem">Want to join? Just ask your coach after class.</p></section>`}
 function vProgressTeacher(){
@@ -1677,17 +1591,16 @@ function vProgressTeacher(){
   const ago=d=>{if(!d)return "–";const t=dayKey(),y=new Date();y.setDate(y.getDate()-1);if(d===t)return "Today";if(d===dayKey(y))return "Yesterday";
     const n=Math.round((new Date(t)-new Date(d))/864e5);return n<30?n+" days ago":new Date(d).toLocaleDateString([], {day:"numeric",month:"short"})};
   const row=u=>{const m=u.summary,open=TPROG.open===u.username;
-    if(!m)return `<tr><td><b>${esc(u.name)}</b><br><span class="li-m">${esc(u.batchName||"")}</span></td><td colspan="6" class="li-m">${u.seen?"Signed in, but no lessons or puzzles done yet":"Has not signed in yet"}</td><td>${u.seen?esc(seenText(u.seen)):"Never"}</td></tr>`;
+    if(!m)return `<tr><td><b>${esc(u.name)}</b><br><span class="li-m">${esc(u.batchName||"")}</span></td><td colspan="5" class="li-m">${u.seen?"Signed in, but no puzzles done yet":"Has not signed in yet"}</td><td>${u.seen?esc(seenText(u.seen)):"Never"}</td></tr>`;
     return `<tr class="tp-row${open?" open":""}" data-tp="${esc(u.username)}" tabindex="0" aria-expanded="${open}">
       <td><b>${esc(u.name)}</b><br><span class="li-m">${esc(u.batchName||"")}</span></td>
       <td class="num"><b>${m.puzzlesSolved}</b><br><span class="li-m">Level ${m.puzzleLevel}</span></td>
       <td class="num"><b>${m.puzzleRating||"–"}</b>${m.ratedPuzzles?`<br><span class="li-m">${m.ratedPuzzles} rated</span>`:""}</td>
       <td class="num">${m.practiceSolved}<span class="li-m">/${m.practiceTotal}</span></td>
-      <td class="num">${m.lessonsDone}<span class="li-m">/${m.lessonsTotal}</span></td>
       <td class="num">${m.bestTest!=null?`${m.bestTest}<span class="li-m">/10</span>`:"–"}${m.lastTest&&m.lastTest.tier?`<br><span class="li-m">${esc(m.lastTest.tier)}</span>`:""}</td>
       <td class="num">${m.xp}<br><span class="li-m">${esc(m.rank)}</span></td>
       <td>${u.seen?esc(seenText(u.seen)):ago(m.lastActive)}${m.streak?`<br><span class="li-m streak-s">${ico("flame")} ${m.streak} day${m.streak===1?"":"s"}</span>`:""}</td></tr>
-      ${open?`<tr class="tp-more"><td colspan="8"><div class="tp-wrap"><div class="tp-grid">
+      ${open?`<tr class="tp-more"><td colspan="7"><div class="tp-wrap"><div class="tp-grid">
         <div><span class="li-m">Puzzle levels finished</span><b>${m.levelsDone} of ${m.levelsTotal}</b></div>
         <div><span class="li-m">Stars</span><b>${m.stars} ★</b></div>
         <div><span class="li-m">Classic puzzles</span><b>${m.classicSolved}</b></div>
@@ -1697,7 +1610,7 @@ function vProgressTeacher(){
         <div class="tp-week"><span class="li-m">Activity, last 7 days</span><div>${(m.week||[]).map(x=>`<i title="${x} XP" style="height:${Math.max(3,Math.min(100,x/Math.max(30,...m.week)*100))}%"></i>`).join("")}</div></div>
       </div>${tpInsight(u)}</div></td></tr>`:""}`};
   return head+`<section class="view"><div class="chips tp-chips">${[["all","All batches"],...batches].map(([k,n])=>`<button class="chip${TPROG.batch===k?" on":""}" data-tpb="${esc(k)}">${esc(n)}</button>`).join("")}</div></section>
-  <section class="card view" style="overflow-x:auto;padding:0"><table class="tp-table"><thead><tr><th>Student</th><th style="text-align:right">Puzzles</th><th style="text-align:right">Rating</th><th style="text-align:right">Practice</th><th style="text-align:right">Lessons</th><th style="text-align:right">Best test</th><th style="text-align:right">XP</th><th>Last opened</th></tr></thead>
+  <section class="card view" style="overflow-x:auto;padding:0"><table class="tp-table"><thead><tr><th>Student</th><th style="text-align:right">Puzzles</th><th style="text-align:right">Rating</th><th style="text-align:right">Practice</th><th style="text-align:right">Best test</th><th style="text-align:right">XP</th><th>Last opened</th></tr></thead>
   <tbody>${list.map(row).join("")}</tbody></table></section>
   <p class="li-m view" style="font-size:.85rem">Tap a student for more. Progress updates a few seconds after a student does something.</p>`;
 }
@@ -1743,18 +1656,13 @@ function vProgress(){
       <div class="week big">${wk.map(w=>`<div class="wd${w.today?" today":""}${w.xp?" on":""}" title="${w.k}: ${w.xp} XP"><em class="mono">${w.xp||""}</em><i style="height:${Math.max(4,w.xp/maxw*100)}%"></i><span>${w.d}</span></div>`).join("")}</div>
     </article>
     <article class="tile t-stats">
-      <div class="kpi"><b class="mono">${lessonsDone()}<small>/${ALL_LESSONS.length}</small></b><span>Lessons</span></div>
-      <div class="kpi"><b class="mono">${lvSolvedCount()}</b><span>Puzzles solved</span></div>
+            <div class="kpi"><b class="mono">${lvSolvedCount()}</b><span>Puzzles solved</span></div>
       <div class="kpi"><b class="mono">${prState().r}</b><span>Puzzle rating</span></div>
       <div class="kpi"><b class="mono">${prAll()}</b><span>Practice positions</span></div>
       <div class="kpi"><b class="mono">${bestTest()??"–"}${bestTest()!=null?`<small>/${TEST_N}</small>`:""}</b><span>Best test · ${S.tests.length} tr${S.tests.length===1?"y":"ies"}</span></div>
     </article>
   </section>
   <section class="grid g2 view">
-    <div class="card" style="overflow-x:auto"><h2 style="margin-bottom:8px">Lessons</h2>
-      <table><thead><tr><th>Course</th><th>Level</th><th style="text-align:right">Watched</th></tr></thead><tbody>
-      ${COURSES.map(c=>`<tr><td>${esc(c.title)}</td><td>${c.level}</td><td class="num">${courseProgress(c)}/${c.lessons.length}</td></tr>`).join("")}
-      </tbody></table></div>
     <div class="card" style="overflow-x:auto"><h2 style="margin-bottom:8px">Puzzle levels</h2>
       <table><thead><tr><th>Stage</th><th>Levels</th><th style="text-align:right">Finished</th></tr></thead><tbody>
       ${LV_STAGES.map(([n,a,b])=>{const d=Object.keys(lvState().done).filter(k=>+k>=a&&+k<=b).length;return `<tr><td>${n}</td><td class="li-m">${a}–${b}</td><td class="num">${d}/${b-a+1}</td></tr>`}).join("")}
@@ -1769,7 +1677,7 @@ function vProgress(){
   <section class="row view" style="justify-content:flex-end"><button class="btn ghost sm" id="resetAll">Reset all progress</button></section>`;
 }
 function afterProgress(){if(AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="teacher")return afterProgressTeacher();if(!PR)prLoad().then(()=>{if(route()==="progress")render()}).catch(()=>{});let armed=false;$("#resetAll").onclick=e=>{if(!armed){armed=true;e.target.textContent="Tap again to erase everything";return}
-  S={lessons:{},puzzles:{},tests:[],days:{},practice:{},liveToken:S.liveToken,liveUser:S.liveUser,owner:S.owner};save();PZ=null;toast("Progress reset");render()}}
+  S={puzzles:{},tests:[],days:{},practice:{},liveToken:S.liveToken,liveUser:S.liveUser,owner:S.owner};save();PZ=null;toast("Progress reset");render()}}
 
 /* ---------- Sign-in and live classes (talk to the site's /api) ---------- */
 let AUTH={state:S.liveToken?"check":"out",user:null,msg:""};
@@ -1820,7 +1728,7 @@ async function authCheck(){
 /* ---------- Progress sync (students) ----------
    Progress lives in this browser (S) and is copied to the server a few seconds after any change,
    so the teacher can see it and it follows the student to another phone or computer. */
-const PROG_KEYS=["lessons","puzzles","tests","practice","days","lv","pr","pm"];
+const PROG_KEYS=["puzzles","tests","practice","days","lv","pr","pm"];
 let progT=null,progBusy=false;
 const isStudent=()=>AUTH&&AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="student";
 function progQueue(){if(!isStudent()||S.owner!==AUTH.user.username)return;clearTimeout(progT);progT=setTimeout(progPush,3000)}
@@ -1828,7 +1736,6 @@ function progState(){const o={};PROG_KEYS.forEach(k=>{if(S[k]!==undefined)o[k]=S
 function progSummary(){const xp=totalXP(),st=lvState(),done=Object.values(st.done||{}),last=S.tests[S.tests.length-1];
   const days=Object.keys(S.days||{}).filter(k=>S.days[k]>0).sort();
   return {xp,rank:rankOf(xp).cur.n,streak:streak(),todayXP:todayXP(),week:week().map(w=>w.xp),
-    lessonsDone:lessonsDone(),lessonsTotal:ALL_LESSONS.length,
     puzzlesSolved:lvSolvedCount(),puzzleLevel:st.unlocked,levelsDone:done.length,levelsTotal:LVD?LVD.length:115,stars:done.reduce((a,d)=>a+(d.stars||0),0),
     classicSolved:Object.values(S.puzzles||{}).filter(Boolean).length,insight:pmSummary(),
     practiceSolved:Object.keys(S.practice||{}).length,practiceTotal:PR?PR.topics.reduce((a,t)=>a+t.chapters.length,0):316,
@@ -1838,7 +1745,7 @@ async function progPush(){clearTimeout(progT);progT=null;if(!isStudent()||progBu
   try{await liveApi("/progress",{method:"POST",body:{state:progState(),summary:progSummary()}})}catch(e){}finally{progBusy=false}}
 // Combine two copies of progress without losing anything either has.
 function progMerge(a,b){a=a||{};b=b||{};const o={};
-  ["lessons","puzzles","practice"].forEach(k=>{o[k]=Object.assign({},a[k]||{},b[k]||{})});
+  ["puzzles","practice"].forEach(k=>{o[k]=Object.assign({},a[k]||{},b[k]||{})});
   const seen=new Set();o.tests=[...(a.tests||[]),...(b.tests||[])].filter(t=>{const id=(t.at||"")+"|"+t.score;if(seen.has(id))return false;seen.add(id);return true}).sort((x,y)=>String(x.at).localeCompare(String(y.at)));
   o.days={};[a.days||{},b.days||{}].forEach(d=>Object.entries(d).forEach(([k,v])=>{o.days[k]=Math.max(o.days[k]||0,v||0)}));
   const la=a.lv||{},lb=b.lv||{};o.lv={unlocked:Math.max(la.unlocked||1,lb.unlocked||1),done:{},part:{}};
@@ -1849,7 +1756,7 @@ function progMerge(a,b){a=a||{};b=b||{};const o={};
   return o}
 // After a student signs in: bring in their saved progress. A different student's leftovers on this device are cleared first.
 async function progPull(){if(!isStudent())return;const me=AUTH.user.username;
-  if(S.owner&&S.owner!==me){PROG_KEYS.forEach(k=>delete S[k]);S.lessons={};S.puzzles={};S.tests=[];S.practice={}}
+  if(S.owner&&S.owner!==me){PROG_KEYS.forEach(k=>delete S[k]);S.puzzles={};S.tests=[];S.practice={}}
   let server=null;try{server=(await liveApi("/progress")).progress}catch(e){}
   const local=S.owner===me||!S.owner?progState():{};
   Object.assign(S,progMerge(local,server&&server.state));S.owner=me;save();progPush();render()}
@@ -1857,7 +1764,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 // Teacher: everyone's progress for the Progress tab.
 let TPROG={state:"idle",list:[],batch:"all",open:null};
 async function loadTeacherProgress(){TPROG.state="loading";try{TPROG.list=(await liveApi("/progress")).students||[];TPROG.state="ok"}catch(e){TPROG.state="err";TPROG.msg=e.message}if(route()==="progress")render()}
-function signOut(){if(progT)progPush();TPROG={state:"idle",list:[],batch:"all",open:null};S.liveToken="";S.liveUser=null;save();AUTH={state:"out",user:null,msg:""};resetLive();stopLesson();location.hash="#home";render()}
+function signOut(){if(progT)progPush();TPROG={state:"idle",list:[],batch:"all",open:null};S.liveToken="";S.liveUser=null;save();AUTH={state:"out",user:null,msg:""};resetLive();location.hash="#home";render()}
 
 function authView(){
   if(AUTH.state==="check")return `<section class="login"><div class="card login-card stack" style="text-align:center"><div class="spin" aria-hidden="true"></div><p class="li-m" role="status">Opening Chess Sathi…</p></div></section>`;
@@ -1866,7 +1773,7 @@ function authView(){
     <div class="login-art" aria-hidden="true">
       <div class="login-glyph">♞</div>
       <h1>Learn chess the easy way.</h1>
-      <ul><li>Short video lessons on the board</li><li>Puzzles from easy to hard</li><li>Live classes with your teacher</li></ul>
+      <ul><li>Puzzles from easy to hard</li><li>Openings explained move by move</li><li>Live classes with your teacher</li></ul>
     </div>
     <form class="card login-card stack" id="loginForm" novalidate>
       <svg width="40" height="40" viewBox="0 0 28 28" aria-hidden="true"><defs><linearGradient id="cs-g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E5525B"/><stop offset="1" stop-color="#B3202B"/></linearGradient></defs><rect width="28" height="28" rx="7" fill="url(#cs-g2)"/><g fill="#fff"><circle cx="14" cy="8.5" r="3.7"/><rect x="9.7" y="11.9" width="8.6" height="2.2" rx="1.1"/><path d="M11.4 13h5.2c.2 3.6 1.2 5.9 2.9 7.9h-11c1.7-2 2.7-4.3 2.9-7.9z"/><rect x="7" y="20.2" width="14" height="3" rx="1.5"/></g></svg>
@@ -1921,7 +1828,7 @@ function openPwDialog(){
 }
 
 /* ----- Live page ----- */
-function vLive(){const u=AUTH.user;if(!u)return `<section class="stack view"><div class="eyebrow">Live classes</div><h1>Coming soon</h1><p class="li-m">Live classes and sign-in are not switched on yet. Lessons, puzzles and the test all work.</p></section><div id="liveRoot"></div>`;return `<section class="stack view"><div class="eyebrow">Live classes</div><h1>${u.role==="teacher"?"Your classroom":u.role==="parent"?`${esc(u.name)}'s classes`:`Hi ${esc(u.name.split(" ")[0])}!`}</h1></section><div id="liveRoot" class="stack"><p class="li-m">Loading…</p></div>`}
+function vLive(){const u=AUTH.user;if(!u)return `<section class="stack view"><div class="eyebrow">Live classes</div><h1>Coming soon</h1><p class="li-m">Live classes and sign-in are not switched on yet. Puzzles, practice and the test all work.</p></section><div id="liveRoot"></div>`;return `<section class="stack view"><div class="eyebrow">Live classes</div><h1>${u.role==="teacher"?"Your classroom":u.role==="parent"?`${esc(u.name)}'s classes`:`Hi ${esc(u.name.split(" ")[0])}!`}</h1></section><div id="liveRoot" class="stack"><p class="li-m">Loading…</p></div>`}
 /* When a Join button is on screen, fetch the classroom's code in the background so the class opens fast. */
 function prefetchClass(){
   if(prefetchClass.done)return;prefetchClass.done=1;
@@ -2013,7 +1920,7 @@ function liveHome(root){
     <p class="li-m">To see how each student is doing, open the <a class="link" href="#progress">Progress</a> tab.</p></section>`
   :`
   ${LV.demo?`<section class="card stack demo-card"><div class="row" style="justify-content:space-between;align-items:center"><h2>Demo login for trial students</h2><span class="pill">Live classes only</span></div>
-    <p class="li-m">Share this in any class. Everyone can use it at the same time and types their own name when joining. Lessons, puzzles and practice stay locked.</p>
+    <p class="li-m">Share this in any class. Everyone can use it at the same time and types their own name when joining. Puzzles, practice and tests stay locked.</p>
     <div class="acct-cred"><span class="li-m">Username</span><code>${esc(LV.demo.username)}</code><span class="li-m">Password</span><code>${esc(LV.demo.password)}</code></div>
     <div class="row"><button class="btn" type="button" data-copy="${esc(waText({...LV.demo,role:"demo"}))}">Copy message for WhatsApp</button></div></section>`
    :`<section class="card stack"><h2>Demo login for trial students</h2><p class="li-m">Not switched on. Add <code>DEMO_PASSWORD</code> in Vercel → Settings → Environment Variables, then redeploy.</p></section>`}
@@ -2208,25 +2115,23 @@ function afterOpening(){
   document.querySelectorAll("[data-line]").forEach(b=>b.onclick=()=>{OPJUMP=OPL.guide.lines[+b.dataset.line].from||0;location.hash="opening?id="+OPL.guide.id+"&l="+b.dataset.line});
   opBind(document.querySelector(".op-play"));
 }
-const VIEWS={plevel:[vPlevel,afterPlevel],classic:[vClassic,afterClassic],practice:[vPractice,afterPractice],drill:[vDrill,afterDrill],live:[vLive,afterLive],home:[vHome,afterHome],courses:[vCourses],lesson:[vLesson,afterLesson],puzzles:[vPuzzles,afterPuzzles],tests:[vTests,afterTests],progress:[vProgress,afterProgress],openings:[vOpenings,afterOpenings],opening:[vOpening,afterOpening],ofam:[vOfam,afterOfam]};
+const VIEWS={plevel:[vPlevel,afterPlevel],classic:[vClassic,afterClassic],practice:[vPractice,afterPractice],drill:[vDrill,afterDrill],live:[vLive,afterLive],home:[vHome,afterHome],puzzles:[vPuzzles,afterPuzzles],tests:[vTests,afterTests],progress:[vProgress,afterProgress],openings:[vOpenings,afterOpenings],opening:[vOpening,afterOpening],ofam:[vOfam,afterOfam]};
 function route(){const h=(location.hash||"#home").slice(1).split("?")[0];return VIEWS[h]?h:"home"}
 function render(){
   document.body.classList.toggle("gated",AUTH.state!=="in"&&AUTH.state!=="guest");renderWho();
-  if(AUTH.state!=="in"&&AUTH.state!=="guest"){stopLesson();$("#app").innerHTML=authView();bindAuth();return}
+  if(AUTH.state!=="in"&&AUTH.state!=="guest"){$("#app").innerHTML=authView();bindAuth();return}
   if(!HAS_CHESS){$("#app").innerHTML=`<div class="card"><h2>The chess engine didn't load</h2><p class="li-m" style="margin-top:8px">Check your connection and reload the page.</p></div>`;return}
   document.body.classList.toggle("demo",isDemo());
   let r=route();
-  if(isDemo()&&r!=="live"){if(r==="home"){location.replace("#live");return}stopLesson();document.body.dataset.route=r;$("#app").innerHTML=vLocked();
+  if(isDemo()&&r!=="live"){if(r==="home"){location.replace("#live");return}document.body.dataset.route=r;$("#app").innerHTML=vLocked();
     document.querySelectorAll("#tabs a").forEach(x=>x.removeAttribute("aria-current"));$("#lkGo").onclick=()=>location.hash="live";return}
-  document.body.dataset.route=r;if(r!=="lesson")stopLesson();
+  document.body.dataset.route=r;
   const [v,a]=VIEWS[r];$("#app").innerHTML=v();a&&a();
-  const tab=r==="lesson"?"courses":(r==="opening"||r==="ofam")?"openings":r==="drill"?"practice":(r==="plevel"||r==="classic")?"puzzles":r;
+  const tab=(r==="opening"||r==="ofam")?"openings":r==="drill"?"practice":(r==="plevel"||r==="classic")?"puzzles":r;
   document.querySelectorAll("#tabs a").forEach(x=>{if(x.getAttribute("href")==="#"+tab)x.setAttribute("aria-current","page");else x.removeAttribute("aria-current")});
-  document.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{curLesson=b.dataset.open;if(location.hash==="#lesson")render();else location.hash="lesson";window.scrollTo(0,0)});
   document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>location.hash=b.dataset.go);
 }
-window.addEventListener("hashchange",()=>{if(route()==="lesson"&&!curLesson)curLesson=ALL_LESSONS[0].id;render();window.scrollTo(0,0)});
-if(route()==="lesson")curLesson=ALL_LESSONS[0].id;
+window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0)});
 authCheck();
 </script>
 </body>

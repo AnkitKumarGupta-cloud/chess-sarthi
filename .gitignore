@@ -3,3 +3,6 @@ dist
 .vercel
 .env*
 test/harness/pip.html
+.env
+.env.local
+.env.*.local

@@ -37,7 +37,7 @@
       ]
     },
     {
-      "source": "/(stockfish|mediapipe|scan|voice)/(.*)",
+      "source": "/(stockfish|mediapipe|scan)/(.*)",
       "headers": [
         {
           "key": "Cache-Control",

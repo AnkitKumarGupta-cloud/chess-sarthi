@@ -2,6 +2,7 @@
 //   npm run build && node test/dev-server.mjs   -> http://localhost:4173  (teacher: teacher / demo-teacher)
 import http from "node:http"; import fs from "node:fs"; import path from "node:path"; import { fileURLToPath } from "node:url";
 import { useEnv } from "./fakes.mjs";
+try { for (const l of fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "..", ".env.local"), "utf8").split("\n")) { const m = l.match(/^([A-Z0-9_]+)=(.*)$/); if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].trim(); } } catch {}
 useEnv({ TEACHER_PASSWORD: "demo-teacher" });
 const dist = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "dist");
 const types = { ".html": "text/html", ".js": "text/javascript", ".mp3": "audio/mpeg", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".css": "text/css", ".wasm": "application/wasm", ".json": "application/json", ".webp": "image/webp" };
