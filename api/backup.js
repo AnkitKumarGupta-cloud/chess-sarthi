@@ -6,7 +6,7 @@ export default handler(async ({ req }) => {
   mustBeTeacher(await whoIs(req));
   const users = (await kv("SMEMBERS", "users")) || [], classes = (await kv("SMEMBERS", "classes")) || [];
   const keys = [
-    ...users.flatMap((u) => ["u:" + u, "p:" + u, "ps:" + u]),
+    ...users.flatMap((u) => ["u:" + u, "p:" + u, "ps:" + u, "at:" + u]),
     ...classes.flatMap((c) => ["c:" + c, "r:" + c]),
   ];
   const data = {};

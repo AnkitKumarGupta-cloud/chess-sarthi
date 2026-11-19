@@ -164,3 +164,10 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - **Limits and cost:** `AI_DAILY_LIMIT` per student (teacher gets 5x), `AI_GLOBAL_LIMIT` for the whole app. Repeated mistakes on the same position are cached in Redis for 14 days and cost nothing. Settings are in SETUP.md.
 - **Tests:** `test/coach.test.mjs` (fake providers). `node test/dev-ai.mjs` runs the site locally with a fake AI so you can try Sathi without a key.
 - **Ideas next:** record mistake types (hung a piece, missed a threat, missed mate) in `S.pm` so the teacher's insight shows them; use Sathi on Practice and Tests; spaced-repetition review of failed puzzles.
+
+## Weakness tracker, parent view (Phase 2, Nov 2026)
+- Every puzzle attempt is saved in Redis `at:<student>` (capped at 1200): `[k, puzzleId, themes, ok, seconds, ts, day]`. A wrong first move = failed, even if the 2nd try works. Logic in `api/_weak.js`, API in `api/attempts.js`. A theme is weak with >= 4 tries and >= 40% failed.
+- Home shows "Practise this" for the weakest theme: lesson card, then a 5-puzzle drill (route `#wdrill?t=<theme>`, a virtual "level 0" on the puzzle screen, +10 XP).
+- Parent logins: teacher taps "Add parent login" on a student (max 2 per child) or ticks withParent at creation. A parent sees only that child on the Progress tab and can erase the child's data (`DELETE /api/attempts`; sets `reset:<child>` so stale phones can't bring data back).
+- Nothing is public; no link to Young Achievers pages.
+- **Migration (run once on the live DB, after deploy):** put KV_REST_API_URL and KV_REST_API_TOKEN in `.env.local`, then `node migrations/run.mjs --dry` and `node migrations/run.mjs`. It seeds `at:` from existing per-theme counts; safe to re-run.

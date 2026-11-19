@@ -778,6 +778,32 @@ html{scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent
 .th-h{margin:0;font-size:1rem}
 .th-p{margin:0;line-height:1.45}
 .th-steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px;line-height:1.45}
+/* Weakness tracker (Phase 2): Practise tile, parent view */
+.t-weak{display:flex;flex-direction:column;gap:8px}
+.t-weak .row{gap:8px;flex-wrap:wrap}
+.t-weak .btn{flex:1 1 auto;text-align:center;text-decoration:none}
+.weak-wrap{max-width:560px;margin-inline:auto;width:100%}
+body.parentv #tabs a:not([href="#live"]):not([href="#progress"]){display:none}
+.par{max-width:640px;margin-inline:auto;width:100%}
+.par-h{margin:0;font-size:1rem}
+.par-k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.par-k .kpi{display:flex;flex-direction:column;gap:2px;padding:12px 8px;border-radius:12px;background:var(--surface-2);text-align:center;min-width:0}
+.par-k .kpi b{font-size:1.25rem;overflow-wrap:anywhere}
+.par-k .kpi span{font-size:.72rem;color:var(--muted)}
+@media (max-width:420px){.par-k{grid-template-columns:1fr 1fr}}
+.par-w{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;height:84px;align-items:end}
+.par-w>div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%}
+.par-w i{width:100%;max-width:28px;border-radius:6px;background:var(--surface-2);display:block}
+.par-w .on i{background:var(--gold)}
+.par-w span{font-size:.7rem;color:var(--muted)}
+.par-weak,.par-rec{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.par-weak li>div:first-child{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.par-bar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:6px}
+.par-bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.par-rec li{display:grid;grid-template-columns:84px 1fr auto;gap:8px;align-items:center}
+.par-ok{font-size:.78rem;font-weight:700}.par-ok.yes{color:var(--good)}.par-ok.no{color:var(--accent)}
+.par-ask{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:var(--surface-2)}
+.par-ask p{margin:0}
 </style>
 
 </head>
@@ -995,6 +1021,7 @@ function vHome(){
       <div class="row" style="margin-top:auto"><a class="btn big" href="#puzzles">▶ ${lvSolvedCount()?"Continue puzzles":"Start puzzles"}</a></div>
       <div class="tile-art" aria-hidden="true">♞</div>
     </article>
+    ${weakTile()}
     <div class="b-pair">
     <article class="tile t-goal">
       <div class="goal">${ring(tx/DAILY_GOAL*100,72,8)}<div class="goal-n"><b class="mono">${Math.min(tx,DAILY_GOAL)}</b><span>/${DAILY_GOAL}</span></div></div>
@@ -1260,7 +1287,7 @@ function vPuzzles(){
 }
 let __mapW=0;window.addEventListener("resize",()=>{clearTimeout(window.__mapT);window.__mapT=setTimeout(()=>{const w=document.querySelector("main")?.clientWidth||0;if(route()==="puzzles"&&Math.abs(w-__mapW)>40){__mapW=w;render()}},250)});
 function afterPuzzles(){__mapW=document.querySelector("main")?.clientWidth||0;
-  document.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{LVS=null;location.hash="plevel?l="+b.dataset.lv});
+  document.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{atRecord();LVS=null;location.hash="plevel?l="+b.dataset.lv});
   if(!LVD)lvLoad().then(()=>{if(route()==="puzzles")render()}).catch(()=>{});
   const show=el=>{el.style.backgroundImage=worldBg(+el.dataset.w,true)};
   // Watch only after jumping to the current level, so worlds far above it don't start loading first.
@@ -1278,10 +1305,10 @@ function afterPuzzles(){__mapW=document.querySelector("main")?.clientWidth||0;
 function lvParam(){const m=location.hash.match(/[?&]l=(\d+)/);return m?+m[1]:lvState().unlocked}
 function lvPart(l){const st=lvState();st.part=st.part||{};const n=LVD[l-1].length,a=st.part[l];
   if(Array.isArray(a)&&a.length===n)return a.slice();return Array(n).fill(null)}
-function lvOpen(l,k){const p=LVD[l-1][k];const prev=LVS&&LVS.l===l?LVS.res:lvPart(l);
+function lvOpen(l,k){atRecord();const p=lvList(l)[k];const prev=LVS&&LVS.l===l?LVS.res:l===0?DRILL.list.map(()=>null):lvPart(l);
   LVS={l,k,res:prev,g:new Chess(p[1]),moves:p[2].split(" "),ply:0,sel:null,state:"think",msg:"",last:[],bad:[],hint:null,promo:null,anim:null,miss:false,shown:false,hinted:false,wrongs:0};
   LVS.color=LVS.g.turn()==="w"?"b":"w";const tok=LVS;
-  setTimeout(()=>{if(LVS!==tok)return;lvPlay(LVS.moves[0]);LVS.ply=1;LVS.state="idle";render()},650)}
+  setTimeout(()=>{if(LVS!==tok)return;lvPlay(LVS.moves[0]);LVS.ply=1;LVS.state="idle";LVS.t0=Date.now();render()},650)}
 function lvPlay(u){const mv=LVS.g.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});if(mv){moveSound(mv,LVS.g);LVS.anim=[mv.from,mv.to];LVS.last=[mv.from,mv.to]}return mv}
 /* Puzzle rating (Elo-style). Each puzzle counts once. Score: clean solve 1, used a hint 0.6,
    one wrong move 0.35, more wrong moves or "show solution" 0. So a hint only costs a few points.
@@ -1320,12 +1347,12 @@ const pmSummary=()=>{const pm=pmState();return {first:pm.n,themes:Object.entries
 function prRate(id,puzzleRating,score){const pr=prState();if(!id||pr.seen[id])return null;
   const e=1/(1+Math.pow(10,(puzzleRating-pr.r)/400)),k=pr.n<20?40:pr.n<60?24:16,d=Math.round(k*(score-e));
   pr.r=Math.max(100,pr.r+d);pr.n++;pr.seen[id]=1;pr.hist.push(pr.r);if(pr.hist.length>60)pr.hist=pr.hist.slice(-60);return d}
-function lvSolved(){const st=lvState();LVS.state="ok";if(LVS.res[LVS.k]==null)LVS.res[LVS.k]=LVS.miss?"retry":"ok";
-  {const p=LVD&&LVD[LVS.l-1]&&LVD[LVS.l-1][LVS.k];LVS.rd=p?prRate(p[0],p[3],LVS.shown||LVS.wrongs>1?0:LVS.wrongs===1?.35:LVS.hinted?.6:1):null;
+function lvSolved(){const st=lvState();LVS.state="ok";atRecord();if(LVS.res[LVS.k]==null)LVS.res[LVS.k]=LVS.miss?"retry":"ok";
+  {const p=lvPuz(LVS.l,LVS.k);LVS.rd=p?prRate(p[0],p[3],LVS.shown||LVS.wrongs>1?0:LVS.wrongs===1?.35:LVS.hinted?.6:1):null;
    if(p&&LVS.rd!==null)pmRecord(LVS.l,LVS.k,p[4],LVS.shown?"s":LVS.wrongs>1?"ww":LVS.wrongs===1?"w":LVS.hinted?"h":"")}
   {const pr=prState(),m=Math.floor(pr.r/100)*100;if(pr.mile==null)pr.mile=Math.max(m,Math.floor(PR_START/100)*100);
-   if(LVS.rd>0&&m>pr.mile){pr.mile=m;LVS.mile=m}else LVS.mile=0}st.part=st.part||{};st.part[LVS.l]=LVS.res.slice();save();if(LVS.res[LVS.k]==="ok"&&!LVS.replay)award(5);setTimeout(()=>sfx("solved"),SOLVED_DELAY);
-  if(LVS.res.every(x=>x)){delete st.part[LVS.l];const stars=lvStars(LVS.res),prev=st.done[LVS.l];st.done[LVS.l]={stars:Math.max(stars,prev?prev.stars:0)};if(st.unlocked<=LVS.l)st.unlocked=LVS.l+1;LVS.complete=stars;save();
+   if(LVS.rd>0&&m>pr.mile){pr.mile=m;LVS.mile=m}else LVS.mile=0}if(LVS.l>0){st.part=st.part||{};st.part[LVS.l]=LVS.res.slice()}save();if(LVS.res[LVS.k]==="ok"&&!LVS.replay)award(5);setTimeout(()=>sfx("solved"),SOLVED_DELAY);
+  if(LVS.l===0)drillSolved();else if(LVS.res.every(x=>x)){delete st.part[LVS.l];const stars=lvStars(LVS.res),prev=st.done[LVS.l];st.done[LVS.l]={stars:Math.max(stars,prev?prev.stars:0)};if(st.unlocked<=LVS.l)st.unlocked=LVS.l+1;LVS.complete=stars;save();
     celebrate("trophy",`Level ${LVS.l} complete!`,"★".repeat(stars)+"☆".repeat(3-stars)+(stars===3?" Perfect!":" Well played!"))}
   if(LVS.mile)celebrate("trend",`Your rating hit ${LVS.mile}!`,"A new best. Your puzzle skills are growing.");
   render()}
@@ -1393,7 +1420,7 @@ function coachFindMove(q,fen){const toks=q.match(/\b(?:O-O-O|O-O|[KQRBNkqrbn]?[a
 async function coachAsk(q){
   const tok=LVS,c=cs();q=q.trim().slice(0,160);if(!q||c.busy)return;
   if(LVS.state==="think"){coachSay("Wait for your opponent's move, then ask me.");return}
-  const my=++c.seq,p=LVD[LVS.l-1][LVS.k],over=LVS.state==="ok"||LVS.shown;
+  const my=++c.seq,p=lvList(LVS.l)[LVS.k],over=LVS.state==="ok"||LVS.shown;
   coachSay("",true);
   let fen=LVS.g.fen(),winning=[],asked=null;
   if(over){const g=new Chess(p[1]),mv=p[2].split(" ");g.move({from:mv[0].slice(0,2),to:mv[0].slice(2,4),promotion:mv[0][4]});fen=g.fen();
@@ -1413,6 +1440,102 @@ function coachHint(p){const l=LVS.hl=Math.min(4,(LVS.hl||0)+1),mv=LVS.moves[LVS.
   else if(l===3){LVS.hint=from;msg=`The highlighted ${pc?PIECE_N[pc.type]:"piece"} is the key.${th.length?` The idea is: ${themeName(th[0])}.`:""} Where should it go?`}
   else{LVS.hl=4;LVS.hint=from;msg="No more hints. If you are really stuck, press Solution and I will show you why it works."}
   c.msg=msg;c.busy=false;render()}
+
+/* ---------- Weakness tracker (Phase 2) ----------
+   1. Every puzzle attempt is saved (atRecord -> /api/attempts): puzzle id, themes, solved or failed, seconds. A wrong first move is a
+      FAILED attempt even if the second try works, and leaving a puzzle after a wrong move counts too. Attempts wait in S.atq (this phone) until
+      the server has them, so nothing is lost offline.
+   2. The server finds the weak themes (api/_weak.js). The "Practise this" tile shows the weakest one: its lesson card, then a 5-puzzle drill
+      of that theme near the child's puzzle rating. The drill reuses the puzzle screen as "level 0" (no stars, no unlocks).
+   3. A parent login (role "parent", linked to one child) sees the child's progress on the Progress tab, and can erase the child's data. */
+const DRILL_BONUS=10;
+let DRILL=null;                                   // {t, list:[puzzle...], paid}  the 5 puzzles being practised
+const lvList=l=>l===0?(DRILL?DRILL.list:[]):LVD[l-1];
+const lvPuz=(l,k)=>{const a=LVD&&lvList(l);return a&&a[k]||null};
+const isParent=()=>AUTH&&AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="parent";
+let AT=null,ATP=null,atT=null,atBusy=false;      // AT = {stats, student, summary} from the server (null = not loaded yet)
+const atQ=()=>{S.atq=S.atq||[];return S.atq};
+function atRecord(){const v=LVS;if(!v||v.atDone||!isStudent()||S.owner!==AUTH.user.username)return;
+  const done=v.state==="ok";if(!done&&!(v.wrongs>0))return;                  // nothing to count yet
+  const p=lvPuz(v.l,v.k);if(!p)return;v.atDone=true;
+  const q=atQ();q.push({k:Date.now().toString(36)+Math.random().toString(36).slice(2,7),id:p[0],th:p[4],ok:done&&!v.wrongs&&!v.shown?1:0,
+    s:Math.min(600,Math.max(0,Math.round((Date.now()-(v.t0||Date.now()))/1000))),t:Date.now(),d:dayKey()});
+  if(q.length>300)S.atq=q.slice(-300);save();atQueue()}
+function atQueue(){clearTimeout(atT);atT=setTimeout(atFlush,4000)}
+async function atFlush(){clearTimeout(atT);atT=null;if(atBusy||!isStudent()||S.owner!==AUTH.user.username)return;const q=atQ();if(!q.length)return;
+  atBusy=true;const sent=q.slice(0,60);
+  try{await liveApi("/attempts",{method:"POST",body:{attempts:sent,resetAck:S.resetAck||0}});const ks=new Set(sent.map(a=>a.k));S.atq=atQ().filter(a=>!ks.has(a.k));save();AT=null;ATP=null;if(S.atq.length)atQueue()}
+  catch(e){if(e&&e.code==="reset")progPull();else if(e&&e.code==="offline")atT=setTimeout(atFlush,60000)}finally{atBusy=false}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){atRecord();atFlush()}});
+window.addEventListener("pagehide",()=>{atRecord();atFlush()});
+function atLoad(){if(!isStudent())return Promise.resolve(null);if(ATP)return ATP;
+  ATP=atFlush().then(()=>liveApi("/attempts?today="+dayKey())).then(j=>(AT=j)).catch(()=>(AT={stats:null}));return ATP}
+const _dc={};
+const drillCount=t=>{if(!LVD)return 99;return _dc[t]!==undefined?_dc[t]:(_dc[t]=LVD.reduce((a,l)=>a+l.filter(p=>p[4].split(" ").includes(t)).length,0))};
+const weakPick=()=>((AT&&AT.stats&&AT.stats.weak)||[]).find(x=>drillCount(x.id)>=5)||null;
+const wkRender=()=>{const r=route();if(r==="home"||r==="progress")render()};
+let _wLv=false;
+function weakTile(){if(!isStudent())return "";
+  if(AT===null)atLoad().then(wkRender);
+  if(!LVD&&!_wLv){_wLv=true;lvLoad().then(()=>{_wLv=false;wkRender()}).catch(()=>{_wLv=false})}
+  if(!TCH&&!TCHFAIL)tchLoad().then(wkRender).catch(()=>{});
+  const w=weakPick();if(!w)return "";
+  const th=tchTh(w.id),nm=th?th.name:themeName(w.id);
+  return `<article class="tile t-weak"><div class="tile-top"><span class="eyebrow">Practise this</span><span class="pill">Missed ${w.fails} of ${w.tries}</span></div>
+    <h3 class="tile-h">${esc(nm)}</h3><p class="li-m">${esc(th?th.remember:"This idea needs a little more practice.")}</p>
+    <div class="row">${th&&th.steps&&th.ex?`<a class="btn ghost" href="#theme?t=${w.id}">See the lesson</a>`:""}<a class="btn" href="#wdrill?t=${w.id}">Practise 5 puzzles</a></div></article>`}
+// 5 puzzles of one theme near the child's rating, easiest first; ones not seen recently are preferred
+function drillMake(t){const r=prState().r,dr=S.dr=S.dr||{seen:{}},all=[];
+  LVD.forEach(l=>l.forEach(p=>{if(p[4].split(" ").includes(t))all.push(p)}));
+  all.sort((a,b)=>Math.abs(a[3]-r)-Math.abs(b[3]-r));
+  const near=all.slice(0,40),fresh=near.filter(p=>!dr.seen[p[0]]);
+  const pick=(fresh.length>=5?fresh:near.slice().sort((a,b)=>(dr.seen[a[0]]||0)-(dr.seen[b[0]]||0))).slice(0,5).sort((a,b)=>a[3]-b[3]);
+  pick.forEach(p=>{dr.seen[p[0]]=Date.now()});const ks=Object.keys(dr.seen);
+  if(ks.length>300)ks.sort((a,b)=>dr.seen[a]-dr.seen[b]).slice(0,ks.length-300).forEach(k=>delete dr.seen[k]);
+  save();return {t,list:pick,paid:false}}
+function drillSolved(){if(!DRILL||DRILL.paid||!LVS.res.every(x=>x))return;
+  DRILL.paid=true;LVS.dcomplete=true;award(DRILL_BONUS);save();atFlush().then(()=>{AT=null;ATP=null});
+  celebrate("target","Practice done!",`+${DRILL_BONUS} XP for finishing 5 puzzles`)}
+function vWdrill(){
+  if(!LVD){lvLoad().then(()=>route()==="wdrill"&&render()).catch(()=>{});return skel("board")}
+  if(!isStudent())return `<section class="stack view"><div class="card stack"><h2>Practice is for students</h2><a class="btn" href="#home">Back</a></section>`;
+  if(!TCH&&!TCHFAIL)tchLoad().then(()=>route()==="wdrill"&&render()).catch(()=>{});
+  const t=(location.hash.match(/[?&]t=([A-Za-z0-9]+)/)||[])[1]||"";
+  if(!DRILL||DRILL.t!==t){atRecord();DRILL=drillMake(t);LVS=null}
+  if(DRILL.list.length<3)return `<section class="stack view"><a class="ds-back" href="#home">← <span>Back</span></a><div class="card stack"><h2>Not enough puzzles yet</h2><p class="li-m">We don't have enough ${esc(themeName(t))} puzzles to practise. Try the puzzle map instead.</p><a class="btn" href="#puzzles">Open puzzles</a></div></section>`;
+  return vPlevel()}
+
+/* Parent view (Progress tab for a parent login): one child, read-only, plus "erase my child's data" */
+let PAR={state:"idle",data:null,msg:"",ask:false};
+function parLoad(){PAR.state="loading";liveApi("/attempts?today="+dayKey()).then(j=>{PAR.data=j;PAR.state="ok"}).catch(e=>{PAR.state="err";PAR.msg=e.message}).finally(()=>{if(route()==="progress")render()})}
+function vProgressParent(){
+  if(PAR.state==="idle")parLoad();
+  if(PAR.state==="idle"||PAR.state==="loading")return skel("cards");
+  if(PAR.state==="err")return `<section class="stack view"><div class="eyebrow">Parent view</div><h1>Progress</h1><div class="card stack"><p class="li-m">${esc(PAR.msg)}</p><button class="btn" id="parRetry">Try again</button></div></section>`;
+  if(!TCH&&!TCHFAIL)tchLoad().then(()=>{if(route()==="progress")render()}).catch(()=>{});
+  const d=PAR.data,st=d.stats,sm=d.summary||{},first=esc(d.student.name.split(" ")[0]);
+  const nm=id=>tchTh(id)?tchTh(id).name:themeName(id),dl=x=>["Su","Mo","Tu","We","Th","Fr","Sa"][new Date(x+"T12:00:00").getDay()];
+  const mx=Math.max(1,...st.week.map(x=>x.n)),active=st.week.filter(x=>x.n).length;
+  const kpi=(b,l)=>`<div class="kpi"><b>${b}</b><span>${l}</span></div>`;
+  const last=sm.lastActive?new Date(sm.lastActive+"T12:00:00").toLocaleDateString(undefined,{day:"numeric",month:"short"}):"";
+  return `<section class="stack view par"><div><div class="eyebrow">Parent view</div><h1>${esc(d.student.name)}</h1><p class="li-m">${last?`Last practised ${esc(last)}`:`${first} hasn't practised yet`}</p></div>
+    <div class="par-k">${kpi(st.streak,"day streak")}${kpi(sm.puzzlesSolved!=null?sm.puzzlesSolved:0,"puzzles solved")}${kpi(sm.puzzleRating!=null?sm.puzzleRating:"–","puzzle rating")}${kpi(esc(sm.rank||"–"),"rank")}</div>
+    <article class="card stack"><h2 class="par-h">This week</h2>
+      <div class="par-w" role="img" aria-label="Puzzles per day this week">${st.week.map(x=>`<div class="${x.n?"on":""}"><i style="height:${x.n?Math.max(10,x.n/mx*100):6}%"></i><span>${dl(x.d)}</span></div>`).join("")}</div>
+      <p class="li-m">${active?`Practised on ${active} of the last 7 days.`:"No puzzles in the last 7 days."}${st.firstTryRate!=null?` First-try rate: ${st.firstTryRate}%.`:""}</p></article>
+    <article class="card stack"><h2 class="par-h">Needs practice</h2>
+      ${st.weak.length?`<ul class="par-weak">${st.weak.map(x=>`<li><div><b>${esc(nm(x.id))}</b><span class="li-m">missed ${x.fails} of ${x.tries}</span></div><div class="par-bar"><i style="width:${Math.round(x.rate*100)}%"></i></div></li>`).join("")}</ul><p class="li-m">${first} sees these on the Home screen with a short lesson and 5 practice puzzles. You don't need to set anything up.</p>`
+        :`<p class="li-m">${st.total>=8?"No weak spots right now. Nice work!":`Nothing to show yet. After ${first} has tried a theme 4 times, we can tell what to practise.`}</p>`}</article>
+    ${st.recent.length?`<article class="card stack"><h2 class="par-h">Recent puzzles</h2><ul class="par-rec">${st.recent.map(x=>`<li><span class="par-ok ${x.ok?"yes":"no"}">${x.ok?"First try":"Missed"}</span><span>${esc(nm(x.themes[0]))}</span><span class="li-m">${x.secs}s</span></li>`).join("")}</ul></article>`:""}
+    <article class="card stack"><h2 class="par-h">Privacy</h2><p class="li-m">Only you and the teacher can see ${first}'s progress. Nothing is shared publicly.</p>
+      ${PAR.ask?`<div class="par-ask" role="alertdialog" aria-label="Erase data"><p><b>Erase all of ${first}'s progress and puzzle history?</b></p><p class="li-m">This cannot be undone. The login stays and ${first} starts fresh.</p><div class="row"><button class="btn" id="parYes">Yes, erase</button><button class="btn ghost" id="parNo">Cancel</button></div></div>`
+        :`<button class="btn ghost" id="parErase">Erase ${first}'s data</button>`}</article></section>`}
+function afterProgressParent(){
+  const r=$("#parRetry");if(r)r.onclick=()=>{PAR.state="idle";render()};
+  const e=$("#parErase");if(e)e.onclick=()=>{PAR.ask=true;render()};
+  const n=$("#parNo");if(n)n.onclick=()=>{PAR.ask=false;render()};
+  const y=$("#parYes");if(y)y.onclick=async()=>{y.disabled=true;y.textContent="Erasing…";
+    try{await liveApi("/attempts",{method:"DELETE"});PAR.ask=false;PAR.state="idle";PAR.data=null;toast("Data erased");render()}catch(err){toast(err.message);y.disabled=false;y.textContent="Yes, erase"}}}
 
 /* ---------- Teaching layer: "Why" after every puzzle (Phase 1) ----------
    The words live in /teach/themes.json (theme explanations, lesson cards, the Sathi Check questions), so they can be
@@ -1475,7 +1598,7 @@ function vTheme(){
     <div class="stack" style="gap:6px"><h2 class="th-h">How to spot it</h2><p class="th-p">${esc(t.spot)}</p></div>
     <div class="stack" style="gap:6px"><h2 class="th-h">3 steps</h2><ol class="th-steps">${t.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div>
     <p class="keypoint">${esc(t.remember)}</p>
-    <div class="row"><a class="btn ghost" href="#puzzles">Practise with puzzles</a></div></section>`}
+    <div class="row">${isStudent()&&drillCount(thId())>=5?`<a class="btn" href="#wdrill?t=${esc(thId())}">Practise 5 puzzles</a>`:`<a class="btn ghost" href="#puzzles">Practise with puzzles</a>`}</div></section>`}
 function afterTheme(){
   const back=$("#thBack");if(back)back.onclick=e=>{if(history.length>1){e.preventDefault();history.back()}};
   const t=tchTh(thId());THX=null;if(!t||!t.ex)return;
@@ -1492,23 +1615,25 @@ function afterTheme(){
 
 function vPlevel(){
   if(!LVD)return skel("board");
-  const st=lvState(),l=Math.max(1,Math.min(lvParam(),st.unlocked,LVD.length)),list=LVD[l-1];
-  if(!LVS||LVS.l!==l){const part=lvPart(l),first=Math.max(0,part.findIndex(x=>!x));LVS=null;lvOpen(l,first)}
+  const D=route()==="wdrill"&&DRILL?DRILL:null;
+  const st=lvState(),l=D?0:Math.max(1,Math.min(lvParam(),st.unlocked,LVD.length)),list=D?D.list:LVD[l-1];
+  if(!LVS||LVS.l!==l){atRecord();if(D){LVS=null;lvOpen(0,0)}else{const part=lvPart(l),first=Math.max(0,part.findIndex(x=>!x));LVS=null;lvOpen(l,first)}}
   const p=list[LVS.k],s=LVS.state,col=LVS.color==="w"?"White":"Black";
   let stat="",scls="";
-  if(LVS.complete){stat=`<b>Level ${l} complete!</b> ${starsHtml(LVS.complete)}`;scls="ok"}
+  if(LVS.dcomplete){stat=`<b>Practice done!</b> +${DRILL_BONUS} XP for finishing`;scls="ok"}
+  else if(LVS.complete){stat=`<b>Level ${l} complete!</b> ${starsHtml(LVS.complete)}`;scls="ok"}
   else if(s==="ok"){const rd=LVS.rd,rt=rd!=null?` · Your rating ${prState().r} <span class="rd ${rd>=0?"up":"down"}">${rd>=0?"+":""}${rd}</span>`:"";stat=(LVS.res[LVS.k]==="ok"?(LVS.replay?"<b>Correct!</b>":"<b>Correct!</b> +5 XP"):"<b>Solved.</b> Next time, first try!")+rt;scls="ok"}
   else if(s==="no"){stat="Not quite. Try another move!";scls="no"}
   else if(s==="think")stat=LVS.ply===0?"Watch your opponent's move…":`<span class="spin sm" aria-hidden="true"></span> Opponent is replying…`;
   else stat=LVS.ply<=1?`<i class="tm ${LVS.color}" aria-hidden="true"></i> ${col} to move`:"Good! Keep going.";
-  const nextBtn=LVS.complete?(l<LVD.length?`Go to Level ${l+1} →`:"Back to puzzles"):LVS.k<list.length-1?"Next puzzle →":"Finish level";
-  const canNext=s==="ok"||LVS.complete;
+  const nextBtn=LVS.dcomplete?"Back to home":LVS.complete?(l<LVD.length?`Go to Level ${l+1} →`:"Back to puzzles"):LVS.k<list.length-1?"Next puzzle →":D?"Finish practice":"Finish level";
+  const canNext=s==="ok"||LVS.complete||LVS.dcomplete;
   return `<section class="drill view" data-sec="puzzles">
   <div class="drill-board"><div class="board" id="lvBoard"></div>
     ${LVS.promo?`<div class="promo" role="group" aria-label="Choose a piece"><span class="li-m">Promote to:</span>${["q","r","b","n"].map(x=>`<button class="chip" data-promo="${x}" aria-label="${NAMES[x]}"><i class="pc inline ${LVS.color} pk-${x}" aria-hidden="true"></i> ${NAMES[x]}</button>`).join("")}</div>`:""}</div>
   <aside class="drill-side">
-    <header class="ds-head"><a class="ds-back" href="#puzzles" aria-label="Back to puzzles">← <span>Puzzles</span></a><span class="pricon sm" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 3h4v3a2 2 0 1 0 4 0V3h3v7h-3a2 2 0 1 0 0 4h3v7h-7v-3a2 2 0 1 0-4 0v3H3v-7h3a2 2 0 1 0 0-4H3V3h7z"/></svg></span>
-      <div class="ds-ht"><span class="eyebrow">Puzzles</span><h1>Level ${l}</h1></div></header>
+    <header class="ds-head"><a class="ds-back" href="${D?"#home":"#puzzles"}" aria-label="${D?"Back to home":"Back to puzzles"}">← <span>${D?"Home":"Puzzles"}</span></a><span class="pricon sm" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 3h4v3a2 2 0 1 0 4 0V3h3v7h-3a2 2 0 1 0 0 4h3v7h-7v-3a2 2 0 1 0-4 0v3H3v-7h3a2 2 0 1 0 0-4H3V3h7z"/></svg></span>
+      <div class="ds-ht"><span class="eyebrow">${D?"Practise this":"Puzzles"}</span><h1>${D?esc(tchTh(D.t)?tchTh(D.t).name:themeName(D.t)):"Level "+l}</h1></div></header>
     <div class="lvdots" aria-label="Puzzles in this level">${list.map((_,i)=>`<span class="${LVS.res[i]||""}${i===LVS.k?" cur":""}" title="Puzzle ${i+1}">${LVS.res[i]==="ok"?"✓":LVS.res[i]==="retry"?"•":i+1}</span>`).join("")}</div>
     <div class="ds-status ${scls}" role="status">${stat}</div>
     <div class="ds-tools">
@@ -1523,7 +1648,7 @@ function vPlevel(){
 }
 function afterPlevel(){
   if(!LVD){lvLoad().then(()=>{if(route()==="plevel")render()}).catch(()=>{});return}
-  const l=LVS.l,list=LVD[l-1],g=LVS.g,flip=LVS.color==="b";
+  const l=LVS.l,list=lvList(l),g=LVS.g,flip=LVS.color==="b";
   const live=(LVS.state==="idle"||LVS.state==="no")&&!LVS.promo&&g.turn()===LVS.color;
   const dots=LVS.sel?g.moves({square:LVS.sel,verbose:true}).map(m=>m.to):[];const anim=LVS.anim;LVS.anim=null;
   drawBoard($("#lvBoard"),g.fen(),{flip,anim,sel:LVS.sel,dots,bad:LVS.bad,hi:LVS.hint?[LVS.hint]:LVS.last,
@@ -1547,7 +1672,8 @@ function afterPlevel(){
   const wa=$("#whyAgain");if(wa)wa.onclick=lvTryAgain;
   if(!TCH&&!TCHFAIL)tchLoad().catch(()=>{});
   coachBind();
-  $("#lvNext").onclick=()=>{if(LVS.complete){LVS=null;if(l<LVD.length)location.hash="plevel?l="+(l+1);else location.hash="puzzles";return}
+  $("#lvNext").onclick=()=>{if(LVS.dcomplete){LVS=null;DRILL=null;location.hash="home";return}
+    if(LVS.complete){LVS=null;if(l<LVD.length)location.hash="plevel?l="+(l+1);else location.hash="puzzles";return}
     if(LVS.k<list.length-1){lvOpen(l,LVS.k+1);render()}else{const miss=LVS.res.findIndex(x=>!x);if(miss>=0){lvOpen(l,miss);render()}}};
 }
 
@@ -1743,8 +1869,10 @@ function afterProgressTeacher(){
 }
 function vProgress(){
   if(AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="teacher")return vProgressTeacher();
+  if(isParent())return vProgressParent();
   const xp=totalXP(),rk=rankOf(xp),wk=week(),maxw=Math.max(DAILY_GOAL,...wk.map(w=>w.xp)),wsum=wk.reduce((a,w)=>a+w.xp,0);
   return `<section class="stack view"><div class="eyebrow">Progress</div><h1>Your report card</h1></section>
+  ${(wt=>wt?`<section class="view weak-wrap">${wt}</section>`:"")(weakTile())}
   <section class="bento bento-p view">
     <article class="tile t-rankbig">
       <div class="ranks">${RANKS.map((r,i)=>`<div class="rk${i<rk.i?" past":i===rk.i?" now":""}" title="${r.n}: ${r.xp} XP"><span>${r.g}</span><small>${r.n}</small></div>`).join("")}</div>
@@ -1777,7 +1905,7 @@ function vProgress(){
     ${S.tests.slice().reverse().map(t=>`<tr><td>${new Date(t.at).toLocaleString()}</td><td class="num">${t.score}/${testTotal(t)}${t.tier!=null?` · ${TIERS[t.tier]}`:""}</td></tr>`).join("")}</tbody></table></section>`:""}
   <section class="row view" style="justify-content:flex-end"><button class="btn ghost sm" id="resetAll">Reset all progress</button></section>`;
 }
-function afterProgress(){if(AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="teacher")return afterProgressTeacher();if(!PR)prLoad().then(()=>{if(route()==="progress")render()}).catch(()=>{});let armed=false;$("#resetAll").onclick=e=>{if(!armed){armed=true;e.target.textContent="Tap again to erase everything";return}
+function afterProgress(){if(AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="teacher")return afterProgressTeacher();if(isParent())return afterProgressParent();if(!PR)prLoad().then(()=>{if(route()==="progress")render()}).catch(()=>{});let armed=false;$("#resetAll").onclick=e=>{if(!armed){armed=true;e.target.textContent="Tap again to erase everything";return}
   S={puzzles:{},tests:[],days:{},practice:{},liveToken:S.liveToken,liveUser:S.liveUser,owner:S.owner};save();PZ=null;toast("Progress reset");render()}}
 
 /* ---------- Sign-in and live classes (talk to the site's /api) ---------- */
@@ -1843,7 +1971,7 @@ function progSummary(){const xp=totalXP(),st=lvState(),done=Object.values(st.don
     tests:S.tests.length,bestTest:bestTest(),lastTest:last?{score:last.score,total:testTotal(last),tier:last.tier!=null?TIERS[last.tier]:"",at:last.at||""}:null,
     lastActive:days[days.length-1]||"",daysActive:days.length,puzzleRating:prState().r,ratedPuzzles:prState().n}}
 async function progPush(){clearTimeout(progT);progT=null;if(!isStudent()||progBusy)return;progBusy=true;
-  try{await liveApi("/progress",{method:"POST",body:{state:progState(),summary:progSummary()}})}catch(e){}finally{progBusy=false}}
+  try{await liveApi("/progress",{method:"POST",body:{state:progState(),summary:progSummary(),resetAck:S.resetAck||0}})}catch(e){if(e&&e.code==="reset")progPull()}finally{progBusy=false}}
 // Combine two copies of progress without losing anything either has.
 function progMerge(a,b){a=a||{};b=b||{};const o={};
   ["puzzles","practice"].forEach(k=>{o[k]=Object.assign({},a[k]||{},b[k]||{})});
@@ -1858,7 +1986,9 @@ function progMerge(a,b){a=a||{};b=b||{};const o={};
 // After a student signs in: bring in their saved progress. A different student's leftovers on this device are cleared first.
 async function progPull(){if(!isStudent())return;const me=AUTH.user.username;
   if(S.owner&&S.owner!==me){PROG_KEYS.forEach(k=>delete S[k]);S.puzzles={};S.tests=[];S.practice={}}
-  let server=null;try{server=(await liveApi("/progress")).progress}catch(e){}
+  let server=null,reset=0;try{const j=await liveApi("/progress");server=j.progress;reset=j.reset||0}catch(e){}
+  // A parent or the teacher erased this child's data: clear what is on this phone too (once), so it cannot come back
+  if(reset>(S.resetAck||0)){PROG_KEYS.forEach(k=>delete S[k]);S.puzzles={};S.tests=[];S.practice={};S.atq=[];S.dr=null;DRILL=null;LVS=null;AT=null;S.resetAck=reset;S.owner=me}
   const local=S.owner===me||!S.owner?progState():{};
   Object.assign(S,progMerge(local,server&&server.state));S.owner=me;save();progPush();render()}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"&&progT)progPush()});
@@ -1953,7 +2083,7 @@ function liveProblem(root,e){
   root.innerHTML=`<div class="card stack"><h2>Live classes aren't available right now</h2><p class="li-m">${esc(msg)}</p><div class="row"><button class="btn ghost" id="lvRetry">Try again</button></div></div>`;
   $("#lvRetry").onclick=()=>{LV.classes=null;LV.users=null;render()};
 }
-const waText=a=>a.role==="demo"?`Join our free Chess Sathi demo class\nWebsite: ${location.origin}\nUsername: ${a.username}\nPassword: ${a.password}\nSign in, open Live, and press Join when the class is live.`:`Chess Sathi login\nWebsite: ${location.origin}\nUsername: ${a.username}\nPassword: ${a.password}`;
+const waText=a=>a.role==="parent"?`Chess Sathi parent login for ${a.name}\nWebsite: ${location.origin}\nUsername: ${a.username}\nPassword: ${a.password}\nSign in to see ${a.name.split(" ")[0]}'s progress, streak and what to practise. Only you and the teacher can see it.`:a.role==="demo"?`Join our free Chess Sathi demo class\nWebsite: ${location.origin}\nUsername: ${a.username}\nPassword: ${a.password}\nSign in, open Live, and press Join when the class is live.`:`Chess Sathi login\nWebsite: ${location.origin}\nUsername: ${a.username}\nPassword: ${a.password}`;
 function classCard(c,u){
   const teacher=u.role==="teacher",parent=u.role==="parent";
   const state=c.live?`<span class="pill live">● Live now</span>`:c.ended?`<span class="pill">Finished</span>`:`<span class="pill level">Upcoming</span>`;
@@ -2015,8 +2145,8 @@ function liveHome(root){
       ${users.length>5?`<input class="adm-q" id="lvQ" type="search" placeholder="Search name" aria-label="Search students" value="${esc(LV.q)}">`:""}</div>
     ${batches.length>1?`<div class="row chips">${["",...batches].map(b=>`<button class="chip ${bf===b?"on":""}" data-batch="${esc(b)}">${b?esc(b):"All batches"}</button>`).join("")}</div>`:""}
     ${shown.length?`<ul class="adm-list">${shown.map(x=>`<li data-name="${esc(x.name.toLowerCase())}"><span class="adm-av" style="--hue:${[4,28,48,140,172,200,226,262,292,330][[...x.username].reduce((a,ch)=>(a*31+ch.charCodeAt(0))>>>0,0)%10]}">${esc((x.name.trim()[0]||"?").toUpperCase())}</span>
-      <div class="adm-who"><b>${esc(x.name)}</b><span class="li-m">${esc(x.username)} · ${esc(x.batchName||x.batch)}${x.role!=="student"?` · ${ROLE_NAME[x.role]}`:""} · ${x.seen?"opened "+esc(seenText(x.seen).replace(/^[TY]/,c=>c.toLowerCase())):"never signed in"}</span></div>
-      <div class="acts"><button class="btn ghost sm" data-reset="${esc(x.username)}">New password</button><button class="btn ghost sm" data-rm="${esc(x.username)}">Remove</button></div></li>`).join("")}</ul>`
+      <div class="adm-who"><b>${esc(x.name)}</b><span class="li-m">${esc(x.username)} · ${esc(x.batchName||x.batch)}${x.role==="parent"?` · Parent of ${esc(((users.find(u=>u.username===x.child)||{}).name)||x.child||"a student")}`:x.role!=="student"?` · ${ROLE_NAME[x.role]}`:""} · ${x.seen?"opened "+esc(seenText(x.seen).replace(/^[TY]/,c=>c.toLowerCase())):"never signed in"}</span></div>
+      <div class="acts">${x.role==="student"?`<button class="btn ghost sm" data-parent="${esc(x.username)}">Add parent login</button>`:""}<button class="btn ghost sm" data-reset="${esc(x.username)}">New password</button><button class="btn ghost sm" data-rm="${esc(x.username)}">Remove</button></div></li>`).join("")}</ul>`
     :`<p class="li-m">${users.length?"No students in this batch.":"No students yet. Add the first one above."}</p>`}
     <p class="li-m">To see how each student is doing, open the <a class="link" href="#progress">Progress</a> tab.</p></section>`
   :`
@@ -2046,6 +2176,8 @@ function liveHome(root){
       catch(err){toast(err.message)}finally{b.disabled=false;b.textContent=t}};
     root.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again to delete";return}
       try{await liveApi("/classes?id="+encodeURIComponent(b.dataset.del),{method:"DELETE"});LV.classes=(LV.classes||[]).filter(c=>c.id!==b.dataset.del);toast("Class deleted");render()}catch(err){toast(err.message)}});
+    root.querySelectorAll("[data-parent]").forEach(b=>b.onclick=async()=>{b.disabled=true;b.textContent="Adding…";
+      try{const a=(await liveApi("/users",{method:"POST",body:{action:"addParent",username:b.dataset.parent}})).accounts;LV.accounts=a;LV.users=[...(LV.users||[]),...a.map(x=>({username:x.username,name:x.name,role:x.role,child:x.child,batch:(x.batch||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""),batchName:x.batch}))];liveHome(root);window.scrollTo(0,0)}catch(err){toast(err.message);b.disabled=false;b.textContent="Add parent login"}});
     root.querySelectorAll("[data-reset]").forEach(b=>b.onclick=async()=>{if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again";return}
       try{LV.accounts=[await liveApi("/users",{method:"POST",body:{action:"reset",username:b.dataset.reset}})];liveHome(root);window.scrollTo(0,0)}catch(err){toast(err.message)}});
     root.querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again to remove";return}
@@ -2216,19 +2348,21 @@ function afterOpening(){
   document.querySelectorAll("[data-line]").forEach(b=>b.onclick=()=>{OPJUMP=OPL.guide.lines[+b.dataset.line].from||0;location.hash="opening?id="+OPL.guide.id+"&l="+b.dataset.line});
   opBind(document.querySelector(".op-play"));
 }
-const VIEWS={plevel:[vPlevel,afterPlevel],classic:[vClassic,afterClassic],practice:[vPractice,afterPractice],drill:[vDrill,afterDrill],live:[vLive,afterLive],home:[vHome,afterHome],puzzles:[vPuzzles,afterPuzzles],tests:[vTests,afterTests],progress:[vProgress,afterProgress],openings:[vOpenings,afterOpenings],opening:[vOpening,afterOpening],ofam:[vOfam,afterOfam],theme:[vTheme,afterTheme]};
+const VIEWS={plevel:[vPlevel,afterPlevel],classic:[vClassic,afterClassic],practice:[vPractice,afterPractice],drill:[vDrill,afterDrill],live:[vLive,afterLive],home:[vHome,afterHome],puzzles:[vPuzzles,afterPuzzles],tests:[vTests,afterTests],progress:[vProgress,afterProgress],openings:[vOpenings,afterOpenings],opening:[vOpening,afterOpening],ofam:[vOfam,afterOfam],theme:[vTheme,afterTheme],wdrill:[vWdrill,afterPlevel]};
 function route(){const h=(location.hash||"#home").slice(1).split("?")[0];return VIEWS[h]?h:"home"}
 function render(){
   document.body.classList.toggle("gated",AUTH.state!=="in"&&AUTH.state!=="guest");renderWho();
   if(AUTH.state!=="in"&&AUTH.state!=="guest"){$("#app").innerHTML=authView();bindAuth();return}
   if(!HAS_CHESS){$("#app").innerHTML=`<div class="card"><h2>The chess engine didn't load</h2><p class="li-m" style="margin-top:8px">Check your connection and reload the page.</p></div>`;return}
-  document.body.classList.toggle("demo",isDemo());
+  document.body.classList.toggle("demo",isDemo());document.body.classList.toggle("parentv",isParent());
   let r=route();
+  if(isParent()&&r!=="live"&&r!=="progress"){location.replace("#progress");return}  // a parent sees only their child's progress and the class schedule
+  if(r!=="plevel"&&r!=="wdrill")atRecord();                                      // leaving a puzzle after a wrong move counts as a failed attempt
   if(isDemo()&&r!=="live"){if(r==="home"){location.replace("#live");return}document.body.dataset.route=r;$("#app").innerHTML=vLocked();
     document.querySelectorAll("#tabs a").forEach(x=>x.removeAttribute("aria-current"));$("#lkGo").onclick=()=>location.hash="live";return}
   document.body.dataset.route=r;
   const [v,a]=VIEWS[r];$("#app").innerHTML=v();a&&a();
-  const tab=(r==="opening"||r==="ofam")?"openings":r==="drill"?"practice":(r==="plevel"||r==="classic"||r==="theme")?"puzzles":r;
+  const tab=(r==="opening"||r==="ofam")?"openings":r==="drill"?"practice":(r==="plevel"||r==="classic"||r==="theme"||r==="wdrill")?"puzzles":r;
   document.querySelectorAll("#tabs a").forEach(x=>{if(x.getAttribute("href")==="#"+tab)x.setAttribute("aria-current","page");else x.removeAttribute("aria-current")});
   document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>location.hash=b.dataset.go);
 }

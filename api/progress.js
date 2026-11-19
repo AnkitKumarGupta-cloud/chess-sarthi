@@ -49,10 +49,14 @@ export default handler(async ({ req, body }) => {
       const [vals, seen] = await Promise.all([kv("MGET", ...users.map((u) => "ps:" + u.username)), seenTimes(users.map((u) => u.username))]);
       return { students: users.map((u, i) => { const p = parse(vals[i]); return { ...u, summary: p ? p.summary : null, at: p ? p.at : null, seen: seen[i] }; }) };
     }
-    return { progress: parse(await kv("GET", "p:" + me.id)) };
+    // reset = when a parent or the teacher erased this child's data (ms). The phone clears its own copy when it sees a newer one.
+    const [p, reset] = await Promise.all([kv("GET", "p:" + me.id), kv("GET", "reset:" + me.id)]);
+    return { progress: parse(p), reset: +reset > 0 ? +reset : null };
   }
   if (req.method !== "POST") throw new HttpError(405, "Use GET or POST.");
   if (me.role !== "student") throw new HttpError(403, "Only students' progress is saved.");
+  // A phone that has not yet seen the latest "erase" (resetAck older than reset:) must not put the old data back.
+  if ((+(await kv("GET", "reset:" + me.id)) || 0) > (+body.resetAck || 0)) throw new HttpError(409, "Your saved progress was erased by your parent or teacher.", "reset");
   const src = body.state && typeof body.state === "object" ? body.state : null;
   if (!src) throw new HttpError(400, "No progress was sent.");
   const state = {}; for (const k of STATE_KEYS) if (src[k] !== undefined) state[k] = src[k];

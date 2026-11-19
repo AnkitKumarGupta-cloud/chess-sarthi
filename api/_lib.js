@@ -97,7 +97,7 @@ function sameSecret(a, b) {
   const x = crypto.createHash("sha256").update(String(a || "")).digest(), y = crypto.createHash("sha256").update(String(b || "")).digest();
   return crypto.timingSafeEqual(x, y);
 }
-export const publicUser = (u) => ({ username: u.username, name: u.name, role: u.role, batch: u.batch || null, batchName: u.batchName || null });
+export const publicUser = (u) => ({ username: u.username, name: u.name, role: u.role, batch: u.batch || null, batchName: u.batchName || null, ...(u.role === "parent" && u.child ? { child: u.child } : {}) }); // a parent account is linked to exactly one child (u.child = the student's username)
 export const TEACHER = { username: "teacher", name: "Teacher", role: "teacher", batch: null, batchName: null };
 // One shared, permanent demo login for trial students (password: the DEMO_PASSWORD setting).
 // It can join any class; everything else in the app is locked for it.
