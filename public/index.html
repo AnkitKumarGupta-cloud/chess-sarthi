@@ -804,6 +804,31 @@ body.parentv #tabs a:not([href="#live"]):not([href="#progress"]){display:none}
 .par-ok{font-size:.78rem;font-weight:700}.par-ok.yes{color:var(--good)}.par-ok.no{color:var(--accent)}
 .par-ask{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:var(--surface-2)}
 .par-ask p{margin:0}
+/* Game doctor (Phase 3) */
+.doc{max-width:640px;margin-inline:auto;width:100%}
+.doc textarea{width:100%;min-height:120px;resize:vertical;font:inherit;font-size:.95rem;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.dc-sd{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.dc-sd .seg,.dc-tg{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px}
+.dc-sd .seg{min-width:200px}
+.dc-tg{grid-template-columns:1fr 1fr 1fr}
+.dc-sd .seg button,.dc-tg button{padding:8px 4px;border-radius:7px;font-size:.82rem;font-weight:700;color:var(--muted);background:none;border:0;min-height:40px;overflow-wrap:anywhere}
+.dc-sd .seg button[aria-pressed=true],.dc-tg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.dc-prog{height:10px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.dc-prog i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .3s ease}
+.dc-t{margin:0;font-weight:700}
+.dc-sides{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dc-sides button{display:flex;flex-direction:column;gap:2px;align-items:center;padding:16px 8px;min-height:72px;overflow-wrap:anywhere}
+.dc-m .board{max-width:none}
+.dc-mh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dc-chip{background:var(--accent-soft);color:var(--accent);border-color:transparent;font-weight:700}
+.dc-x{margin:0;line-height:1.5}
+.dc-note{margin:0;padding:10px 12px;border-radius:12px;background:var(--surface-2)}
+.dc-old{display:flex;flex-direction:column;gap:8px}
+.dc-old button{display:flex;flex-direction:column;gap:2px;align-items:flex-start;text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-height:48px}
+.dc-foot{margin:0;font-size:.8rem}
+.link{background:none;border:0;padding:0;color:var(--accent);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;min-height:32px}
+.t-doc{display:flex;flex-direction:column;gap:4px;text-decoration:none;color:var(--ink);margin-bottom:12px}
+.t-doc.ready{border-color:var(--good)}
 </style>
 
 </head>
@@ -1021,7 +1046,7 @@ function vHome(){
       <div class="row" style="margin-top:auto"><a class="btn big" href="#puzzles">▶ ${lvSolvedCount()?"Continue puzzles":"Start puzzles"}</a></div>
       <div class="tile-art" aria-hidden="true">♞</div>
     </article>
-    ${weakTile()}
+    ${docPill()}${weakTile()}
     <div class="b-pair">
     <article class="tile t-goal">
       <div class="goal">${ring(tx/DAILY_GOAL*100,72,8)}<div class="goal-n"><b class="mono">${Math.min(tx,DAILY_GOAL)}</b><span>/${DAILY_GOAL}</span></div></div>
@@ -1041,6 +1066,7 @@ function vHome(){
       <div class="kpi"><b>${bestTest()??"–"}${bestTest()!=null?`<small>/${TEST_N}</small>`:""}</b><span>Best test</span></div>
     </article>
     <a class="tile t-scan" href="/reader/"><span class="scan-i">${ico("scan")}</span><div><h3>Scan a score sheet</h3><p class="li-m">Photo of your tournament sheet → the game on a board, ready to analyse.</p></div></a>
+    <a class="tile t-scan" href="#doctor"><span class="scan-i">${ico("search")}</span><div><h3>Game doctor</h3><p class="li-m">Paste a game. We find your biggest mistakes and give you puzzles for them.</p></div></a>
   </div><div class="b-col b-side">
     <article class="tile t-rank">
       <div class="rank-g" aria-hidden="true">${rk.cur.g}</div>
@@ -1441,6 +1467,135 @@ function coachHint(p){const l=LVS.hl=Math.min(4,(LVS.hl||0)+1),mv=LVS.moves[LVS.
   else{LVS.hl=4;LVS.hint=from;msg="No more hints. If you are really stuck, press Solution and I will show you why it works."}
   c.msg=msg;c.busy=false;render()}
 
+/* ---------- Game doctor (Phase 3) ----------
+   The child pastes a PGN or a Lichess link. Stockfish (the same Web Worker the rest of the app uses) checks ONLY the child's own moves at
+   depth 12, one position at a time, so puzzles and Sathi keep working while it runs. The finished check (top 3-5 mistakes with tags) is saved
+   to the child's account (api/_games.js) and tagged mistakes also count in the weakness tracker. The same game is never checked twice.
+   The thinking lives in public/doctor/doctor.js (loaded only when this screen is used). */
+let DOC={step:"input",text:"",err:"",game:null,color:"",pick:"",job:null,res:null,list:null,show:{},seen:true,note:"",saved:false,cache:null,cacheId:""};
+let DOCM=null;
+function docMod(){return DOCM||(DOCM=new Promise((res,rej)=>{if(window.GameDoctor)return res(window.GameDoctor);
+  const s=document.createElement("script");s.src="/doctor/doctor.js?v=1";s.onload=()=>res(window.GameDoctor);s.onerror=()=>{DOCM=null;rej(new Error("load"))};document.head.appendChild(s)}))}
+const DOC_ERR={empty:"Paste a game first.",unreadable:"We couldn't read that as a chess game. Paste the whole PGN, or a Lichess game link.",short:"That game is very short. Paste a game with at least 3 moves each.",toolong:"That is too long. Paste just one game.",variant:"Only normal chess works here, not chess variants."};
+function docList(){if(!isStudent()||DOC.list)return;DOC.list=[];liveApi("/games").then(j=>{DOC.list=j.games||[];if(route()==="doctor"&&DOC.step==="input")render()}).catch(()=>{})}
+async function docResolve(txt){const t=txt.trim();
+  if(!/^(https?:\/\/|(www\.)?(lichess\.org|chess\.com)\/)/i.test(t))return t;
+  if(/chess\.com/i.test(t))throw new Error("chess.com doesn't let other websites read its games. On chess.com open your game, tap Share, then PGN, copy it and paste it here.");
+  const m=!/lichess\.org\/(?:training|study|tournament|team|broadcast|analysis|practice|opening|swiss|@|api|coach|learn|puzzle)/i.test(t)&&t.match(/lichess\.org\/(?:game\/export\/|embed\/)?([A-Za-z0-9]{8})/i);
+  if(!m)throw new Error("That doesn't look like a Lichess game link. It should look like lichess.org/AbCdEfGh. Or paste the PGN.");
+  let r;try{r=await fetch(`https://lichess.org/game/export/${m[1]}?clocks=false&evals=false&opening=false`,{headers:{Accept:"application/x-chess-pgn"}})}catch(e){throw new Error("We couldn't reach Lichess. Check your internet, or paste the PGN instead.")}
+  if(!r.ok)throw new Error(r.status===404?"Lichess couldn't find that game. Check the link, or paste the PGN.":"Lichess didn't send the game. Paste the PGN instead.");
+  return r.text()}
+const docTimeout=(p,ms)=>new Promise((res,rej)=>{const t=setTimeout(()=>rej(new Error("engine timeout")),ms);p.then(v=>{clearTimeout(t);res(v)},e=>{clearTimeout(t);rej(e)})});
+function docKill(){try{SF.w&&SF.w.terminate()}catch(e){}SF.w=null;SF.ready=null;SF.busy=Promise.resolve()}   // a stuck engine is restarted on the next ask
+async function docGo(){
+  DOC.text=($("#dcText")||{}).value||DOC.text;DOC.err="";DOC.note="";
+  const b=$("#dcGo");if(b){b.disabled=true;b.textContent="Reading…"}
+  let D;try{D=await docMod()}catch(e){DOC.err="We couldn't load the game doctor. Check your internet and try again.";return render()}
+  let txt;try{txt=await docResolve(DOC.text)}catch(e){DOC.err=e.message;return render()}
+  const g=D.prepare(Chess,txt);if(g.error){DOC.err=DOC_ERR[g.error]||DOC_ERR.unreadable;return render()}
+  DOC.game=g;DOC.color=DOC.pick||D.guessSide(g.headers,AUTH&&AUTH.user?AUTH.user.name:"")||"";
+  if(!DOC.color){DOC.step="side";return render()}
+  docCheck(12)}
+function docCheck(depth){
+  const g=DOC.game,D=window.GameDoctor,color=DOC.color,id=D.gameId(g,color);
+  const old=(DOC.list||[]).find(x=>x.id===id);
+  if(old){DOC.res=old;DOC.step="result";DOC.show={};DOC.saved=true;DOC.note="You already checked this game. Here are the saved results.";return render()}
+  if(DOC.cacheId!==id){DOC.cache=new Map();DOC.cacheId=id}
+  const cache=DOC.cache,job=DOC.job={running:true,i:0,total:g.moves.filter(m=>m.color===color).length,depth,cancel:false,asks:0,ms:0,slow:false};
+  DOC.step="run";DOC.seen=false;DOC.err="";render();
+  const ask=async fen=>{const k=fen+"|"+depth;if(cache.has(k))return cache.get(k);const t0=Date.now();let r;
+    try{r=await docTimeout(sfAsk(fen,{depth}),depth>8?30000:15000)}catch(e){docKill();throw e}
+    cache.set(k,r);job.asks++;job.ms+=Date.now()-t0;
+    if(job.asks>=4&&job.ms/job.asks>2500&&depth>8&&!job.slow){job.slow=true;docTick()}return r};
+  D.analyse(Chess,g,color,ask,{progress:(i,n)=>{job.i=i;job.total=n;docTick()},cancel:()=>job.cancel}).then(async out=>{
+    job.running=false;if(DOC.job!==job)return;
+    if(out.cancelled){DOC.step="input";if(route()==="doctor")render();return}
+    const res={id,white:g.headers.white,black:g.headers.black,date:g.headers.date,result:g.headers.result,color,checked:out.checked,depth,mist:out.mistakes};
+    DOC.res=res;DOC.show={};DOC.step="result";DOC.saved=false;DOC.note="";
+    if(isStudent()&&S.owner===AUTH.user.username){
+      try{await liveApi("/games",{method:"POST",body:{game:res,d:dayKey(),resetAck:S.resetAck||0}});DOC.saved=true;DOC.list=[res].concat(DOC.list||[]);AT=null;ATP=null}
+      catch(e){if(e&&e.code==="reset")progPull()}}
+    if(route()==="doctor"){DOC.seen=true;render()}else{toast("Your game check is ready");if(route()==="home")render()}
+  }).catch(e=>{job.running=false;if(DOC.job!==job)return;DOC.step="fail";DOC.err=/timeout/.test(String(e&&e.message))?"This phone took too long to check a move.":"The chess engine stopped.";if(route()==="doctor"||route()==="home")render()})}
+function docTick(){const j=DOC.job;if(!j)return;
+  const pt=$("#dcPillT");if(pt)pt.textContent=`Checking move ${Math.min(j.i+1,j.total)} of ${j.total}`;
+  if(route()!=="doctor")return;
+  const b=$("#dcBar"),t=$("#dcTxt"),sl=$("#dcSlow");
+  if(b){const pct=Math.round(j.i/Math.max(1,j.total)*100);b.style.width=pct+"%";if(b.parentNode)b.parentNode.setAttribute("aria-valuenow",pct)}
+  if(t)t.textContent=`Checking move ${Math.min(j.i+1,j.total)} of ${j.total}`;
+  if(sl)sl.hidden=!j.slow}
+const docRunning=()=>DOC.job&&DOC.job.running&&DOC.step==="run";
+function docPill(){if(!isStudent())return "";
+  if(docRunning())return `<a class="tile t-doc" href="#doctor"><span class="eyebrow">Game doctor</span><b id="dcPillT">Checking move ${Math.min(DOC.job.i+1,DOC.job.total)} of ${DOC.job.total}</b><span class="li-m">Tap to see it</span></a>`;
+  if(DOC.step==="result"&&!DOC.seen)return `<a class="tile t-doc ready" href="#doctor"><span class="eyebrow">Game doctor</span><b>Your game check is ready</b><span class="li-m">${DOC.res.mist.length?`${DOC.res.mist.length} move${DOC.res.mist.length>1?"s":""} to learn from`:"No big mistakes"}</span></a>`;
+  return ""}
+const docFoot=()=>`<p class="li-m dc-foot">Your moves are checked by <b>Stockfish</b>, free software under the GPLv3 licence. <a href="/about/licenses.html" target="_blank" rel="noopener">Licence and source code</a></p>`;
+function vDoctor(){
+  docList();
+  const back=`<a class="ds-back" href="#home">← <span>Back</span></a>`;
+  if(DOC.step==="run"&&DOC.job){const j=DOC.job,pct=Math.round(j.i/Math.max(1,j.total)*100);
+    return `<section class="stack view doc">${back}<div><div class="eyebrow">Game doctor</div><h1>Checking your game</h1></div>
+    <div class="card stack"><div class="dc-prog" role="progressbar" aria-label="Game check progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i id="dcBar" style="width:${pct}%"></i></div>
+      <p class="dc-t" id="dcTxt">Checking move ${Math.min(j.i+1,j.total)} of ${j.total}</p>
+      <p class="li-m">This happens on your phone. You can use the rest of the app while it works. We will tell you when it is ready.</p>
+      <p class="li-m" id="dcSlow" aria-live="polite"${j.slow?"":" hidden"}>This phone is a bit slow. <button class="link" id="dcQuick">Use a quicker check</button></p>
+      <div class="row"><button class="btn ghost" id="dcCancel">Cancel</button></div></div>${docFoot()}</section>`}
+  if(DOC.step==="fail")return `<section class="stack view doc">${back}<div><div class="eyebrow">Game doctor</div><h1>We couldn't finish</h1></div>
+    <div class="card stack"><p>${esc(DOC.err||"Something went wrong.")}</p><p class="li-m">Your phone may be busy or low on memory. A quicker check looks less deeply but still finds the big mistakes. What was already checked is kept.</p>
+      <div class="row"><button class="btn" id="dcRetry">Try a quicker check</button><button class="btn ghost" id="dcAgain">Start over</button></div></div>${docFoot()}</section>`;
+  if(DOC.step==="side"&&DOC.game){const h=DOC.game.headers;
+    return `<section class="stack view doc">${back}<div><div class="eyebrow">Game doctor</div><h1>Which side were you?</h1></div>
+    <div class="card stack"><div class="dc-sides"><button class="btn ghost" data-pick="w"><b>White</b><span class="li-m">${esc(h.white||"")}</span></button><button class="btn ghost" data-pick="b"><b>Black</b><span class="li-m">${esc(h.black||"")}</span></button></div></div></section>`}
+  if(DOC.step==="result"&&DOC.res){
+    if(!window.GameDoctor){docMod().then(()=>route()==="doctor"&&render()).catch(()=>{});return skel("cards")}
+    if(!TCH&&!TCHFAIL)tchLoad().then(()=>route()==="doctor"&&render()).catch(()=>{});
+    if(!LVD&&!_wLv){_wLv=true;lvLoad().then(()=>{_wLv=false;if(route()==="doctor")render()}).catch(()=>{_wLv=false})}
+    const D=window.GameDoctor,r=DOC.res,me=r.color==="w"?r.white:r.black,opp=(r.color==="w"?r.black:r.white)||"your opponent";
+    return `<section class="stack view doc">${back}<div><div class="eyebrow">Game check</div><h1>${esc(r.white||"White")} vs ${esc(r.black||"Black")}</h1>
+      <p class="li-m">You played ${r.color==="w"?"White":"Black"}${r.date?" · "+esc(r.date):""} · ${r.checked} of your moves checked</p></div>
+      ${DOC.note?`<p class="dc-note">${esc(DOC.note)}</p>`:""}
+      <article class="card stack"><h2 class="par-h">${r.mist.length?`${r.mist.length} move${r.mist.length>1?"s":""} to learn from`:"No big mistakes. Nice game!"}</h2>
+        <p class="li-m">${r.mist.length?"Biggest first. Tap the buttons under a board to see your move and the better move. The tags are our best guess from the computer's move, so they say \"looks like\".":"The computer found nothing that lost a lot. Keep playing and check another game."}</p>
+        ${isStudent()?`<p class="li-m">${DOC.saved?"Saved. These also count in your practice, so you will see them on your Home screen.":"Not saved yet."}</p>`:`<p class="li-m">Log in as a student to save game checks.</p>`}</article>
+      ${r.mist.map((m,i)=>{const ex=D.explain(m,opp),t=m.tag,th=t&&tchTh(t.id),drill=t&&isStudent()&&drillCount(t.id)>=5;
+        return `<article class="card stack dc-m" data-i="${i}"><div class="dc-mh"><span class="pill">Move ${m.no}</span>${ex.chip?`<span class="pill dc-chip">${esc(ex.chip)}</span>`:""}<span class="li-m">cost ${esc(D.pawns(m.loss))}</span></div>
+          <div class="board dc-board" id="dcB${i}" role="img" aria-label="Position before your move ${esc(m.san)}"></div>
+          <div class="dc-tg" role="group" aria-label="Board view"><button type="button" data-v="pos" aria-pressed="true">Before</button><button type="button" data-v="mine" aria-pressed="false">You: ${esc(m.san)}</button><button type="button" data-v="best" aria-pressed="false">Better: ${esc(m.best.san)}</button></div>
+          <p class="dc-x">${esc(ex.text)}</p>
+          ${t&&(th&&th.steps&&th.ex||drill)?`<div class="row">${th&&th.steps&&th.ex?`<a class="btn ghost" href="#theme?t=${esc(t.id)}">See the lesson</a>`:""}${drill?`<a class="btn" href="#wdrill?t=${esc(t.id)}">Practise 5 puzzles</a>`:""}</div>`:""}</article>`}).join("")}
+      <div class="row"><button class="btn" id="dcNew">Check another game</button></div>${docFoot()}</section>`}
+  const own=isStudent()?"":`<p class="li-m">You can try it without logging in. Log in as a student to keep your game checks.</p>`;
+  return `<section class="stack view doc">${back}<div><div class="eyebrow">Game doctor</div><h1>Check your game</h1>
+    <p class="li-m">Paste a game and we find your biggest mistakes, show the better move, and give you puzzles to practise. The checking happens on your phone.</p></div>
+    <div class="card stack"><label class="eyebrow" for="dcText">Game (PGN or Lichess link)</label>
+      <textarea id="dcText" rows="6" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Paste a PGN, or a link like lichess.org/AbCdEfGh">${esc(DOC.text)}</textarea>
+      <div class="dc-sd"><span class="li-m">I played</span><div class="seg" role="group" aria-label="I played"><button type="button" data-side="w" aria-pressed="${DOC.pick==="w"}">White</button><button type="button" data-side="b" aria-pressed="${DOC.pick==="b"}">Black</button></div></div>
+      ${DOC.err?`<p class="feedback no" role="alert">${esc(DOC.err)}</p>`:""}
+      <button class="btn" id="dcGo">Check my game</button>
+      <p class="li-m">Using chess.com? Open the game, tap Share, then PGN, copy it and paste it here.</p>${own}</div>
+    ${DOC.list&&DOC.list.length?`<article class="card stack"><h2 class="par-h">Games you checked</h2><div class="dc-old">${DOC.list.map(g=>`<button type="button" data-g="${esc(g.id)}"><b>${esc(g.white||"White")} vs ${esc(g.black||"Black")}</b><span class="li-m">${g.mist.length?`${g.mist.length} to learn`:"No big mistakes"}${g.date?" · "+esc(g.date):""}</span></button>`).join("")}</div></article>`:""}
+    ${docFoot()}</section>`}
+function docDraw(i){const r=DOC.res,m=r&&r.mist[i],el=$("#dcB"+i);if(!m||!el)return;
+  const v=DOC.show[i]||"pos";let fen=m.fen,hi=[],bad=[],anim;
+  if(v!=="pos"){const u=v==="mine"?m.uci:m.best.uci,g=new Chess(m.fen);g.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]||undefined});fen=g.fen();hi=[u.slice(0,2),u.slice(2,4)];anim=hi;
+    if(v==="mine"&&m.tag&&m.tag.id==="hangingPiece"&&m.tag.sq)bad=[m.tag.sq]}
+  drawBoard(el,fen,{flip:m.color==="b",hi,bad,anim});
+  const card=el.closest(".dc-m");if(card)card.querySelectorAll(".dc-tg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===v)))}
+function afterDoctor(){
+  const ta=$("#dcText");if(ta)ta.oninput=()=>{DOC.text=ta.value};
+  document.querySelectorAll("[data-side]").forEach(b=>b.onclick=()=>{DOC.pick=DOC.pick===b.dataset.side?"":b.dataset.side;document.querySelectorAll("[data-side]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.side===DOC.pick)))});
+  const go=$("#dcGo");if(go)go.onclick=docGo;
+  document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{DOC.color=b.dataset.pick;docCheck(12)});
+  const c=$("#dcCancel");if(c)c.onclick=()=>{if(DOC.job)DOC.job.cancel=true;DOC.step="input";render()};
+  const q=$("#dcQuick");if(q)q.onclick=()=>{if(DOC.job)DOC.job.cancel=true;docCheck(8)};
+  const rt=$("#dcRetry");if(rt)rt.onclick=()=>docCheck(8);
+  const ag=$("#dcAgain");if(ag)ag.onclick=()=>{DOC.step="input";render()};
+  const nw=$("#dcNew");if(nw)nw.onclick=()=>{DOC.step="input";DOC.text="";DOC.res=null;DOC.err="";DOC.note="";DOC.game=null;DOC.pick="";render();window.scrollTo(0,0)};
+  document.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const g=(DOC.list||[]).find(x=>x.id===b.dataset.g);if(g){DOC.res=g;DOC.step="result";DOC.show={};DOC.saved=true;DOC.note="";render();window.scrollTo(0,0)}});
+  if(DOC.step==="result"&&DOC.res&&window.GameDoctor){DOC.res.mist.forEach((m,i)=>docDraw(i));
+    document.querySelectorAll(".dc-tg button").forEach(b=>b.onclick=()=>{const i=+b.closest(".dc-m").dataset.i;DOC.show[i]=b.dataset.v;docDraw(i)})}}
+
 /* ---------- Weakness tracker (Phase 2) ----------
    1. Every puzzle attempt is saved (atRecord -> /api/attempts): puzzle id, themes, solved or failed, seconds. A wrong first move is a
       FAILED attempt even if the second try works, and leaving a puzzle after a wrong move counts too. Attempts wait in S.atq (this phone) until
@@ -1527,6 +1682,7 @@ function vProgressParent(){
       ${st.weak.length?`<ul class="par-weak">${st.weak.map(x=>`<li><div><b>${esc(nm(x.id))}</b><span class="li-m">missed ${x.fails} of ${x.tries}</span></div><div class="par-bar"><i style="width:${Math.round(x.rate*100)}%"></i></div></li>`).join("")}</ul><p class="li-m">${first} sees these on the Home screen with a short lesson and 5 practice puzzles. You don't need to set anything up.</p>`
         :`<p class="li-m">${st.total>=8?"No weak spots right now. Nice work!":`Nothing to show yet. After ${first} has tried a theme 4 times, we can tell what to practise.`}</p>`}</article>
     ${st.recent.length?`<article class="card stack"><h2 class="par-h">Recent puzzles</h2><ul class="par-rec">${st.recent.map(x=>`<li><span class="par-ok ${x.ok?"yes":"no"}">${x.ok?"First try":"Missed"}</span><span>${esc(nm(x.themes[0]))}</span><span class="li-m">${x.secs}s</span></li>`).join("")}</ul></article>`:""}
+    ${d.games?`<article class="card stack"><h2 class="par-h">Game doctor</h2><p class="li-m">${first} has checked ${d.games} game${d.games>1?"s":""}. The mistakes found are part of the practice above.</p></article>`:""}
     <article class="card stack"><h2 class="par-h">Privacy</h2><p class="li-m">Only you and the teacher can see ${first}'s progress. Nothing is shared publicly.</p>
       ${PAR.ask?`<div class="par-ask" role="alertdialog" aria-label="Erase data"><p><b>Erase all of ${first}'s progress and puzzle history?</b></p><p class="li-m">This cannot be undone. The login stays and ${first} starts fresh.</p><div class="row"><button class="btn" id="parYes">Yes, erase</button><button class="btn ghost" id="parNo">Cancel</button></div></div>`
         :`<button class="btn ghost" id="parErase">Erase ${first}'s data</button>`}</article></section>`}
@@ -1988,7 +2144,7 @@ async function progPull(){if(!isStudent())return;const me=AUTH.user.username;
   if(S.owner&&S.owner!==me){PROG_KEYS.forEach(k=>delete S[k]);S.puzzles={};S.tests=[];S.practice={}}
   let server=null,reset=0;try{const j=await liveApi("/progress");server=j.progress;reset=j.reset||0}catch(e){}
   // A parent or the teacher erased this child's data: clear what is on this phone too (once), so it cannot come back
-  if(reset>(S.resetAck||0)){PROG_KEYS.forEach(k=>delete S[k]);S.puzzles={};S.tests=[];S.practice={};S.atq=[];S.dr=null;DRILL=null;LVS=null;AT=null;S.resetAck=reset;S.owner=me}
+  if(reset>(S.resetAck||0)){PROG_KEYS.forEach(k=>delete S[k]);S.puzzles={};S.tests=[];S.practice={};S.atq=[];S.dr=null;DRILL=null;LVS=null;AT=null;if(DOC.job)DOC.job.cancel=true;DOC={step:"input",text:"",err:"",game:null,color:"",pick:"",job:null,res:null,list:null,show:{},seen:true,note:"",saved:false,cache:null,cacheId:""};S.resetAck=reset;S.owner=me}
   const local=S.owner===me||!S.owner?progState():{};
   Object.assign(S,progMerge(local,server&&server.state));S.owner=me;save();progPush();render()}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"&&progT)progPush()});
@@ -2034,10 +2190,10 @@ function renderWho(){
   w.innerHTML=`<button class="chipbtn" id="whoBtn" aria-haspopup="menu" aria-expanded="false"><span class="avatar" aria-hidden="true">${esc(u.name.trim()[0]||"?").toUpperCase()}</span><span class="whoname">${esc(u.name.split(" ")[0])}</span></button>
     <div class="menu" id="whoMenu" role="menu" hidden><div class="menu-h"><b>${esc(u.name)}</b><span class="li-m">${[ROLE_NAME[u.role]!==u.name?ROLE_NAME[u.role]:"",u.batchName?esc(u.batchName):"",u.username?"@"+esc(u.username):""].filter(Boolean).join(" · ")}</span></div>
     <div class="menu-theme" role="group" aria-label="Theme"><span class="li-m">Theme</span><div class="seg">${[["auto","Auto"],["light","Light"],["dark","Dark"]].map(([k,l])=>`<button type="button" data-theme-pick="${k}" aria-pressed="${themeGet()===k}">${l}</button>`).join("")}</div></div>
-    ${u.role==="teacher"||u.role==="demo"?"":`<button role="menuitem" id="whoPw">Change password</button>`}<button role="menuitem" id="whoOut">Sign out</button></div>`;
+    ${u.role==="teacher"||u.role==="demo"?"":`<button role="menuitem" id="whoPw">Change password</button>`}<button role="menuitem" id="whoLic">Licences and source code</button><button role="menuitem" id="whoOut">Sign out</button></div>`;
   const btn=$("#whoBtn"),menu=$("#whoMenu");
   btn.onclick=e=>{e.stopPropagation();menu.hidden=!menu.hidden;btn.setAttribute("aria-expanded",!menu.hidden)};
-  $("#whoOut").onclick=signOut;
+  $("#whoOut").onclick=signOut;$("#whoLic").onclick=()=>window.open("/about/licenses.html","_blank","noopener");
   menu.onclick=e=>e.stopPropagation();
   menu.querySelectorAll("[data-theme-pick]").forEach(b=>b.onclick=()=>{themeSet(b.dataset.themePick);menu.querySelectorAll("[data-theme-pick]").forEach(x=>x.setAttribute("aria-pressed",x===b))});
   const pw=$("#whoPw");if(pw)pw.onclick=()=>{menu.hidden=true;openPwDialog()};
@@ -2348,7 +2504,7 @@ function afterOpening(){
   document.querySelectorAll("[data-line]").forEach(b=>b.onclick=()=>{OPJUMP=OPL.guide.lines[+b.dataset.line].from||0;location.hash="opening?id="+OPL.guide.id+"&l="+b.dataset.line});
   opBind(document.querySelector(".op-play"));
 }
-const VIEWS={plevel:[vPlevel,afterPlevel],classic:[vClassic,afterClassic],practice:[vPractice,afterPractice],drill:[vDrill,afterDrill],live:[vLive,afterLive],home:[vHome,afterHome],puzzles:[vPuzzles,afterPuzzles],tests:[vTests,afterTests],progress:[vProgress,afterProgress],openings:[vOpenings,afterOpenings],opening:[vOpening,afterOpening],ofam:[vOfam,afterOfam],theme:[vTheme,afterTheme],wdrill:[vWdrill,afterPlevel]};
+const VIEWS={plevel:[vPlevel,afterPlevel],classic:[vClassic,afterClassic],practice:[vPractice,afterPractice],drill:[vDrill,afterDrill],live:[vLive,afterLive],home:[vHome,afterHome],puzzles:[vPuzzles,afterPuzzles],tests:[vTests,afterTests],progress:[vProgress,afterProgress],openings:[vOpenings,afterOpenings],opening:[vOpening,afterOpening],ofam:[vOfam,afterOfam],theme:[vTheme,afterTheme],wdrill:[vWdrill,afterPlevel],doctor:[vDoctor,afterDoctor]};
 function route(){const h=(location.hash||"#home").slice(1).split("?")[0];return VIEWS[h]?h:"home"}
 function render(){
   document.body.classList.toggle("gated",AUTH.state!=="in"&&AUTH.state!=="guest");renderWho();
@@ -2362,7 +2518,7 @@ function render(){
     document.querySelectorAll("#tabs a").forEach(x=>x.removeAttribute("aria-current"));$("#lkGo").onclick=()=>location.hash="live";return}
   document.body.dataset.route=r;
   const [v,a]=VIEWS[r];$("#app").innerHTML=v();a&&a();
-  const tab=(r==="opening"||r==="ofam")?"openings":r==="drill"?"practice":(r==="plevel"||r==="classic"||r==="theme"||r==="wdrill")?"puzzles":r;
+  const tab=(r==="opening"||r==="ofam")?"openings":r==="drill"?"practice":(r==="plevel"||r==="classic"||r==="theme"||r==="wdrill"||r==="doctor")?"puzzles":r;
   document.querySelectorAll("#tabs a").forEach(x=>{if(x.getAttribute("href")==="#"+tab)x.setAttribute("aria-current","page");else x.removeAttribute("aria-current")});
   document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>location.hash=b.dataset.go);
 }

@@ -8,11 +8,11 @@ import { addAttempts, parseRecord, weakStats } from "./_weak.js";
 //  GET    (teacher) ?student=<username>   -> the same, for that student
 //  DELETE (parent of the child, or teacher)  ?student=<username> -> erases the child's attempts and saved progress
 //         (the account stays; the child's phone clears itself the next time it signs in, see "reset:" below)
-// Redis keys: at:<username> = { v, seed, list } (see _weak.js) · reset:<username> = when the data was erased (ms)
+// Redis keys: at:<username> = { v, seed, list } (see _weak.js) · g:<username> = checked games (see _games.js) · reset:<username> = when the data was erased (ms)
 const parse = (s) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
 
 // Whose data is this call about, and is the caller allowed to see it?
-async function whose(me, query) {
+export async function whose(me, query) {
   const asked = normUser(query.student);
   let who;
   if (me.role === "student") who = me.id;
@@ -41,11 +41,11 @@ export default handler(async ({ req, body, query }) => {
   const child = await whose(me, query);
   if (req.method === "DELETE") {
     if (me.role === "student") throw new HttpError(403, "Ask your parent or teacher to erase your data.");
-    await kvPipe([["DEL", "at:" + child.username], ["DEL", "p:" + child.username], ["DEL", "ps:" + child.username], ["SET", "reset:" + child.username, Date.now()]]);
+    await kvPipe([["DEL", "at:" + child.username], ["DEL", "g:" + child.username], ["DEL", "p:" + child.username], ["DEL", "ps:" + child.username], ["SET", "reset:" + child.username, Date.now()]]);
     return { ok: true };
   }
   if (req.method !== "GET") throw new HttpError(405, "Use GET, POST or DELETE.");
-  const [at, ps] = await Promise.all([kv("GET", "at:" + child.username), kv("GET", "ps:" + child.username)]);
+  const [at, ps, gs] = await Promise.all([kv("GET", "at:" + child.username), kv("GET", "ps:" + child.username), kv("GET", "g:" + child.username)]);
   const sum = parse(ps), s = sum && sum.summary ? sum.summary : null;
   return {
     student: { username: child.username, name: child.name, batchName: child.batchName || null },
@@ -53,5 +53,6 @@ export default handler(async ({ req, body, query }) => {
     // Only the safe, small summary the parent needs (no puzzle-by-puzzle history beyond the stats above)
     summary: s ? { xp: s.xp, rank: s.rank, streak: s.streak, puzzlesSolved: s.puzzlesSolved, puzzleRating: s.puzzleRating, lastActive: s.lastActive, week: s.week, bestTest: s.bestTest, tests: s.tests } : null,
     at: sum ? sum.at : null,
+    games: (parse(gs) || { list: [] }).list.length,
   };
 }, { needs: ["base", "db"] });

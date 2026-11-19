@@ -40,7 +40,7 @@ assert.deepEqual(weakStats(r3, "2026-11-19").weak.map((x) => x.id), ["fork"]);
 // ---------- through the API ----------
 const load = async (f) => (await import("../api/" + f + ".js")).default;
 async function call(file, { method = "GET", body, query = {}, auth } = {}) {
-  if (file === "attempts") { file = "progress"; query = { ...query, x: "attempts" }; }   // shares progress.js (vercel.json rewrite)
+  if (file === "attempts" || file === "games") { query = { ...query, x: file }; file = "progress"; }   // shares progress.js (vercel.json rewrite)
   const h = await load(file); let status, out;
   const res = { setHeader() {}, status(s) { status = s; return this; }, json(j) { out = j; } };
   await h({ method, body, query, headers: auth ? { authorization: "Bearer " + auth } : {} }, res);
@@ -111,6 +111,41 @@ assert.equal((await call("me", { auth: P })).status, 401);
 const both = await mk("Ishaan Verma", "Beginners", { withParent: true });
 assert.deepEqual(both.map((a) => a.role), ["student", "parent"]); assert.equal(both[1].child, both[0].username);
 
+
+// ---------- Game doctor: checked games ----------
+const mist = (ply, tag) => ({ ply, no: Math.ceil(ply / 2), color: "w", san: "Nxe5", uci: "f3e5", fen: "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", loss: 320, best: { uci: "f1b5", san: "Bb5" }, reply: "Nxe5", tag });
+const game = (id, mists) => ({ id, white: "Meera", black: "Other", date: "2026.11.18", result: "0-1", color: "w", checked: 24, depth: 12, mist: mists });
+const gid1 = "0123456789abcdef", gid2 = "fedcba9876543210";
+let gr = await call("games", { method: "POST", auth: M, body: { game: game(gid1, [mist(5, { id: "hangingPiece", kind: "moved", pc: "knight", sq: "e5", by: "knight", defended: false }), mist(9, null)]), d: "2026-11-19", resetAck: 0 } });
+assert.equal(gr.saved, true); assert.equal(gr.counted, 1, "only the tagged mistake counts in the weakness tracker");
+gr = await call("games", { method: "POST", auth: M, body: { game: game(gid1, []), resetAck: 0 } });
+assert.equal(gr.saved, false); assert.equal(gr.duplicate, true, "the same game is never saved twice");
+const atRec = JSON.parse(db.get("at:" + meera.username));
+assert.ok(atRec.list.some((a) => a[2] === "hangingPiece" && a[3] === 0), "a tagged game mistake is a missed attempt");
+await call("games", { method: "POST", auth: M, body: { game: game(gid1, [mist(5, { id: "hangingPiece", kind: "moved" })]), resetAck: 0 } });
+assert.equal(JSON.parse(db.get("at:" + meera.username)).list.filter((a) => a[2] === "hangingPiece").length, 1, "and is counted once");
+// bad input is refused; markup and long text are cleaned
+assert.equal((await call("games", { method: "POST", auth: M, body: { game: { id: "nope" } } })).status, 400);
+assert.equal((await call("games", { method: "POST", auth: M, body: {} })).status, 400);
+await call("games", { method: "POST", auth: M, body: { game: { ...game(gid2, [{ ...mist(3, null), fen: "not a fen" }, mist(7, { id: "fork", kind: "missed", pc: "knight<script>", x: "rook", y: "king" })]), white: "<b>" + "x".repeat(80) + "</b>" } } });
+let list = (await call("games", { auth: M })).games;
+assert.equal(list.length, 2); assert.equal(list[0].id, gid2, "newest first"); assert.equal(list[0].mist.length, 1, "a mistake with a bad position is dropped");
+assert.ok(list[0].white.length <= 40 && !list[0].white.includes("<")); assert.equal(list[0].mist[0].tag.pc, "", "a tag word that is not plain letters is dropped");
+// access: a student only sees their own; the parent sees only their child; the teacher needs ?student=
+assert.equal((await call("games", { auth: PM })).games.length, 2, "the parent sees their child's games");
+assert.equal((await call("games", { auth: T })).status, 400); assert.equal((await call("games", { auth: T, query: { student: meera.username } })).games.length, 2);
+assert.equal((await call("games", { auth: PM, query: { student: "someoneelse" } })).status, 403);
+assert.equal((await call("games", { method: "POST", auth: PM, body: { game: game("1111111111111111", []) } })).status, 403, "a parent cannot add games");
+assert.equal((await call("games", { method: "DELETE", auth: M })).status, 403, "a child cannot delete");
+assert.equal((await call("attempts", { auth: PM })).games, 2, "the parent view shows how many games were checked");
+// the parent can delete one game, then everything with the erase button
+assert.equal((await call("games", { method: "DELETE", auth: PM, query: { id: gid1 } })).ok, true);
+assert.deepEqual((await call("games", { auth: M })).games.map((x) => x.id), [gid2]);
+await call("games", { method: "POST", auth: M, body: { game: game(gid1, []) } });
+assert.equal((await call("attempts", { method: "DELETE", auth: PM })).ok, true);
+assert.equal(db.has("g:" + meera.username), false, "erasing a child's data erases their checked games too");
+assert.equal((await call("games", { method: "POST", auth: M, body: { game: game(gid1, []), resetAck: 0 } })).status, 409, "a stale phone cannot save after an erase");
+
 // ---------- migrations ----------
 const { runMigrations } = await import("../migrations/run.mjs");
 const quiet = () => {};
@@ -123,8 +158,8 @@ const before = JSON.stringify([...db.entries()].map(([k, v]) => [k, v instanceof
 await runMigrations({ dry: true, log: quiet });
 assert.equal(JSON.stringify([...db.entries()].map(([k, v]) => [k, v instanceof Set ? [...v] : v])), before, "a dry run changes nothing");
 const ran = await runMigrations({ log: quiet });
-assert.equal(ran.length, 1);
-assert.equal(db.get("schema:version"), "1");
+assert.equal(ran.length, 2);
+assert.equal(db.get("schema:version"), "2");
 assert.deepEqual(JSON.parse(db.get("at:" + old.username)).seed, { fork: [10, 6], pin: [6, 5] }, "old counts become [tries, misses]; a bad theme name is skipped");
 assert.equal(db.get("at:" + meera.username), keep, "an existing record is never overwritten");
 assert.ok(db.has("at:" + both[0].username), "every student gets a record");

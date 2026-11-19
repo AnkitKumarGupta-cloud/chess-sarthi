@@ -9,7 +9,8 @@
     }
   ],
   "rewrites": [
-    { "source": "/api/attempts", "destination": "/api/progress?x=attempts" }
+    { "source": "/api/attempts", "destination": "/api/progress?x=attempts" },
+    { "source": "/api/games", "destination": "/api/progress?x=games" }
   ],
   "headers": [
     {

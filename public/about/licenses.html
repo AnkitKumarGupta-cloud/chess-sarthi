@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Licences and source code · Chess Sathi</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#f7f5f1;--ink:#1c1b1a;--muted:#5f5b55;--line:#e3ded6;--accent:#c4262e;--surface:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#161514;--ink:#f2efea;--muted:#a8a29a;--line:#34312e;--accent:#ff6b6b;--surface:#1f1d1b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:720px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:1.7rem;line-height:1.2;margin:8px 0 4px}h2{font-size:1.1rem;margin:28px 0 6px}
+p,li{margin:6px 0}a{color:var(--accent)}.m{color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-top:12px}
+code{font-size:.9em;overflow-wrap:anywhere}
+ul{padding-left:20px}
+</style></head><body><main>
+<a href="/">← Chess Sathi</a>
+<h1>Licences and source code</h1>
+<p class="m">Chess Sathi uses free and open-source software. This page lists what it uses and where to get the source code.</p>
+
+<h2>Stockfish (chess engine)</h2>
+<div class="card">
+<p>The Game doctor, the Practice tab, puzzle checks and Sathi use <b>Stockfish.js 18</b> (lite, single-threaded), which runs in your browser. It is free software under the <b>GNU General Public License, version 3 (GPLv3)</b>.</p>
+<ul>
+<li>Stockfish.js 18 © 2026 Chess.com, LLC, by Nathan Rugg: <a href="https://github.com/nmrugg/stockfish.js">github.com/nmrugg/stockfish.js</a></li>
+<li>Based on Stockfish © T. Romstad, M. Costalba, J. Kiiski, G. Linscott and other contributors: <a href="https://github.com/official-stockfish/Stockfish">github.com/official-stockfish/Stockfish</a></li>
+<li>Full licence text: <a href="/stockfish/COPYING.txt">GPLv3 (COPYING.txt)</a> · <a href="https://www.gnu.org/licenses/gpl-3.0.html">gnu.org/licenses/gpl-3.0</a></li>
+<li>The engine files we serve are unmodified copies of the official release: <a href="/stockfish/stockfish-18-lite-single.js">stockfish-18-lite-single.js</a> and <a href="/stockfish/stockfish-18-lite-single.wasm">stockfish-18-lite-single.wasm</a>. The source code for exactly this version is in the two repositories above (release “18”).</li>
+</ul>
+<p class="m">Stockfish comes with no warranty. You are free to use, study, share and change it under the GPLv3.</p>
+</div>
+
+<h2>Other software and data</h2>
+<div class="card"><ul>
+<li><b>chess.js</b>: BSD 2-Clause licence</li>
+<li><b>Lichess puzzle database and practice positions</b>: CC0 (public domain), from <a href="https://database.lichess.org/">database.lichess.org</a></li>
+<li><b>Lucide icons</b>: ISC licence</li>
+<li><b>LiveKit client</b> (live classes) and <b>MediaPipe</b> (score-sheet scanner): Apache 2.0 licence</li>
+<li><b>React</b>: MIT licence</li>
+</ul></div>
+<p class="m">Games you paste into the Game doctor are checked on your own device. When the check is finished, the result (the mistakes found, not the whole game) is saved to your Chess Sathi account, and only your parent, your teacher and you can see it.</p>
+</main></body></html>

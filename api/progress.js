@@ -1,5 +1,6 @@
 import { handler, HttpError, whoIs, kv, kvPipe, listUsers, seenTimes } from "./_lib.js";
 import attempts from "./_attempts.js";
+import games from "./_games.js";
 
 // Student progress, saved so the teacher can see it and so it follows the student to any device.
 //  POST  (student)  { state, summary }  -> saves both
@@ -73,7 +74,7 @@ const progressHandler = handler(async ({ req, body }) => {
 
 // Vercel's free plan allows 12 serverless functions, so related endpoints share this one.
 // vercel.json rewrites /api/attempts -> /api/progress?x=attempts (the browser still calls /api/attempts).
-const SUB = { attempts };
+const SUB = { attempts, games };
 export default function (req, res) {
   const x = req.query && req.query.x;
   return x && SUB[x] ? SUB[x](req, res) : progressHandler(req, res);

@@ -30,7 +30,7 @@ export default handler(async ({ req, body, query }) => {
     const u = normUser(query.username);
     const rec = await getUser(u);
     if (!rec) throw new HttpError(404, "That account was not found.");
-    const cmds = [["DEL", "u:" + u], ["SREM", "users", u], ["DEL", "p:" + u], ["DEL", "ps:" + u], ["DEL", "seen:" + u], ["DEL", "at:" + u], ["DEL", "reset:" + u]];
+    const cmds = [["DEL", "u:" + u], ["SREM", "users", u], ["DEL", "p:" + u], ["DEL", "ps:" + u], ["DEL", "seen:" + u], ["DEL", "at:" + u], ["DEL", "g:" + u], ["DEL", "reset:" + u]];
     // A parent login is useless without its child, so it goes too (and takes nothing else: parents hold no data of their own)
     if (rec.role === "student") for (const x of await listUsers()) if (x.role === "parent" && x.child === u) cmds.push(["DEL", "u:" + x.username], ["SREM", "users", x.username], ["DEL", "seen:" + x.username]);
     await kvPipe(cmds);
