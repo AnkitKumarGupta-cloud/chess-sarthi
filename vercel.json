@@ -8,6 +8,9 @@
       "schedule": "30 3 * * *"
     }
   ],
+  "rewrites": [
+    { "source": "/api/attempts", "destination": "/api/progress?x=attempts" }
+  ],
   "headers": [
     {
       "source": "/vendor/(.*)",

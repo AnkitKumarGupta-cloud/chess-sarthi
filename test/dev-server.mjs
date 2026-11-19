@@ -10,7 +10,9 @@ http.createServer(async (req, res) => {
   const u = new URL(req.url, "http://x");
   if (u.pathname.startsWith("/api/")) {
     let raw = ""; for await (const c of req) raw += c;
-    const mod = await import("../api/" + u.pathname.slice(5).replace(/[^a-z]/g, "") + ".js").catch(() => null);
+    let name = u.pathname.slice(5).replace(/[^a-z]/g, "");
+    const sub = ["attempts"].includes(name) ? name : null; if (sub) { name = "progress"; u.searchParams.set("x", sub); }   // same routing as vercel.json
+    const mod = await import("../api/" + name + ".js").catch(() => null);
     if (!mod) { res.writeHead(404, { "Content-Type": "application/json" }); return res.end("{}"); }
     req.body = raw ? JSON.parse(raw) : {}; req.query = Object.fromEntries(u.searchParams);
     res.status = (s) => { res.statusCode = s; return res; }; res.json = (j) => { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(j)); };

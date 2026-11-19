@@ -40,6 +40,7 @@ assert.deepEqual(weakStats(r3, "2026-11-19").weak.map((x) => x.id), ["fork"]);
 // ---------- through the API ----------
 const load = async (f) => (await import("../api/" + f + ".js")).default;
 async function call(file, { method = "GET", body, query = {}, auth } = {}) {
+  if (file === "attempts") { file = "progress"; query = { ...query, x: "attempts" }; }   // shares progress.js (vercel.json rewrite)
   const h = await load(file); let status, out;
   const res = { setHeader() {}, status(s) { status = s; return this; }, json(j) { out = j; } };
   await h({ method, body, query, headers: auth ? { authorization: "Bearer " + auth } : {} }, res);
