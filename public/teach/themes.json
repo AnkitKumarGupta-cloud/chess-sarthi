@@ -1,0 +1,995 @@
+{
+  "v": 1,
+  "note": "Edit the words freely. Keep each line short and kid-friendly. 'rank' decides which theme is shown first when a puzzle has several (lower = first). A theme with 'steps' gets a lesson card; its example position ('ex') is filled in by tools/teach/pick.mjs from real Lichess puzzles.",
+  "check": [
+    {
+      "id": "checks",
+      "title": "Checks",
+      "q": "Can I give check?",
+      "hint": "A check attacks the king. Look at your pieces one by one. Which of them can reach a square that attacks the king?",
+      "tap": "checking moves"
+    },
+    {
+      "id": "captures",
+      "title": "Captures",
+      "q": "Can I capture something, and is it protected?",
+      "hint": "Find enemy pieces you can take. Before you take, ask: can they take me back?",
+      "tap": "pieces you can capture"
+    },
+    {
+      "id": "threats",
+      "title": "Threats",
+      "q": "What is my opponent threatening, and what is my best threat?",
+      "hint": "Pretend it is their turn. What would they do to you? Then ask what you can threaten.",
+      "tap": "pieces in danger"
+    },
+    {
+      "id": "blunder",
+      "title": "Blunder check",
+      "optional": true,
+      "q": "Is my move safe?",
+      "hint": "After you move, can they capture the piece you moved, or something else you forgot about?",
+      "tap": "your move"
+    }
+  ],
+  "themes": {
+    "mateIn1": {
+      "name": "Mate in 1",
+      "rank": 40,
+      "what": "You can checkmate the enemy king on your very next move.",
+      "spot": "Look at every check you can give. Ask: can the king run, block, or capture the checker?",
+      "remember": "Check every check. One of them is mate!",
+      "why": "The king is attacked and has nowhere to go, nothing can block, and nothing can capture the checker. That is checkmate, so the game is over.",
+      "steps": [
+        "List every check you can give.",
+        "For each check, look at the king's escape squares. Are they all covered or blocked?",
+        "Pick the check where nothing can block or capture. That's mate!"
+      ],
+      "ex": {
+        "id": "OL7sW",
+        "rating": 512,
+        "fen": "2r1q2k/1R4pp/p2n4/3P4/3Q2b1/2N3P1/PP4P1/6K1 w - - 3 29",
+        "color": "w",
+        "moves": [
+          "d4g7"
+        ]
+      }
+    },
+    "mateIn2": {
+      "name": "Mate in 2",
+      "rank": 41,
+      "what": "You can force checkmate in two of your moves, whatever your opponent does.",
+      "spot": "Start with checks and with moves that take squares away from the king. Then ask: after their reply, do I have mate?",
+      "remember": "First move squeezes the king. Second move finishes.",
+      "why": "Your first move leaves the king without a good defence, so whatever your opponent plays, you have a checkmate ready.",
+      "steps": [
+        "Look for checks first, even ones that give up a piece.",
+        "After each check, find the king's replies. There are usually only one or two.",
+        "Make sure you have mate after every reply. Then play it!"
+      ],
+      "ex": {
+        "id": "vcmJ6",
+        "rating": 527,
+        "fen": "5q1k/1p4pp/p2p4/3P2P1/3B3P/2N2r1b/PP5Q/4R1K1 b - - 3 33",
+        "color": "b",
+        "moves": [
+          "f3f1",
+          "e1f1",
+          "f8f1"
+        ]
+      }
+    },
+    "mateIn3": {
+      "name": "Mate in 3",
+      "rank": 42,
+      "what": "You can force checkmate in three of your moves.",
+      "spot": "Use checks to push the king where you want it. Think about one forcing move at a time.",
+      "remember": "Keep giving check and the king runs out of room.",
+      "why": "Each of your moves forces a reply, so the king is steered into a trap and mated on your third move.",
+      "steps": [
+        "Find a check (or a big threat) that forces their reply.",
+        "After their reply, look for the next check. The king is being pushed along.",
+        "Keep going until the king has no squares left. That's mate!"
+      ],
+      "ex": {
+        "id": "xAOcT",
+        "rating": 950,
+        "fen": "3Rn2k/4q2p/6p1/3Rb3/8/2P5/PP2QPP1/7K b - - 1 29",
+        "color": "b",
+        "moves": [
+          "e7h4",
+          "h1g1",
+          "h4h2",
+          "g1f1",
+          "h2h1"
+        ]
+      }
+    },
+    "mateIn4": {
+      "name": "Mate in 4",
+      "rank": 43,
+      "what": "A forced checkmate is hiding four moves deep.",
+      "spot": "Look for strong checks and sacrifices that rip open the king's cover. Take it one forcing move at a time.",
+      "remember": "One forcing move at a time.",
+      "why": "Every move forces a reply, so your opponent can never stop the plan, and it ends in checkmate."
+    },
+    "mateIn5": {
+      "name": "Mate in 5 or more",
+      "rank": 44,
+      "what": "A long forced checkmate. It takes five or more moves.",
+      "spot": "Keep your checks and big threats in mind. If every move forces a reply, you are on the right track.",
+      "remember": "Stay forcing, and the king cannot escape.",
+      "why": "Each move forces a reply, so your opponent never gets time to defend, and the king is mated at the end."
+    },
+    "backRankMate": {
+      "name": "Back-rank mate",
+      "rank": 10,
+      "what": "Checkmate on the first row, because the king is trapped behind its own pawns.",
+      "spot": "Look for a king still on its back row with its pawns in front. Can a rook or queen reach that row?",
+      "remember": "Pawns in front, rook behind: mate on the last row.",
+      "why": "The king's own pawns block its escape squares, so a rook or queen check along the back row is checkmate.",
+      "steps": [
+        "Find the enemy king. Is it stuck behind its own pawns?",
+        "Look for a rook or queen that can reach the back row.",
+        "If nothing can block or capture it, give the check. That's mate!"
+      ],
+      "ex": {
+        "id": "FN2Pm",
+        "rating": 505,
+        "fen": "8/1p3Rbk/p1pr2rp/4p2N/2P1P3/6R1/PPP3PP/7K b - - 0 27",
+        "color": "b",
+        "moves": [
+          "d6d1",
+          "f7f1",
+          "d1f1"
+        ]
+      }
+    },
+    "anastasiaMate": {
+      "name": "Anastasia's mate",
+      "rank": 11,
+      "what": "A knight and a rook trap the king against the edge of the board.",
+      "spot": "Look for a king on the side of the board next to its own pawn, with a knight and a rook ready to join in.",
+      "remember": "The knight shuts the doors, the rook gives mate.",
+      "why": "The knight covers the squares the king could run to, the king's own piece blocks the other side, and the rook gives check along the edge.",
+      "steps": [
+        "Find a king at the edge of the board with its own piece next to it.",
+        "Put a knight where it covers the king's escape squares.",
+        "Bring a rook to give check along the edge. That's mate!"
+      ],
+      "ex": {
+        "id": "qkQS3",
+        "rating": 541,
+        "fen": "3rq3/4N1pk/n7/1p6/1pbP1R2/8/PP4PP/6K1 w - - 0 29",
+        "color": "w",
+        "moves": [
+          "f4h4",
+          "e8h5",
+          "h4h5"
+        ]
+      }
+    },
+    "arabianMate": {
+      "name": "Arabian mate",
+      "rank": 12,
+      "what": "A knight and a rook checkmate a king in the corner.",
+      "spot": "Look for a king in the corner. Can a rook check next to it, protected by a knight?",
+      "remember": "Rook next to the king, knight guards the rook.",
+      "why": "The rook checks the cornered king, the knight protects the rook so the king cannot take it, and the king has no other square.",
+      "steps": [
+        "Find a king in the corner of the board.",
+        "Move your knight to a square that guards the square next to the king.",
+        "Put your rook on that square with check. The king can't take it. Mate!"
+      ],
+      "ex": {
+        "id": "CpJca",
+        "rating": 562,
+        "fen": "5r1k/3R4/1pp2Np1/p1b4p/P1B1PK2/1Pr5/8/8 w - - 2 39",
+        "color": "w",
+        "moves": [
+          "d7h7"
+        ]
+      }
+    },
+    "smotheredMate": {
+      "name": "Smothered mate",
+      "rank": 13,
+      "what": "A knight checkmates a king that is surrounded by its own pieces.",
+      "spot": "Look for a king in the corner, boxed in by its own rook and pawns, with a knight that can jump to check.",
+      "remember": "The king is smothered by its own friends!",
+      "why": "The king's own pieces take away every square, and a knight's check cannot be blocked, so it is checkmate.",
+      "steps": [
+        "Find a king with its own pieces crowded around it.",
+        "Look for a knight that can jump to a square giving check.",
+        "A knight check cannot be blocked. If the king cannot move, it's mate!"
+      ],
+      "ex": {
+        "id": "U4ood",
+        "rating": 650,
+        "fen": "r5rk/p2n2bp/2pN2pN/1p2P2q/3P4/5pP1/PP3P1P/2R2RK1 w - - 0 21",
+        "color": "w",
+        "moves": [
+          "h6f7"
+        ]
+      }
+    },
+    "hookMate": {
+      "name": "Hook mate",
+      "rank": 14,
+      "what": "A rook, a knight and a pawn work together to checkmate the king.",
+      "spot": "Look for a rook check on the edge that is protected by a knight, with a pawn covering an escape square.",
+      "remember": "Rook gives mate, knight and pawn lock the doors.",
+      "why": "The rook gives check, the knight guards the rook and covers squares, and a pawn takes away another escape square.",
+      "steps": [
+        "Find a king near the edge with few squares to move.",
+        "Bring a knight (and a pawn) to cover the squares around the king.",
+        "Give check with the rook so the king cannot escape. Mate!"
+      ],
+      "ex": {
+        "id": "428w4",
+        "rating": 2097,
+        "fen": "1r1r3R/2q2p1R/4pkp1/p5N1/P2pPPP1/1p6/1P6/1K6 w - - 9 37",
+        "color": "w",
+        "moves": [
+          "e4e5",
+          "c7e5",
+          "h7f7"
+        ]
+      }
+    },
+    "bodenMate": {
+      "name": "Boden's mate",
+      "rank": 15,
+      "what": "Two bishops on crossing diagonals checkmate a king that is boxed in by its own pieces.",
+      "spot": "Look for a king with its own pieces next to it, and two bishops that can aim at it from different diagonals.",
+      "remember": "Two bishops cross like scissors.",
+      "why": "One bishop gives check, the other covers the squares the king could use, and the king's own pieces block the rest.",
+      "steps": [
+        "Find a king hemmed in by its own pieces.",
+        "Aim one bishop at the king.",
+        "Use the other bishop to give check so the crossing diagonals trap the king. Mate!"
+      ],
+      "ex": {
+        "id": "sIbVc",
+        "rating": 822,
+        "fen": "r3kb2/5p2/b2p2p1/p2Pp1B1/n1p1P3/2P3N1/3K4/3B2R1 w q - 0 31",
+        "color": "w",
+        "moves": [
+          "d1a4",
+          "a6b5",
+          "a4b5"
+        ]
+      }
+    },
+    "doubleBishopMate": {
+      "name": "Two-bishop mate",
+      "rank": 16,
+      "what": "Two bishops side by side checkmate the king on the edge of the board.",
+      "spot": "Look for a king at the edge and two bishops on neighbouring diagonals.",
+      "remember": "Two bishops, side by side, take away the squares.",
+      "why": "One bishop checks and the other covers the escape squares, so the king has nowhere to go.",
+      "steps": [
+        "Find a king on the edge of the board.",
+        "Put your bishops on neighbouring diagonals.",
+        "Give check so the other bishop covers the escape squares. Mate!"
+      ],
+      "ex": {
+        "id": "SrCuu",
+        "rating": 598,
+        "fen": "5k2/p4ppp/8/2p5/3b1P2/8/P1B1b2P/1R5K b - - 2 28",
+        "color": "b",
+        "moves": [
+          "e2f3"
+        ]
+      }
+    },
+    "dovetailMate": {
+      "name": "Dovetail mate",
+      "rank": 17,
+      "what": "A queen checks the king from right next to it, while the king's own pieces block the squares on both sides.",
+      "spot": "Look for a king with its own pieces beside it. Can your queen reach a square touching the king, with a friend protecting her?",
+      "remember": "The queen touches the king, the king's friends are in the way.",
+      "why": "The queen is protected so the king cannot take her, and its own pieces block the squares beside it.",
+      "steps": [
+        "Find a king boxed in by its own pieces.",
+        "Make sure a piece of yours protects the square next to the king.",
+        "Put the queen there with check. The king can't take her. Mate!"
+      ],
+      "ex": {
+        "id": "RmeOe",
+        "rating": 2271,
+        "fen": "1k4r1/p3N2p/bp5Q/4P3/P7/6P1/1P3PqP/2RKR3 b - - 6 30",
+        "color": "b",
+        "moves": [
+          "g2f3",
+          "d1c2",
+          "f3d3"
+        ]
+      }
+    },
+    "operaMate": {
+      "name": "Opera mate",
+      "rank": 18,
+      "what": "A bishop and a rook checkmate the king on the edge of the board.",
+      "spot": "Look for a king on the edge, a bishop covering escape squares and a rook that can check.",
+      "remember": "The bishop guards the squares, the rook gives mate.",
+      "why": "The bishop takes away the squares the king could run to, and the rook gives check along the edge.",
+      "steps": [
+        "Find a king on the edge of the board.",
+        "Use a bishop to cover the squares next to the king.",
+        "Give check with the rook. Mate!"
+      ],
+      "ex": {
+        "id": "X9HH4",
+        "rating": 506,
+        "fen": "6k1/1p3p2/4pBp1/1p2Pr1p/r7/P5K1/1P4P1/3R4 w - - 1 32",
+        "color": "w",
+        "moves": [
+          "d1d8",
+          "g8h7",
+          "d8h8"
+        ]
+      }
+    },
+    "epauletteMate": {
+      "name": "Epaulette mate",
+      "rank": 19,
+      "what": "The king's own pieces sit on both sides of it like shoulder pads, and a check from the front is mate.",
+      "spot": "Look for a king with its own pieces on both sides. Can your queen or rook check it from the front?",
+      "remember": "Pieces on both shoulders, check from the front.",
+      "why": "The king's own pieces take away both side squares, so a check from the front has no escape.",
+      "steps": [
+        "Find a king with its own pieces on both sides.",
+        "Look for a queen or rook that can check from in front.",
+        "Make sure the checker is safe. Then play it. Mate!"
+      ],
+      "ex": {
+        "id": "gjUwS",
+        "rating": 596,
+        "fen": "5b2/5kp1/5p2/B3pKn1/1Pp1NNP1/P4r2/1P4R1/8 b - - 18 43",
+        "color": "b",
+        "moves": [
+          "f3f4"
+        ]
+      }
+    },
+    "pillsburysMate": {
+      "name": "Pillsbury's mate",
+      "rank": 20,
+      "what": "A rook and a bishop work together to checkmate the king on the edge.",
+      "spot": "Look for a king on the edge with a bishop aimed at it and a rook ready to give check.",
+      "remember": "The bishop stares, the rook strikes.",
+      "why": "The bishop takes away the king's squares and the rook gives the check, so the king cannot escape."
+    },
+    "fork": {
+      "name": "Fork",
+      "rank": 21,
+      "what": "One piece attacks two or more enemy pieces at the same time.",
+      "spot": "Knights are great at forks. Look for a square where one of your pieces can attack two things that are not well protected.",
+      "remember": "One attacker, two targets. They can only save one!",
+      "why": "Your forking piece attacks two things at once. Your opponent can only save one of them, so you win the other.",
+      "steps": [
+        "Find two enemy pieces that are valuable or not protected.",
+        "Look for one square where a single piece of yours can attack both.",
+        "Check that the square is safe, then jump in!"
+      ],
+      "ex": {
+        "id": "lCOCw",
+        "rating": 582,
+        "fen": "6k1/p1p1qppp/2p1r3/8/N1R5/bP4P1/P2P1P1P/3Q2K1 b - - 5 21",
+        "color": "b",
+        "moves": [
+          "e6e1",
+          "d1e1",
+          "e7e1"
+        ]
+      }
+    },
+    "pin": {
+      "name": "Pin",
+      "rank": 22,
+      "what": "A piece cannot move without exposing a more valuable piece behind it on the same line.",
+      "spot": "Look for bishops, rooks and queens lined up with an enemy piece that has the king or queen behind it.",
+      "remember": "A pinned piece is stuck in the way.",
+      "why": "The pinned piece cannot move without losing something bigger, so you can attack it again and again and win it.",
+      "steps": [
+        "Find a long line (diagonal, file or row) with two enemy pieces on it.",
+        "If the piece behind is worth more, the one in front is pinned.",
+        "Attack the pinned piece again and again until you win it."
+      ],
+      "ex": {
+        "id": "RiAFm",
+        "rating": 815,
+        "fen": "r2qkbnr/p5pp/1pp1P3/3p4/3QP3/8/PPP3PP/RNB2RK1 b kq - 0 11",
+        "color": "b",
+        "moves": [
+          "f8c5",
+          "d4c5",
+          "b6c5"
+        ]
+      }
+    },
+    "skewer": {
+      "name": "Skewer",
+      "rank": 23,
+      "what": "Like a pin, but the other way round: the valuable piece is in front and must move, so you take the piece behind it.",
+      "spot": "Look for a king or queen on the same line as another piece. Attack the big one!",
+      "remember": "The big piece runs away, and you take what was behind.",
+      "why": "Your attack on the bigger piece forces it to move, and then you capture the piece that was hiding behind it.",
+      "steps": [
+        "Find a king or queen on a line with another piece behind it.",
+        "Attack the big piece along that line.",
+        "It has to move, so take the piece that was behind it."
+      ],
+      "ex": {
+        "id": "oCC2p",
+        "rating": 612,
+        "fen": "8/1pr2k2/p6R/2P2pp1/Pb6/4PP1P/5P2/6K1 w - - 0 36",
+        "color": "w",
+        "moves": [
+          "h6h7",
+          "f7e6",
+          "h7c7"
+        ]
+      }
+    },
+    "discoveredAttack": {
+      "name": "Discovered attack",
+      "rank": 24,
+      "what": "You move one piece and uncover an attack from the piece behind it.",
+      "spot": "Look for your bishop, rook or queen hiding behind another of your pieces. The front piece can move with a threat!",
+      "remember": "Move one piece, and two things attack.",
+      "why": "The piece that moved makes its own threat, and the piece behind it now attacks something too. Your opponent cannot answer both.",
+      "steps": [
+        "Find a long-range piece of yours hiding behind another piece of yours.",
+        "See what the hidden piece would attack if the front piece moved.",
+        "Move the front piece with a threat of its own. Two attacks at once!"
+      ],
+      "ex": {
+        "id": "qKNx3",
+        "rating": 637,
+        "fen": "3r2k1/pp3p1p/8/3B1p2/1P2P3/P1r2PP1/7P/3R2K1 w - - 1 26",
+        "color": "w",
+        "moves": [
+          "d5f7",
+          "g8f7",
+          "d1d8"
+        ]
+      }
+    },
+    "discoveredCheck": {
+      "name": "Discovered check",
+      "rank": 25,
+      "what": "You move a piece and uncover a check from the piece behind it.",
+      "spot": "Look for your bishop, rook or queen lined up with the enemy king behind one of your own pieces.",
+      "remember": "Open the line and the king is in check!",
+      "why": "The king must answer the check, so the piece that moved is free to do something big, like capturing a queen.",
+      "steps": [
+        "Find your piece lined up with the enemy king, with one of your own pieces in between.",
+        "Look at where the front piece could go to make a threat.",
+        "Move it! The king must deal with the check, so your threat can't be stopped."
+      ],
+      "ex": {
+        "id": "9eTlj",
+        "rating": 1382,
+        "fen": "r6k/pp3p2/2n1p1rB/3pP3/1b1P3Q/7P/1q3PP1/3R1RK1 w - - 3 23",
+        "color": "w",
+        "moves": [
+          "h6c1",
+          "h8g7",
+          "c1b2"
+        ]
+      }
+    },
+    "doubleCheck": {
+      "name": "Double check",
+      "rank": 26,
+      "what": "Two of your pieces give check at the same time.",
+      "spot": "Look for a discovered check where the piece that moves also gives check.",
+      "remember": "Two checks at once: only the king can move.",
+      "why": "You cannot block or capture two checking pieces at once, so the king must move. That often leads to checkmate.",
+      "steps": [
+        "Look for a discovered check.",
+        "Check if the piece that moves can also give check.",
+        "Play it. Only the king can answer!"
+      ],
+      "ex": {
+        "id": "KxaKh",
+        "rating": 599,
+        "fen": "r2qkb1r/4pppp/p7/1Nnp4/Q7/3B3P/PPP2PP1/R3K2R w KQkq - 1 15",
+        "color": "w",
+        "moves": [
+          "b5c7"
+        ]
+      }
+    },
+    "deflection": {
+      "name": "Deflection",
+      "rank": 27,
+      "what": "You force a defender to leave the job it is doing.",
+      "spot": "Find an enemy piece guarding something important. Can you attack it or offer it something to take?",
+      "remember": "Chase the guard away.",
+      "why": "The guard has to leave its post, so the piece or square it was protecting is free to take.",
+      "steps": [
+        "Find something important that one enemy piece is guarding.",
+        "Think of a way to force that guard to move or to capture something.",
+        "When the guard leaves, strike at what it was protecting."
+      ],
+      "ex": {
+        "id": "I9XQg",
+        "rating": 979,
+        "fen": "8/6k1/p5p1/q4p1p/2Pp4/3B3P/1RKN1PP1/8 b - - 1 41",
+        "color": "b",
+        "moves": [
+          "a5c3",
+          "c2b1",
+          "c3d3"
+        ]
+      }
+    },
+    "attraction": {
+      "name": "Attraction",
+      "rank": 28,
+      "what": "You lure an enemy piece, often the king, onto a square where it can be attacked.",
+      "spot": "Look for a sacrifice that forces the king or queen to capture and land on a bad square.",
+      "remember": "Pull them onto a bad square.",
+      "why": "Your move forces their piece to capture and move to a square where you can attack it or checkmate it.",
+      "steps": [
+        "Offer a piece that the king or queen must take.",
+        "Look at the square where their piece lands.",
+        "Strike at that square with check, a fork or mate."
+      ],
+      "ex": {
+        "id": "e4nFW",
+        "rating": 1386,
+        "fen": "r6r/ppnkp1bp/3p2p1/1Npq1p2/8/8/PP1BQPPP/1R3RK1 w - - 2 20",
+        "color": "w",
+        "moves": [
+          "b5c7",
+          "d7c7",
+          "e2e7"
+        ]
+      }
+    },
+    "sacrifice": {
+      "name": "Sacrifice",
+      "rank": 29,
+      "what": "You give up material on purpose to get something bigger back.",
+      "spot": "Ask: what do I get if they take? Look for check, mate, or winning more than you gave.",
+      "remember": "Give a little, win a lot.",
+      "why": "The piece you give up pulls the enemy out of position or opens a path, and you win more than you lost.",
+      "steps": [
+        "Pick the piece you could give up. Which squares or lines does it open?",
+        "Count what happens if your opponent takes it. Do you get check or a bigger win?",
+        "Only sacrifice if you can see the payoff. Never guess!"
+      ],
+      "ex": {
+        "id": "L8b27",
+        "rating": 1014,
+        "fen": "5r2/3b2k1/1q3p2/p3pPp1/p1BpP3/1Pr3R1/2PQ2P1/2R3K1 w - - 2 31",
+        "color": "w",
+        "moves": [
+          "g3g5",
+          "f6g5",
+          "d2g5"
+        ]
+      }
+    },
+    "hangingPiece": {
+      "name": "Hanging piece",
+      "rank": 30,
+      "what": "A piece that is not protected, so you can take it for free.",
+      "spot": "Before every move ask: which of their pieces has no protector? Which of mine?",
+      "remember": "Loose pieces get lost.",
+      "why": "The piece had no defender, so taking it costs you nothing.",
+      "steps": [
+        "Look at every enemy piece. Is it protected by anything?",
+        "Find an unprotected piece you can attack or take.",
+        "Before you take, check that you are not leaving something of yours hanging."
+      ],
+      "ex": {
+        "id": "mDxnD",
+        "rating": 709,
+        "fen": "3br3/1p3pkp/pnr3p1/n1B5/P3P1N1/2P2P2/4B1PP/1R1R2K1 b - - 0 26",
+        "color": "b",
+        "moves": [
+          "c6c5",
+          "d1d8",
+          "e8d8"
+        ]
+      }
+    },
+    "trappedPiece": {
+      "name": "Trapped piece",
+      "rank": 31,
+      "what": "A piece that is attacked and has no safe square to run to.",
+      "spot": "Look for enemy pieces near the edge or surrounded by pawns. Attack them.",
+      "remember": "No safe square, no escape.",
+      "why": "Every square the piece could run to is covered, so you win it.",
+      "steps": [
+        "Find an enemy piece with very few squares to move to.",
+        "Count its escape squares. Are they all covered?",
+        "Attack it. It cannot get away!"
+      ],
+      "ex": {
+        "id": "R5BJX",
+        "rating": 1619,
+        "fen": "r2q1rk1/5b1p/6p1/p2pQB2/1ppP1P1P/2P3R1/PP4P1/4R1K1 b - - 0 23",
+        "color": "b",
+        "moves": [
+          "f8e8",
+          "e5e8",
+          "f7e8"
+        ]
+      }
+    },
+    "clearance": {
+      "name": "Clearance",
+      "rank": 32,
+      "what": "You move a piece out of the way so another piece can use a square or a line.",
+      "spot": "Ask: is one of my own pieces blocking a good move for another piece?",
+      "remember": "Clear the road, then drive through.",
+      "why": "Moving the blocker with a threat, often a check, lets your other piece reach its square without losing time.",
+      "steps": [
+        "Find a great square or line that one of your pieces cannot reach.",
+        "See which of your own pieces is in the way.",
+        "Move it with a threat so your opponent has no time to react."
+      ],
+      "ex": {
+        "id": "Ujqq0",
+        "rating": 1725,
+        "fen": "1r2r1k1/6pp/p1p1bp2/3p4/8/1PP2Q2/q1BK1PPP/4R2R w - - 2 20",
+        "color": "w",
+        "moves": [
+          "e1a1",
+          "a2b2",
+          "h1b1"
+        ]
+      }
+    },
+    "capturingDefender": {
+      "name": "Remove the defender",
+      "rank": 33,
+      "what": "You take away a piece that is protecting something.",
+      "spot": "Find a piece you want to win. Who is protecting it? Can you take that protector?",
+      "remember": "Take the guard, then take the prize.",
+      "why": "Once the defender is gone, the piece it was protecting can be captured.",
+      "steps": [
+        "Pick the piece you want to win.",
+        "Find the piece that protects it.",
+        "Take or chase the protector, then win the prize."
+      ],
+      "ex": {
+        "id": "dasFg",
+        "rating": 817,
+        "fen": "1k2r3/1p4p1/p1qbp3/2p5/2P1Q3/5N2/PP4P1/3R3K w - - 2 29",
+        "color": "w",
+        "moves": [
+          "e4c6",
+          "b7c6",
+          "d1d6"
+        ]
+      }
+    },
+    "intermezzo": {
+      "name": "In-between move",
+      "rank": 34,
+      "what": "Instead of the expected move, you play a stronger move first.",
+      "spot": "Before you take back, ask: is there a check or a threat I can make first?",
+      "remember": "Think before you take back.",
+      "why": "The extra move, often a check, wins something, and you can still make the move you planned afterwards.",
+      "steps": [
+        "Notice the move everyone expects, like taking back a piece.",
+        "Look for a check or a threat you could play first.",
+        "Play it. Your opponent must answer, and you win something extra."
+      ],
+      "ex": {
+        "id": "A2cj0",
+        "rating": 804,
+        "fen": "r3kbnr/pp3ppp/2n5/8/3q4/5B2/P1P2PPP/RNBQK2R w KQkq - 0 11",
+        "color": "w",
+        "moves": [
+          "f3c6",
+          "b7c6",
+          "d1d4"
+        ]
+      }
+    },
+    "xRayAttack": {
+      "name": "X-ray",
+      "rank": 35,
+      "what": "A piece attacks through another piece, as if it had x-ray eyes.",
+      "spot": "Look along a line past the first piece. What is behind it?",
+      "remember": "Look through the first piece. What is behind it?",
+      "why": "Your piece keeps up pressure on a square or piece behind another piece, so trades on that square work out in your favour.",
+      "steps": [
+        "Pick a line where one of your long-range pieces looks past an enemy piece.",
+        "See what is hiding behind it.",
+        "Use that hidden pressure when pieces are traded."
+      ],
+      "ex": {
+        "id": "V0yAN",
+        "rating": 937,
+        "fen": "6k1/2rr1pp1/Bp2p2p/3p2q1/1P1P4/P1R5/4QPPP/2R3K1 b - - 0 25",
+        "color": "b",
+        "moves": [
+          "g5c1",
+          "c3c1",
+          "c7c1"
+        ]
+      }
+    },
+    "interference": {
+      "name": "Interference",
+      "rank": 36,
+      "what": "You put a piece between two enemy pieces so they can no longer protect each other.",
+      "spot": "Find two enemy pieces that protect each other along a line. Can you step in between?",
+      "remember": "Cut the line between them.",
+      "why": "The piece you place in between cuts the connection, so one enemy piece loses its protection.",
+      "steps": [
+        "Find two enemy pieces that guard each other along a line.",
+        "Look for a safe square on that line between them.",
+        "Put a piece there, then win the piece that lost its protection."
+      ],
+      "ex": {
+        "id": "2sXHf",
+        "rating": 1126,
+        "fen": "2kr4/ppp5/2n1p3/4p1P1/2q1P2P/b1PP1P2/P2KQ3/1R5R b - - 0 24",
+        "color": "b",
+        "moves": [
+          "c4a2",
+          "d2e1",
+          "a2b1"
+        ]
+      }
+    },
+    "quietMove": {
+      "name": "Quiet move",
+      "rank": 37,
+      "what": "A calm move, not a check or a capture, that sets up a strong threat.",
+      "spot": "When there are no good checks or captures, look for a move that creates a threat your opponent cannot stop.",
+      "remember": "Quiet move, loud threat.",
+      "why": "It does not look scary, but it prepares a threat your opponent cannot stop.",
+      "steps": [
+        "Look for checks and captures first. If none work, don't panic.",
+        "Ask: what threat could I make that they cannot stop?",
+        "Play the quiet move and let the threat do the work."
+      ],
+      "ex": {
+        "id": "zAXFS",
+        "rating": 1877,
+        "fen": "2r2k2/2R2ppp/4p3/1N6/8/n7/P4PPP/6K1 b - - 3 35",
+        "color": "b",
+        "moves": [
+          "c8d8",
+          "c7c1",
+          "a3b5"
+        ]
+      }
+    },
+    "defensiveMove": {
+      "name": "Defensive move",
+      "rank": 38,
+      "what": "The best move is to defend, not to attack.",
+      "spot": "Ask what your opponent is threatening first. Can you stop it?",
+      "remember": "Stop their plan before you start yours.",
+      "why": "The move stops your opponent's threat and keeps your advantage.",
+      "steps": [
+        "Ask: what is my opponent threatening?",
+        "Find a move that stops it. Check whether it is safe.",
+        "Only then think about your own attack."
+      ],
+      "ex": {
+        "id": "gLt7e",
+        "rating": 1731,
+        "fen": "4rr2/2pk4/p1P3Qp/1p6/8/P1P1p3/2B3KP/8 b - - 0 42",
+        "color": "b",
+        "moves": [
+          "d7c8",
+          "c2f5",
+          "c8b8"
+        ]
+      }
+    },
+    "zugzwang": {
+      "name": "Zugzwang",
+      "rank": 39,
+      "what": "Every move your opponent can make makes their position worse.",
+      "spot": "Look for positions where it would be great if it were your opponent's turn to move and they had to give something up.",
+      "remember": "Sometimes you must move, and that hurts.",
+      "why": "Your opponent has to move, and every move loses something. Waiting with a useful move made it work.",
+      "steps": [
+        "Count the safe moves your opponent has. Are there very few?",
+        "Find a move that keeps everything safe and passes the turn to them.",
+        "Now they must make a move that hurts."
+      ],
+      "ex": {
+        "id": "SyOSF",
+        "rating": 2756,
+        "fen": "8/pp6/3kpp2/P6p/1PKP1Pp1/6P1/7P/8 b - - 0 33",
+        "color": "b",
+        "moves": [
+          "d6c6",
+          "c4d3",
+          "c6d5"
+        ]
+      }
+    },
+    "exposedKing": {
+      "name": "Exposed king",
+      "rank": 45,
+      "what": "The enemy king has lost its pawn cover and is easy to attack.",
+      "spot": "Look for kings with missing pawns in front of them. Which of your pieces can join the attack?",
+      "remember": "A king without cover is in danger.",
+      "why": "Few pieces guard the king, so checks and threats quickly become dangerous.",
+      "steps": [
+        "Look at the pawns in front of the enemy king. Are some missing?",
+        "Bring your pieces closer, or look for checks.",
+        "Keep making threats so the king never gets to hide."
+      ],
+      "ex": {
+        "id": "2oHJt",
+        "rating": 1545,
+        "fen": "3r4/4k3/2r2n2/7R/Np2pp2/1Pp5/P1P3P1/3R2K1 w - - 2 37",
+        "color": "w",
+        "moves": [
+          "h5e5",
+          "c6e6",
+          "e5e6",
+          "e7e6",
+          "d1d8"
+        ]
+      }
+    },
+    "attackingF2F7": {
+      "name": "Attack on f2/f7",
+      "rank": 46,
+      "what": "At the start of the game, only the king guards the f2 and f7 squares, so they are weak.",
+      "spot": "Look for a bishop, knight or queen that can hit f2 (against White) or f7 (against Black).",
+      "remember": "f2 and f7 are weak spots at the start.",
+      "why": "Only the king guards that square, so an attack there is hard to stop.",
+      "steps": [
+        "Look at f7 (or f2). Who guards it?",
+        "Aim your pieces at it, such as a bishop and a queen.",
+        "If only the king guards it, you can win material or even checkmate."
+      ],
+      "ex": {
+        "id": "DWddu",
+        "rating": 515,
+        "fen": "r3k2B/1b3q2/pp2p2p/8/2PPn1p1/4P3/PP3PP1/R2QKB1R b KQq - 0 18",
+        "color": "b",
+        "moves": [
+          "f7f2"
+        ]
+      }
+    },
+    "kingsideAttack": {
+      "name": "Kingside attack",
+      "rank": 47,
+      "what": "An attack on the enemy king after it has castled on the right-hand side of the board.",
+      "spot": "Look for ways to bring many of your pieces near the enemy king.",
+      "remember": "Bring many pieces to the attack.",
+      "why": "Several of your pieces aim at the king's corner, so the defence breaks.",
+      "steps": [
+        "Count your pieces that can reach the enemy king.",
+        "Bring more pieces closer.",
+        "Look for checks and sacrifices that crack open the king's cover."
+      ],
+      "ex": {
+        "id": "bfw6Q",
+        "rating": 652,
+        "fen": "r4rk1/ppp3p1/1bn2q1p/3pp3/8/2PP1NPB/PP2QP1P/R4R1K b - - 1 18",
+        "color": "b",
+        "moves": [
+          "f6f3",
+          "e2f3",
+          "f8f3"
+        ]
+      }
+    },
+    "queensideAttack": {
+      "name": "Queenside attack",
+      "rank": 48,
+      "what": "An attack on the enemy king after it has castled on the left-hand side of the board.",
+      "spot": "Look for ways to bring your pieces near the enemy king.",
+      "remember": "Bring many pieces to the attack.",
+      "why": "Several of your pieces aim at the king's corner, so the defence breaks."
+    },
+    "advancedPawn": {
+      "name": "Advanced pawn",
+      "rank": 49,
+      "what": "A pawn deep in enemy land that is close to turning into a queen.",
+      "spot": "Look for pawns near the last row. Can they be helped, or do they distract the enemy?",
+      "remember": "A pawn near the end is a big danger.",
+      "why": "The pawn is so close to promoting that the opponent must deal with it, and that gives you time or wins material.",
+      "steps": [
+        "Find a pawn that is close to the last row.",
+        "See which squares in front of it are free or guarded.",
+        "Help it forward, or use the threat to win something."
+      ],
+      "ex": {
+        "id": "qNxlq",
+        "rating": 987,
+        "fen": "k7/1p6/p2P4/7p/2n5/P1P1Q3/1q3NK1/8 w - - 1 49",
+        "color": "w",
+        "moves": [
+          "e3e8",
+          "a8a7",
+          "d6d7"
+        ]
+      }
+    },
+    "promotion": {
+      "name": "Promotion",
+      "rank": 50,
+      "what": "A pawn reaches the last row and turns into a new piece.",
+      "spot": "Look for pawns that are a step or two from the last row.",
+      "remember": "A pawn at the end becomes a queen!",
+      "why": "Reaching the last row makes a new queen (or another piece) and changes the game."
+    },
+    "rookEndgame": {
+      "name": "Rook endgame",
+      "rank": 60,
+      "what": "An ending where each side has a rook and some pawns.",
+      "spot": "Keep your rook active and your king close to the pawns.",
+      "remember": "Active rooks win endgames.",
+      "why": "In rook endgames, exact moves and an active rook decide the game."
+    },
+    "pawnEndgame": {
+      "name": "Pawn endgame",
+      "rank": 61,
+      "what": "An ending with only kings and pawns.",
+      "spot": "Kings are strong here. Count moves carefully and use your king.",
+      "remember": "In pawn endings, the king is a fighter.",
+      "why": "With only pawns left, one extra step by the king or a pawn can decide the game, so counting matters."
+    },
+    "queenEndgame": {
+      "name": "Queen endgame",
+      "rank": 62,
+      "what": "An ending where each side has a queen and some pawns.",
+      "spot": "Look for checks, and keep your king safe from them.",
+      "remember": "With queens on, checks are everywhere.",
+      "why": "Queens can check from far away, so the best move often uses checks to win pawns or force a draw."
+    },
+    "bishopEndgame": {
+      "name": "Bishop endgame",
+      "rank": 63,
+      "what": "An ending with bishops and pawns.",
+      "spot": "Notice which colour your bishop moves on, and where the pawns are.",
+      "remember": "A bishop stays on one colour.",
+      "why": "Bishops only travel on one colour, so which squares they control decides the ending."
+    },
+    "knightEndgame": {
+      "name": "Knight endgame",
+      "rank": 64,
+      "what": "An ending with knights and pawns.",
+      "spot": "Knights are slow. Count how many jumps you need.",
+      "remember": "Knights are slow, so count the jumps.",
+      "why": "Knights need several moves to cross the board, so counting jumps decides who gets there first."
+    },
+    "queenRookEndgame": {
+      "name": "Queen and rook endgame",
+      "rank": 65,
+      "what": "An ending where each side has a queen and a rook.",
+      "spot": "Look for checks and keep your king covered.",
+      "remember": "Checks first, then think.",
+      "why": "With a queen and a rook, a single check can win a piece or start a mating attack."
+    },
+    "enPassant": {
+      "name": "En passant",
+      "rank": 66,
+      "what": "A special pawn capture: a pawn that just moved two squares can be taken as if it had moved only one.",
+      "spot": "It can only be done on the very next move.",
+      "remember": "Now or never: en passant must happen right away.",
+      "why": "The special capture is the only way to take that pawn, and it only works on the move right after the pawn jumps."
+    },
+    "castling": {
+      "name": "Castling",
+      "rank": 67,
+      "what": "The king and a rook move together in one move.",
+      "spot": "It puts your king in a safer place and brings the rook into play.",
+      "remember": "Castle early to keep the king safe.",
+      "why": "Castling moves the king to safety and the rook to the middle in a single move."
+    }
+  }
+}

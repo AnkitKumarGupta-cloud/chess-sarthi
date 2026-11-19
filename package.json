@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node test/api.test.mjs && node test/coach.test.mjs && node test/reader.test.mjs"
+    "test": "node test/api.test.mjs && node test/coach.test.mjs && node test/reader.test.mjs && node test/teach.test.mjs"
   },
   "dependencies": {
     "@livekit/components-react": "^2.9.25",
