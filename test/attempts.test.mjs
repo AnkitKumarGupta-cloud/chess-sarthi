@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { useEnv, db } from "./fakes.mjs";
 useEnv();
-const { cleanAttempt, addAttempts, emptyRecord, weakStats, MAX_ATTEMPTS } = await import("../api/_weak.js");
+const { cleanAttempt, addAttempts, emptyRecord, weakStats, thinkFirstStats, MAX_ATTEMPTS } = await import("../api/_weak.js");
 
 // ---------- pure logic ----------
 const NOW = Date.UTC(2026, 10, 19, 10, 0, 0);
@@ -36,6 +36,22 @@ assert.equal(st.week.length, 7); assert.equal(st.week[6].d, "2026-11-19"); asser
 // the old counts from before this feature (migration seed) count too
 const r3 = { v: 1, seed: { fork: [10, 8], mateIn1: [6, 0] }, list: [] };
 assert.deepEqual(weakStats(r3, "2026-11-19").weak.map((x) => x.id), ["fork"]);
+
+// ---------- Phase 4: Think first (Sathi Check) ----------
+assert.equal(cleanAttempt({ k: "a", id: "x", th: "fork", ok: 1, t: NOW }, NOW).length, 7, "no c sent: the attempt stays 7 items long, like before");
+assert.equal(cleanAttempt({ k: "a", id: "x", th: "fork", ok: 1, c: 1, t: NOW }, NOW)[7], 1, "c = 1: thought first");
+assert.equal(cleanAttempt({ k: "a", id: "x", th: "fork", ok: 1, c: 0, t: NOW }, NOW)[7], 0, "c = 0: did not");
+assert.equal(cleanAttempt({ k: "a", id: "x", th: "fork", ok: 1, c: "<b>", t: NOW }, NOW).length, 7, "a junk c is ignored");
+const tf = emptyRecord();
+assert.equal(thinkFirstStats(tf.list), null, "no history: nothing to say");
+// 8 attempts with Think first (6 solved first try) and 4 without (1 solved), plus 5 old ones with no c that must be ignored
+addAttempts(tf, [...Array(5).keys()].map((i) => ({ k: "o" + i, id: "o" + i, th: "pin", ok: 1, t: NOW + i })), NOW + 1e4);
+addAttempts(tf, [...Array(8).keys()].map((i) => ({ k: "w" + i, id: "w" + i, th: "pin", ok: i < 6 ? 1 : 0, c: 1, t: NOW + 100 + i })), NOW + 1e4);
+addAttempts(tf, [...Array(4).keys()].map((i) => ({ k: "n" + i, id: "n" + i, th: "pin", ok: i < 1 ? 1 : 0, c: 0, t: NOW + 200 + i })), NOW + 1e4);
+assert.deepEqual(thinkFirstStats(tf.list), { of: 12, with: 8, withRate: 75, withoutRate: 25 });
+assert.deepEqual(weakStats(tf, "2026-11-19").thinkFirst, thinkFirstStats(tf.list), "weakStats carries it to the screens");
+const few = emptyRecord(); addAttempts(few, [...Array(5).keys()].map((i) => ({ k: "f" + i, id: "f" + i, th: "pin", ok: 1, c: 1, t: NOW + i })), NOW + 1e4);
+assert.equal(thinkFirstStats(few.list).withoutRate, null, "a side with fewer than 3 attempts shows no rate");
 
 // ---------- through the API ----------
 const load = async (f) => (await import("../api/" + f + ".js")).default;
@@ -146,6 +162,13 @@ assert.equal((await call("attempts", { method: "DELETE", auth: PM })).ok, true);
 assert.equal(db.has("g:" + meera.username), false, "erasing a child's data erases their checked games too");
 assert.equal((await call("games", { method: "POST", auth: M, body: { game: game(gid1, []), resetAck: 0 } })).status, 409, "a stale phone cannot save after an erase");
 
+// the "sc" setting syncs with the rest of the child's progress, and only whitelisted keys are kept
+const [kid] = await mk("Think Kid"), K = await login(kid.username, kid.password);
+assert.equal((await call("progress", { method: "POST", auth: K, body: { state: { sc: { on: 1, n: 3 }, evil: 1 }, summary: {} } })).status, 200);
+assert.deepEqual(JSON.parse(db.get("p:" + kid.username)).state, { sc: { on: 1, n: 3 } }, "sc is saved, unknown keys are not");
+assert.equal((await call("attempts", { method: "POST", auth: K, body: { attempts: [{ ...att("c1", "fork", 1, "2026-11-19"), c: 1 }] } })).saved, 1);
+assert.equal(JSON.parse(db.get("at:" + kid.username)).list[0][7], 1, "c is stored with the attempt");
+
 // ---------- migrations ----------
 const { runMigrations } = await import("../migrations/run.mjs");
 const quiet = () => {};
@@ -158,8 +181,8 @@ const before = JSON.stringify([...db.entries()].map(([k, v]) => [k, v instanceof
 await runMigrations({ dry: true, log: quiet });
 assert.equal(JSON.stringify([...db.entries()].map(([k, v]) => [k, v instanceof Set ? [...v] : v])), before, "a dry run changes nothing");
 const ran = await runMigrations({ log: quiet });
-assert.equal(ran.length, 2);
-assert.equal(db.get("schema:version"), "2");
+assert.equal(ran.length, 3);
+assert.equal(db.get("schema:version"), "3");
 assert.deepEqual(JSON.parse(db.get("at:" + old.username)).seed, { fork: [10, 6], pin: [6, 5] }, "old counts become [tries, misses]; a bad theme name is skipped");
 assert.equal(db.get("at:" + meera.username), keep, "an existing record is never overwritten");
 assert.ok(db.has("at:" + both[0].username), "every student gets a record");

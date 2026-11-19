@@ -9,7 +9,7 @@ import games from "./_games.js";
 //         seen = when the student last opened the app (ms), or null if they never signed in
 // Redis keys: p:<username> = full state, ps:<username> = small summary for the teacher's table.
 const MAX_STATE = 200_000; // bytes of JSON; a very active student is well under this
-const STATE_KEYS = ["puzzles", "tests", "practice", "days", "lv", "pr", "pm"];
+const STATE_KEYS = ["puzzles", "tests", "practice", "days", "lv", "pr", "pm", "sc"];   // sc = Sathi Check settings (Phase 4)
 const parse = (s) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
 const num = (v, max = 1e7) => (Number.isFinite(+v) ? Math.max(0, Math.min(max, Math.round(+v))) : 0);
 const str = (v, n = 40) => (typeof v === "string" ? v.slice(0, n) : "");

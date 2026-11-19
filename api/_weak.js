@@ -1,7 +1,9 @@
 // Pure logic for the weakness tracker (no database, no network), so it is easy to test.
-// An attempt is saved as a compact array:  [k, puzzleId, "theme theme", ok(1|0), seconds, timestampMs, "YYYY-MM-DD"]
+// An attempt is saved as a compact array:  [k, puzzleId, "theme theme", ok(1|0), seconds, timestampMs, "YYYY-MM-DD", c?]
 //   k  = unique id made by the phone, so the same attempt is never counted twice
 //   ok = 1 when the puzzle was solved with no wrong move and without opening the solution (a hint is allowed: the child still found it).
+//   c  = (optional, Phase 4) 1 when the child did the "Think first" checklist before moving, 0 when they did not.
+//        Only sent once the child has tried Think first; older attempts have no c and are left out of the comparison.
 //        A wrong first move is a FAILED attempt even if the second try works: the position was not understood the first time.
 
 export const MAX_ATTEMPTS = 1200;   // newest kept; older ones are dropped
@@ -32,7 +34,9 @@ export function cleanAttempt(a, now = Date.now()) {
   if (!th.length) return null; // an attempt with no theme cannot say what the kid is weak at
   let t = +a.t; if (!Number.isFinite(t) || t > now + 864e5 || t < now - 400 * 864e5) t = now;
   const d = DAY.test(a.d) ? a.d : new Date(t).toISOString().slice(0, 10);
-  return [k, id, th.join(" "), a.ok ? 1 : 0, num(a.s, 3600), Math.round(t), d];
+  const row = [k, id, th.join(" "), a.ok ? 1 : 0, num(a.s, 3600), Math.round(t), d];
+  if (a.c === 1 || a.c === 0) row.push(a.c);   // only attempts made with Sathi Check on carry a 1 or 0
+  return row;
 }
 
 // Adds new attempts to a stored record. Returns how many were new.
@@ -47,6 +51,16 @@ export function addAttempts(rec, incoming, now = Date.now()) {
   rec.list.sort((a, b) => a[5] - b[5]);
   if (rec.list.length > MAX_ATTEMPTS) rec.list = rec.list.slice(-MAX_ATTEMPTS);
   return n;
+}
+
+// Phase 4: does thinking first help? Looks at the newest 30 attempts that know (c is 1 or 0).
+// Each side needs 3 attempts before its rate is shown, so one lucky puzzle never makes a claim.
+export function thinkFirstStats(list) {
+  const rows = list.filter((a) => a[7] === 0 || a[7] === 1).slice(-30);
+  if (rows.length < 5) return null;
+  const rate = (r) => (r.length >= 3 ? Math.round((r.filter((a) => a[3]).length / r.length) * 100) : null);
+  const w = rows.filter((a) => a[7] === 1), wo = rows.filter((a) => a[7] === 0);
+  return { of: rows.length, with: w.length, withRate: rate(w), withoutRate: rate(wo) };
 }
 
 export const emptyRecord = () => ({ v: 1, seed: {}, list: [] });
@@ -81,6 +95,7 @@ export function weakStats(rec, today) {
   return {
     total: rec.list.length + Object.values(rec.seed || {}).reduce((s, v) => s + (Array.isArray(v) ? num(v[0], 99999) : 0), 0),
     themes, weak, streak, week, daysTotal: days.size,
+    thinkFirst: thinkFirstStats(rec.list),
     firstTryRate: last.length >= 5 ? Math.round((clean / last.length) * 100) : null,
     recent: rec.list.slice(-8).reverse().map((a) => ({ id: a[1], themes: a[2].split(" "), ok: !!a[3], secs: a[4], at: a[5] })),
   };

@@ -829,6 +829,21 @@ body.parentv #tabs a:not([href="#live"]):not([href="#progress"]){display:none}
 .link{background:none;border:0;padding:0;color:var(--accent);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;min-height:32px}
 .t-doc{display:flex;flex-direction:column;gap:4px;text-decoration:none;color:var(--ink);margin-bottom:12px}
 .t-doc.ready{border-color:var(--good)}
+/* Sathi Check: think first (Phase 4). Flat card, red = the action, green dots = done. */
+.sc{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.sc-top{display:flex;align-items:center;justify-content:space-between}
+.sc-dots{display:flex;gap:5px}.sc-dots i{width:18px;height:5px;border-radius:3px;background:var(--line)}.sc-dots i.cur{background:var(--accent)}.sc-dots i.done{background:var(--good)}
+.sc-q{margin:0;font-weight:700;line-height:1.3}
+.sc-h{margin:0;font-size:.85rem;line-height:1.35}
+.sc-b{gap:8px;flex-wrap:nowrap}.sc-b .btn{flex:1;padding:9px 10px;min-height:44px}
+/* "Show me" squares: a dark ring, so they never look like the pale last-move colour */
+.sq.mark::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 4px var(--ink);border-radius:2px;opacity:.85;pointer-events:none}
+.sc-sw{margin-left:auto;flex:none;font-size:.78rem;padding:6px 10px;white-space:nowrap}
+.t-sc .row{gap:8px}
+.drill.view .sc{order:4}
+@media (min-width:900px){.drill.view .sc{order:4}}
+/* on a phone the panel needs room: the (disabled) Next button hides and the board is a little smaller until "Ready to move" */
+@media (max-width:600px){.drill:has(.sc) .ds-next{display:none}.drill:has(.sc) .drill-board .board{width:min(100%,calc(100svh - 350px));min-width:220px;margin-inline:auto}.drill .sc{order:5;padding:8px 10px;gap:4px}.drill .sc-q{font-size:.92rem}.drill .sc-h{font-size:.78rem}}
 </style>
 
 </head>
@@ -951,6 +966,7 @@ function drawBoard(el,fen,o={}){
     const s=document.createElement(o.onSquare?"button":"div");
     s.className="sq"+((file+rank)%2===0?" d":"");
     if(o.hi&&o.hi.includes(name))s.classList.add("hi");
+    if(o.mark&&o.mark.includes(name))s.classList.add("mark");
     if(o.sel===name)s.classList.add("sel");
     if(o.bad&&o.bad.includes(name))s.classList.add("bad");
     if(o.dots&&o.dots.includes(name))s.classList.add("dot");
@@ -1046,7 +1062,7 @@ function vHome(){
       <div class="row" style="margin-top:auto"><a class="btn big" href="#puzzles">▶ ${lvSolvedCount()?"Continue puzzles":"Start puzzles"}</a></div>
       <div class="tile-art" aria-hidden="true">♞</div>
     </article>
-    ${docPill()}${weakTile()}
+    ${docPill()}${weakTile()}${scTile()}
     <div class="b-pair">
     <article class="tile t-goal">
       <div class="goal">${ring(tx/DAILY_GOAL*100,72,8)}<div class="goal-n"><b class="mono">${Math.min(tx,DAILY_GOAL)}</b><span>/${DAILY_GOAL}</span></div></div>
@@ -1084,6 +1100,7 @@ function vHome(){
   </section>`;
 }
 function afterHome(){
+  scTileBind();
   const d=PUZZLES.filter(p=>p.level==="Advanced")[new Date().getDate()%13];
   const go=()=>{pzStart=d.id;location.hash="classic"};
   drawBoard($("#heroBoard"),d.fen,{flip:d.fen.split(" ")[1]==="b",onSquare:go});$("#dailyGo").onclick=go;
@@ -1334,7 +1351,7 @@ function lvPart(l){const st=lvState();st.part=st.part||{};const n=LVD[l-1].lengt
 function lvOpen(l,k){atRecord();const p=lvList(l)[k];const prev=LVS&&LVS.l===l?LVS.res:l===0?DRILL.list.map(()=>null):lvPart(l);
   LVS={l,k,res:prev,g:new Chess(p[1]),moves:p[2].split(" "),ply:0,sel:null,state:"think",msg:"",last:[],bad:[],hint:null,promo:null,anim:null,miss:false,shown:false,hinted:false,wrongs:0};
   LVS.color=LVS.g.turn()==="w"?"b":"w";const tok=LVS;
-  setTimeout(()=>{if(LVS!==tok)return;lvPlay(LVS.moves[0]);LVS.ply=1;LVS.state="idle";LVS.t0=Date.now();render()},650)}
+  setTimeout(()=>{if(LVS!==tok)return;lvPlay(LVS.moves[0]);LVS.ply=1;LVS.state="idle";LVS.t0=Date.now();scStart();render()},650)}
 function lvPlay(u){const mv=LVS.g.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});if(mv){moveSound(mv,LVS.g);LVS.anim=[mv.from,mv.to];LVS.last=[mv.from,mv.to]}return mv}
 /* Puzzle rating (Elo-style). Each puzzle counts once. Score: clean solve 1, used a hint 0.6,
    one wrong move 0.35, more wrong moves or "show solution" 0. So a hint only costs a few points.
@@ -1614,7 +1631,7 @@ function atRecord(){const v=LVS;if(!v||v.atDone||!isStudent()||S.owner!==AUTH.us
   const done=v.state==="ok";if(!done&&!(v.wrongs>0))return;                  // nothing to count yet
   const p=lvPuz(v.l,v.k);if(!p)return;v.atDone=true;
   const q=atQ();q.push({k:Date.now().toString(36)+Math.random().toString(36).slice(2,7),id:p[0],th:p[4],ok:done&&!v.wrongs&&!v.shown?1:0,
-    s:Math.min(600,Math.max(0,Math.round((Date.now()-(v.t0||Date.now()))/1000))),t:Date.now(),d:dayKey()});
+    s:Math.min(600,Math.max(0,Math.round((Date.now()-(v.t0||Date.now()))/1000))),t:Date.now(),d:dayKey(),...(S.sc&&S.sc.used?{c:v.checked?1:0}:{})});
   if(q.length>300)S.atq=q.slice(-300);save();atQueue()}
 function atQueue(){clearTimeout(atT);atT=setTimeout(atFlush,4000)}
 async function atFlush(){clearTimeout(atT);atT=null;if(atBusy||!isStudent()||S.owner!==AUTH.user.username)return;const q=atQ();if(!q.length)return;
@@ -1677,7 +1694,8 @@ function vProgressParent(){
     <div class="par-k">${kpi(st.streak,"day streak")}${kpi(sm.puzzlesSolved!=null?sm.puzzlesSolved:0,"puzzles solved")}${kpi(sm.puzzleRating!=null?sm.puzzleRating:"–","puzzle rating")}${kpi(esc(sm.rank||"–"),"rank")}</div>
     <article class="card stack"><h2 class="par-h">This week</h2>
       <div class="par-w" role="img" aria-label="Puzzles per day this week">${st.week.map(x=>`<div class="${x.n?"on":""}"><i style="height:${x.n?Math.max(10,x.n/mx*100):6}%"></i><span>${dl(x.d)}</span></div>`).join("")}</div>
-      <p class="li-m">${active?`Practised on ${active} of the last 7 days.`:"No puzzles in the last 7 days."}${st.firstTryRate!=null?` First-try rate: ${st.firstTryRate}%.`:""}</p></article>
+      <p class="li-m">${active?`Practised on ${active} of the last 7 days.`:"No puzzles in the last 7 days."}${st.firstTryRate!=null?` First-try rate: ${st.firstTryRate}%.`:""}</p>
+      ${st.thinkFirst?`<p class="li-m">Thinks first on ${st.thinkFirst.with} of the last ${st.thinkFirst.of} puzzles.${st.thinkFirst.withRate!=null&&st.thinkFirst.withoutRate!=null?` First-try rate: ${st.thinkFirst.withRate}% with it, ${st.thinkFirst.withoutRate}% without.`:""}</p>`:""}</article>
     <article class="card stack"><h2 class="par-h">Needs practice</h2>
       ${st.weak.length?`<ul class="par-weak">${st.weak.map(x=>`<li><div><b>${esc(nm(x.id))}</b><span class="li-m">missed ${x.fails} of ${x.tries}</span></div><div class="par-bar"><i style="width:${Math.round(x.rate*100)}%"></i></div></li>`).join("")}</ul><p class="li-m">${first} sees these on the Home screen with a short lesson and 5 practice puzzles. You don't need to set anything up.</p>`
         :`<p class="li-m">${st.total>=8?"No weak spots right now. Nice work!":`Nothing to show yet. After ${first} has tried a theme 4 times, we can tell what to practise.`}</p>`}</article>
@@ -1739,6 +1757,47 @@ function whyHtml(p){
 // Replaying a puzzle never pays XP again (it was already paid the first time).
 function lvTryAgain(){const l=LVS.l,k=LVS.k;LVS.complete=null;lvOpen(l,k);LVS.replay=true;render()}
 
+/* ---------- Sathi Check: think first (Phase 4) ----------
+   Before a kid moves, the board waits while they answer 3 questions, one at a time (the words are in themes.json under "check"):
+   checks, captures, threats. "Show me" colours the squares for that question (public/teach/check.js, chess.js only, no Stockfish).
+   Finishing sets LVS.checked, so the "Why it works" card is the short one, and the attempt is saved with c = 1.
+   It is OFF until the kid turns it on (S.sc = {on, used}), it only starts on the kid's first move, and Hint or Solution skips it.
+   If themes.json does not load, there is simply no checklist and the puzzle works as before. "Show me" is not a hint: no rating cost. */
+const scOn=()=>!!(S.sc&&S.sc.on);
+const scItems=()=>((TCH&&TCH.check)||[]).filter(x=>["checks","captures","threats"].includes(x.id));
+let SCP=null;
+function scLogic(){if(window.SathiCheck)return Promise.resolve(window.SathiCheck);
+  if(!SCP)SCP=new Promise((res,rej)=>{const s=document.createElement("script");s.src="/teach/check.js?v=1";s.onload=()=>res(window.SathiCheck);s.onerror=()=>{SCP=null;rej(new Error("load"))};document.head.appendChild(s)});return SCP}
+// Can the checklist start now? Only on the kid's first move, with nothing played yet.
+const scCan=tok=>LVS===tok&&LVS.state==="idle"&&LVS.ply===1&&!LVS.miss&&!LVS.checked&&!LVS.chk&&scOn()&&scItems().length>0;
+function scStart(){const tok=LVS;if(!scOn())return;
+  if(TCH){if(scCan(tok))LVS.chk={i:0,sq:null,say:""};return}
+  if(TCHFAIL)return;
+  tchLoad().then(()=>{if(scCan(tok)){LVS.chk={i:0,sq:null,say:""};render()}}).catch(()=>{})}
+function scSet(on){S.sc=Object.assign(S.sc||{},{on:on?1:0,used:1});delete S.sc.no;save()}
+function scPanel(){const c=LVS.chk,its=scItems(),it=its[c.i];if(!it)return "";
+  return `<div class="sc" id="scBox" role="group" aria-label="Think first">
+    <div class="sc-top"><span class="eyebrow">Think first</span><span class="sc-dots" aria-label="Question ${c.i+1} of ${its.length}">${its.map((_,i)=>`<i class="${i<c.i?"done":i===c.i?"cur":""}"></i>`).join("")}</span></div>
+    <p class="sc-q">${esc(it.q)}</p>
+    <p class="sc-h li-m" aria-live="polite">${esc(c.say||it.hint)}</p>
+    <div class="row sc-b"><button class="btn ghost" id="scShow" type="button">Show me</button><button class="btn" id="scNext" type="button">${c.i<its.length-1?"Next question":"Ready to move"}</button></div></div>`}
+function scBind(){const c=LVS.chk,its=scItems(),it=c&&its[c.i];
+  const sw=$("#scSw");if(sw)sw.onclick=()=>{const on=!scOn();scSet(on);
+    if(!on)LVS.chk=null;else{const tok=LVS;if(scCan(tok)&&TCH)LVS.chk={i:0,sq:null,say:""}}
+    toast(on?"Think first is on":"Think first is off");render()};
+  if(!c||!it)return;
+  $("#scShow").onclick=()=>{const tok=LVS,i=c.i;scLogic().then(L=>{if(LVS!==tok||!LVS.chk||LVS.chk.i!==i)return;const r=L.squares(Chess,LVS.g.fen(),it.id);LVS.chk.sq=r.squares;LVS.chk.say=r.say;render()}).catch(()=>toast("Could not load. Try again."))};
+  $("#scNext").onclick=()=>{if(c.i<its.length-1){c.i++;c.sq=null;c.say="";render();return}
+    LVS.chk=null;LVS.checked=true;S.sc=S.sc||{on:1,used:1};S.sc.n=(S.sc.n||0)+1;save();render()}}
+// "Try the checklist" card on Home, shown once to students who have never chosen
+function scTile(){if(!isStudent()||S.sc)return "";
+  return `<article class="tile t-sc"><div class="tile-top"><span class="eyebrow">New</span></div><h3 class="tile-h">Think first</h3>
+    <p class="li-m">Before each puzzle move, pause and ask 3 quick questions: checks, captures, threats. Good players do this every move.</p>
+    <div class="row"><button class="btn" id="scOn" type="button">Turn on</button><button class="btn ghost" id="scNo" type="button">Not now</button></div></article>`}
+function scTileBind(){const a=$("#scOn"),b=$("#scNo");
+  if(a)a.onclick=()=>{scSet(true);toast("Think first is on. Try a puzzle!");render()};
+  if(b)b.onclick=()=>{S.sc={on:0,no:1};save();render()}}
+
 /* Lesson card page: #theme?t=<theme>. What it is, a real Lichess example the kid can watch, how to spot it, 3 steps. */
 let THX=null;
 const thId=()=>(location.hash.match(/[?&]t=([A-Za-z0-9]+)/)||[])[1]||"";
@@ -1789,9 +1848,10 @@ function vPlevel(){
     ${LVS.promo?`<div class="promo" role="group" aria-label="Choose a piece"><span class="li-m">Promote to:</span>${["q","r","b","n"].map(x=>`<button class="chip" data-promo="${x}" aria-label="${NAMES[x]}"><i class="pc inline ${LVS.color} pk-${x}" aria-hidden="true"></i> ${NAMES[x]}</button>`).join("")}</div>`:""}</div>
   <aside class="drill-side">
     <header class="ds-head"><a class="ds-back" href="${D?"#home":"#puzzles"}" aria-label="${D?"Back to home":"Back to puzzles"}">← <span>${D?"Home":"Puzzles"}</span></a><span class="pricon sm" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 3h4v3a2 2 0 1 0 4 0V3h3v7h-3a2 2 0 1 0 0 4h3v7h-7v-3a2 2 0 1 0-4 0v3H3v-7h3a2 2 0 1 0 0-4H3V3h7z"/></svg></span>
-      <div class="ds-ht"><span class="eyebrow">${D?"Practise this":"Puzzles"}</span><h1>${D?esc(tchTh(D.t)?tchTh(D.t).name:themeName(D.t)):"Level "+l}</h1></div></header>
+      <div class="ds-ht"><span class="eyebrow">${D?"Practise this":"Puzzles"}</span><h1>${D?esc(tchTh(D.t)?tchTh(D.t).name:themeName(D.t)):"Level "+l}</h1></div>
+      <button class="chip sc-sw${scOn()?" on":""}" id="scSw" type="button" aria-pressed="${scOn()}">Think first: ${scOn()?"On":"Off"}</button></header>
     <div class="lvdots" aria-label="Puzzles in this level">${list.map((_,i)=>`<span class="${LVS.res[i]||""}${i===LVS.k?" cur":""}" title="Puzzle ${i+1}">${LVS.res[i]==="ok"?"✓":LVS.res[i]==="retry"?"•":i+1}</span>`).join("")}</div>
-    <div class="ds-status ${scls}" role="status">${stat}</div>
+    ${LVS.chk&&s==="idle"?scPanel():`<div class="ds-status ${scls}" role="status">${stat}</div>`}
     <div class="ds-tools">
       <button class="tbtn" id="lvHint" ${s==="idle"||s==="no"?"":"disabled"}><svg viewBox="0 0 24 24"><path d="M9 21h6M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5v1h6v-1c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg><span>Hint${LVS.hl?` ${Math.min(3,LVS.hl)}/3`:""}</span></button>
       <button class="tbtn" id="lvShow" ${s==="idle"||s==="no"?"":"disabled"}><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span>Solution</span></button>
@@ -1805,9 +1865,9 @@ function vPlevel(){
 function afterPlevel(){
   if(!LVD){lvLoad().then(()=>{if(route()==="plevel")render()}).catch(()=>{});return}
   const l=LVS.l,list=lvList(l),g=LVS.g,flip=LVS.color==="b";
-  const live=(LVS.state==="idle"||LVS.state==="no")&&!LVS.promo&&g.turn()===LVS.color;
+  const live=(LVS.state==="idle"||LVS.state==="no")&&!LVS.promo&&!LVS.chk&&g.turn()===LVS.color;
   const dots=LVS.sel?g.moves({square:LVS.sel,verbose:true}).map(m=>m.to):[];const anim=LVS.anim;LVS.anim=null;
-  drawBoard($("#lvBoard"),g.fen(),{flip,anim,sel:LVS.sel,dots,bad:LVS.bad,hi:LVS.hint?[LVS.hint]:LVS.last,
+  drawBoard($("#lvBoard"),g.fen(),{flip,anim,sel:LVS.sel,dots,bad:LVS.bad,mark:LVS.chk&&LVS.chk.sq?LVS.chk.sq:null,hi:LVS.chk?[]:LVS.hint?[LVS.hint]:LVS.last,
     onSquare:live?sq=>{const pc=g.get(sq);
       if(pc&&pc.color===g.turn()){LVS.sel=LVS.sel===sq?null:sq;LVS.bad=[];if(LVS.state==="no")LVS.state="idle";return render()}
       if(!LVS.sel)return;ac();const cand=g.moves({square:LVS.sel,verbose:true}).filter(m=>m.to===sq);if(!cand.length){LVS.sel=null;return render()}
@@ -1821,13 +1881,13 @@ function afterPlevel(){
       LVS.state="think";render();const tok=LVS;setTimeout(()=>{if(LVS!==tok)return;lvPlay(LVS.moves[LVS.ply]);LVS.ply++;LVS.state="idle";render()},500);return}
     g.undo();LVS.miss=true;LVS.wrongs=(LVS.wrongs||0)+1;LVS.state="no";LVS.bad=[mv.from,mv.to];LVS.last=[];sfx("wrong");render();coachMistake(fenBefore,mv.from+mv.to+(mv.promotion||""),list[LVS.k])}
   document.querySelectorAll("[data-promo]").forEach(b=>b.onclick=()=>{const p=LVS.promo;LVS.promo=null;lvUser({...p,promotion:b.dataset.promo})});
-  $("#lvHint").onclick=()=>{LVS.miss=true;LVS.hinted=true;coachHint(list[LVS.k])};
-  $("#lvShow").onclick=()=>{LVS.miss=true;LVS.shown=true;LVS.state="think";render();const tok=LVS;
+  $("#lvHint").onclick=()=>{LVS.chk=null;LVS.miss=true;LVS.hinted=true;coachHint(list[LVS.k])};
+  $("#lvShow").onclick=()=>{LVS.chk=null;LVS.miss=true;LVS.shown=true;LVS.state="think";render();const tok=LVS;
     const step=()=>{if(LVS!==tok)return;if(LVS.ply>=LVS.moves.length)return lvSolved();lvPlay(LVS.moves[LVS.ply]);LVS.ply++;render();setTimeout(step,700)};setTimeout(step,300)};
   $("#lvRetry").onclick=lvTryAgain;
   const wa=$("#whyAgain");if(wa)wa.onclick=lvTryAgain;
   if(!TCH&&!TCHFAIL)tchLoad().catch(()=>{});
-  coachBind();
+  coachBind();scBind();
   $("#lvNext").onclick=()=>{if(LVS.dcomplete){LVS=null;DRILL=null;location.hash="home";return}
     if(LVS.complete){LVS=null;if(l<LVD.length)location.hash="plevel?l="+(l+1);else location.hash="puzzles";return}
     if(LVS.k<list.length-1){lvOpen(l,LVS.k+1);render()}else{const miss=LVS.res.findIndex(x=>!x);if(miss>=0){lvOpen(l,miss);render()}}};
@@ -2113,7 +2173,7 @@ async function authCheck(){
 /* ---------- Progress sync (students) ----------
    Progress lives in this browser (S) and is copied to the server a few seconds after any change,
    so the teacher can see it and it follows the student to another phone or computer. */
-const PROG_KEYS=["puzzles","tests","practice","days","lv","pr","pm"];
+const PROG_KEYS=["puzzles","tests","practice","days","lv","pr","pm","sc"];
 let progT=null,progBusy=false;
 const isStudent=()=>AUTH&&AUTH.state==="in"&&AUTH.user&&AUTH.user.role==="student";
 function progQueue(){if(!isStudent()||S.owner!==AUTH.user.username)return;clearTimeout(progT);progT=setTimeout(progPush,3000)}
