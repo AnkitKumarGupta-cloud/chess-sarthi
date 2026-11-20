@@ -197,3 +197,14 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - **Redis keys:** `tl:ka` (list from AICF), `tl:mod` (teacher's hide/extra), `t:<student>`. Migration `004_tournaments.mjs` only creates an empty `tl:ka`.
 - **Also fixed:** `signOut()` now clears the cached parent and tournament screens, so the next person on a shared phone does not see them.
 - **No new serverless functions:** `_tournaments.js` and `_reminders.js` are registered in `SUB` in `api/progress.js`. Only `/api/tournaments` needed a rewrite; the cron calls `/api/progress?x=reminders` directly.
+
+## Phase 6: ChessMood puzzles (used with permission, no credit shown)
+- Source: 9 ChessMood lesson PGN files. They are lessons, not puzzles, so `tools/moodimport/convert.mjs <folder>` keeps a position only when
+  Stockfish (depth 12) says the lesson's move is the clear best move (150+ centipawns better than the 2nd best, and not a mate alternative),
+  cuts the line to at most 3 kid moves, and invents the opponent's "last move" (the app starts every puzzle with the opponent's move, lessons start with the kid to move).
+  1,565 positions in, 670 kept (the rest: no moves, or no single clear best move). Result: `tools/moodimport/puzzles.json`.
+- `tools/moodimport/merge.mjs [--per-level 6]` puts them into `public/levels.json`, mixed into the closest-rated level, at the END of that level
+  (so saved progress for existing puzzles is unchanged). 288 are in now, ids start with `cm`. Re-running is safe. The other ~380 are kept in puzzles.json for later.
+- Levels with extras now have up to 16 puzzles; stars use the share of clean solves (90% / 70%) instead of 9 / 7 out of 10. `levels.json?v=2` busts the cache.
+- Ratings are estimates (by number of moves and how clear the best move is). Themes come from the lesson headings; about a third have none.
+- Test: `test/moodimport.test.mjs` (every ChessMood puzzle replays legally, ids unique, original ten puzzles untouched).

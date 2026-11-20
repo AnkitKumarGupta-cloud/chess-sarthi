@@ -1301,9 +1301,10 @@ function afterDrill(){
 /* ---------- Puzzle levels (Lichess puzzle database, CC0). One path, 10 puzzles per level, getting harder. ---------- */
 let LVD=null, LVS=null;
 const LV_STAGES=[["Beginner",1,20],["Improver",21,40],["Intermediate",41,60],["Club player",61,80],["Advanced",81,100],["Expert",101,115]];
-async function lvLoad(){if(LVD)return LVD;const r=await fetch("/levels.json?v=1",{cache:"no-cache"});if(!r.ok)throw new Error("load");LVD=(await r.json()).levels;return LVD}
+async function lvLoad(){if(LVD)return LVD;const r=await fetch("/levels.json?v=2",{cache:"no-cache"});if(!r.ok)throw new Error("load");LVD=(await r.json()).levels;return LVD}
 const lvState=()=>{S.lv=S.lv||{unlocked:1,done:{}};return S.lv};
-const lvStars=r=>{const ok=r.filter(x=>x==="ok").length;return ok>=9?3:ok>=7?2:1};
+// Stars by share of clean solves (levels can hold more than 10 puzzles now): 90% = 3 stars, 70% = 2 stars
+const lvStars=r=>{const q=r.filter(x=>x==="ok").length/Math.max(1,r.length);return q>=.9?3:q>=.7?2:1};
 const starsHtml=n=>`<span class="stars" aria-label="${n} of 3 stars">${[1,2,3].map(i=>`<i class="${i<=n?"on":""}">★</i>`).join("")}</span>`;
 const lvRating=l=>LVD&&LVD[l-1]?Math.round(LVD[l-1].reduce((a,p)=>a+p[3],0)/LVD[l-1].length):500+(l-1)*20;
 
@@ -2135,7 +2136,7 @@ function afterClassic(){
 const TEST_N=10;
 const testTotal=t=>t.total||12;
 function testTier(){const L=lvState().unlocked;return L<=5?0:L<=20?1:L<=45?2:3}
-function lvSolvedCount(){const st=lvState();return Object.keys(st.done).length*10+Object.values(st.part||{}).reduce((a,r)=>a+r.filter(x=>x==="ok").length,0)}
+function lvSolvedCount(){const st=lvState();return Object.keys(st.done).reduce((a,l)=>a+(LVD&&LVD[l-1]?LVD[l-1].length:10),0)+Object.values(st.part||{}).reduce((a,r)=>a+r.filter(x=>x==="ok").length,0)}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function testPuzzleQ(p){const g=new Chess(p[1]),mv=p[2].split(" ");
   const op=g.move({from:mv[0].slice(0,2),to:mv[0].slice(2,4),promotion:mv[0][4]});if(!op)return null;
