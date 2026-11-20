@@ -6,7 +6,7 @@ import { addAttempts, parseRecord, weakStats } from "./_weak.js";
 //  GET    (student)                       -> { stats, summary }  for the signed-in student
 //  GET    (parent)                        -> the same, for their own child only
 //  GET    (teacher) ?student=<username>   -> the same, for that student
-//  DELETE (parent of the child, or teacher)  ?student=<username> -> erases the child's attempts and saved progress
+//  DELETE (parent of the child, or teacher)  ?student=<username> -> erases the child's attempts, games, tournaments and saved progress
 //         (the account stays; the child's phone clears itself the next time it signs in, see "reset:" below)
 // Redis keys: at:<username> = { v, seed, list } (see _weak.js) · g:<username> = checked games (see _games.js) · reset:<username> = when the data was erased (ms)
 const parse = (s) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
@@ -41,7 +41,7 @@ export default handler(async ({ req, body, query }) => {
   const child = await whose(me, query);
   if (req.method === "DELETE") {
     if (me.role === "student") throw new HttpError(403, "Ask your parent or teacher to erase your data.");
-    await kvPipe([["DEL", "at:" + child.username], ["DEL", "g:" + child.username], ["DEL", "p:" + child.username], ["DEL", "ps:" + child.username], ["SET", "reset:" + child.username, Date.now()]]);
+    await kvPipe([["DEL", "at:" + child.username], ["DEL", "g:" + child.username], ["DEL", "p:" + child.username], ["DEL", "ps:" + child.username], ["DEL", "t:" + child.username], ["SET", "reset:" + child.username, Date.now()]]);
     return { ok: true };
   }
   if (req.method !== "GET") throw new HttpError(405, "Use GET, POST or DELETE.");

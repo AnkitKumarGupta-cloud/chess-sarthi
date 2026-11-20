@@ -6,11 +6,25 @@
     {
       "path": "/api/keepalive",
       "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/progress?x=reminders",
+      "schedule": "30 2 * * *"
     }
   ],
   "rewrites": [
-    { "source": "/api/attempts", "destination": "/api/progress?x=attempts" },
-    { "source": "/api/games", "destination": "/api/progress?x=games" }
+    {
+      "source": "/api/attempts",
+      "destination": "/api/progress?x=attempts"
+    },
+    {
+      "source": "/api/games",
+      "destination": "/api/progress?x=games"
+    },
+    {
+      "source": "/api/tournaments",
+      "destination": "/api/progress?x=tournaments"
+    }
   ],
   "headers": [
     {

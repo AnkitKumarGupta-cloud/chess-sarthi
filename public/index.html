@@ -844,6 +844,25 @@ body.parentv #tabs a:not([href="#live"]):not([href="#progress"]){display:none}
 @media (min-width:900px){.drill.view .sc{order:4}}
 /* on a phone the panel needs room: the (disabled) Next button hides and the board is a little smaller until "Ready to move" */
 @media (max-width:600px){.drill:has(.sc) .ds-next{display:none}.drill:has(.sc) .drill-board .board{width:min(100%,calc(100svh - 350px));min-width:220px;margin-inline:auto}.drill .sc{order:5;padding:8px 10px;gap:4px}.drill .sc-q{font-size:.92rem}.drill .sc-h{font-size:.78rem}}
+/* Tournament planner (Phase 5): flat cards; red = the action, green = going */
+.trn-tabs,.trn-rem{display:flex;gap:8px;flex-wrap:wrap}
+.trn-tab{flex:1;min-width:0;min-height:44px;padding:9px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:.9rem;font-weight:700;cursor:pointer}
+.trn-tab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.trn-rem .trn-tab{flex:0 1 auto;font-size:.82rem;padding:8px 12px}
+.trn-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.trn-top .pill{flex:none;white-space:nowrap}
+.trn-go{color:var(--good);border-color:currentColor}
+.trn-when{color:var(--ink)}
+.trn-c.past{opacity:.8}
+.trn-todo{display:flex;flex-direction:column}
+.trn-todo label{display:flex;gap:12px;align-items:center;min-height:44px;font-size:.95rem}
+.trn-todo input{width:22px;height:22px;flex:none;accent-color:var(--good)}
+.trn-mo{margin:10px 0 -4px;font-size:.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.trn-del{background:none;border:0;color:var(--muted);font:inherit;font-weight:700;padding:10px 4px;min-height:44px;cursor:pointer;text-decoration:underline}
+.trn-card{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:inherit}
+.trn-src{font-size:.8rem}
+.trn textarea{width:100%;font:inherit;font-size:.95rem;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical}
+.t-trn{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:inherit}
 </style>
 
 </head>
@@ -1062,7 +1081,7 @@ function vHome(){
       <div class="row" style="margin-top:auto"><a class="btn big" href="#puzzles">▶ ${lvSolvedCount()?"Continue puzzles":"Start puzzles"}</a></div>
       <div class="tile-art" aria-hidden="true">♞</div>
     </article>
-    ${docPill()}${weakTile()}${scTile()}
+    ${docPill()}${weakTile()}${scTile()}${trTile()}
     <div class="b-pair">
     <article class="tile t-goal">
       <div class="goal">${ring(tx/DAILY_GOAL*100,72,8)}<div class="goal-n"><b class="mono">${Math.min(tx,DAILY_GOAL)}</b><span>/${DAILY_GOAL}</span></div></div>
@@ -1691,6 +1710,7 @@ function vProgressParent(){
   const kpi=(b,l)=>`<div class="kpi"><b>${b}</b><span>${l}</span></div>`;
   const last=sm.lastActive?new Date(sm.lastActive+"T12:00:00").toLocaleDateString(undefined,{day:"numeric",month:"short"}):"";
   return `<section class="stack view par"><div><div class="eyebrow">Parent view</div><h1>${esc(d.student.name)}</h1><p class="li-m">${last?`Last practised ${esc(last)}`:`${first} hasn't practised yet`}</p></div>
+    ${trCard()}
     <div class="par-k">${kpi(st.streak,"day streak")}${kpi(sm.puzzlesSolved!=null?sm.puzzlesSolved:0,"puzzles solved")}${kpi(sm.puzzleRating!=null?sm.puzzleRating:"–","puzzle rating")}${kpi(esc(sm.rank||"–"),"rank")}</div>
     <article class="card stack"><h2 class="par-h">This week</h2>
       <div class="par-w" role="img" aria-label="Puzzles per day this week">${st.week.map(x=>`<div class="${x.n?"on":""}"><i style="height:${x.n?Math.max(10,x.n/mx*100):6}%"></i><span>${dl(x.d)}</span></div>`).join("")}</div>
@@ -1710,6 +1730,154 @@ function afterProgressParent(){
   const n=$("#parNo");if(n)n.onclick=()=>{PAR.ask=false;render()};
   const y=$("#parYes");if(y)y.onclick=async()=>{y.disabled=true;y.textContent="Erasing…";
     try{await liveApi("/attempts",{method:"DELETE"});PAR.ask=false;PAR.state="idle";PAR.data=null;toast("Data erased");render()}catch(err){toast(err.message);y.disabled=false;y.textContent="Yes, erase"}}}
+
+/* ---------- Tournament planner (Phase 5) ----------
+   Karnataka tournaments are read once a day from the AICF "all events" page by the server (api/_aicf.js). A PARENT picks the ones
+   the child is going to ("We're going" / "Maybe"), ticks a small checklist, chooses reminders and later writes the result.
+   The child can look but not change; the teacher only looks after the shared list (hide wrong ones, add missing ones).
+   Reminders: in the app (the cards on Progress / Home, worked out here from today's date) and by email (the daily server job).
+   Nothing here is public. The family's plan is erased with the child's data. */
+let TR={state:"idle",data:null,msg:"",tab:"mine",adding:false,askDel:null,emailEdit:false,busy:false};
+const trD=s=>new Date(s+"T12:00:00");
+const trLeft=s=>Math.round((trD(s)-trD(dayKey()))/864e5);
+const trWhen=d=>d<0?"Over":d===0?"Today":d===1?"Tomorrow":"in "+d+" days";
+const trFmt=(a,b)=>{const f=(d,o)=>trD(d).toLocaleDateString(undefined,o);
+  if(!b||b===a)return f(a,{weekday:"short",day:"numeric",month:"short"});
+  return f(a,{day:"numeric",month:"short"})+" – "+f(b,{day:"numeric",month:"short"})};   // e.g. "Dec 11 – Dec 12": clear in every language
+const trTeacher=()=>AUTH.user&&AUTH.user.role==="teacher";
+function trLoad(after){TR.state="loading";liveApi("/tournaments").then(j=>{TR.data=j;TR.state="ok"}).catch(e=>{TR.state="err";TR.msg=e.message}).finally(()=>{if(after)after()})}
+async function trReload(){TR.data=await liveApi("/tournaments");TR.state="ok";render()}
+// One change to the server, then reload the list. Shows the server's plain message if it says no.
+async function trSend(body,msg){if(TR.busy)return null;TR.busy=true;
+  try{const j=await liveApi("/tournaments",{method:"POST",body});await trReload();if(msg)toast(msg);return j}catch(e){toast(e.message);return null}finally{TR.busy=false}}
+const trSoon=()=>((TR.data&&TR.data.mine)||[]).filter(t=>t.status==="going"&&trLeft(t.end)>=0).sort((a,b)=>a.start.localeCompare(b.start))[0];
+
+// The little "next tournament" card on the parent's Progress screen
+function trCard(){
+  if(TR.state==="idle"){trLoad(()=>{if(route()==="progress")render()});return ""}
+  if(TR.state!=="ok")return "";
+  const t=trSoon();
+  return `<a class="card trn-card" href="#tourney"><span class="eyebrow">Tournaments</span>
+    <b>${t?esc(t.name):"Plan the next tournament"}</b>
+    <span class="li-m">${t?`${trFmt(t.start,t.end)} · ${trWhen(Math.max(0,trLeft(t.start)))}`:"Pick from the Karnataka list"}</span></a>`}
+// The same, as a tile on a child's Home screen (only when a tournament is planned)
+function trTile(){if(!isStudent())return "";
+  if(TR.state==="idle"){trLoad(()=>{if(route()==="home")render()});return ""}
+  const t=TR.state==="ok"?trSoon():null;if(!t||trLeft(t.start)>45)return "";
+  return `<a class="tile t-trn" href="#tourney"><span class="eyebrow">Tournament</span><b>${esc(t.name)}</b><span class="li-m">${trFmt(t.start,t.end)} · ${trWhen(Math.max(0,trLeft(t.start)))}</span></a>`}
+
+const TR_TODO=[["entry","Entry fee paid"],["travel","Travel and stay sorted"],["kit","Clock, notation sheet and ID packed"]];
+const TR_REM=[[7,"7 days before"],[1,"1 day before"],[0,"On the day"]];
+
+function trEmailCard(d){
+  if(!d.canEdit)return "";
+  const h=`<article class="card stack"><h2 class="par-h">Email reminders</h2>`;
+  if(!d.emailReady)return h+`<p class="li-m">Email reminders are not switched on yet. You will still see reminders here in the app.</p></article>`;
+  if(d.email&&!TR.emailEdit)return h+`<p>Reminders go to <b>${esc(d.email)}</b></p><div class="row"><button class="btn ghost" data-tr="emailChg" type="button">Change</button><button class="btn ghost" data-tr="emailDel" type="button">Remove</button></div></article>`;
+  return h+`<label class="fld"><span>Your email address</span><input id="trEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" value="${esc(d.email||"")}"></label>
+    <div class="row"><button class="btn" data-tr="emailSave" type="button">Save email</button>${TR.emailEdit?`<button class="btn ghost" data-tr="emailNo" type="button">Cancel</button>`:""}</div>
+    <p class="li-m">Used only to remind you about tournaments you pick (7 days before, 1 day before and on the day, as you choose). It is never shown to anyone else.</p></article>`}
+
+function trMineCard(t,edit){
+  const left=trLeft(t.start),over=trLeft(t.end)<0,going=t.status==="going";
+  const head=`<div class="trn-top"><div><h3 class="tile-h">${esc(t.name)}</h3><p class="li-m">${trFmt(t.start,t.end)}${t.place?" · "+esc(t.place):""}</p></div><span class="pill${over?"":" trn-when"}">${over?"Over":trWhen(left)}</span></div>`;
+  const link=t.link?`<a class="link" href="${esc(t.link)}" target="_blank" rel="noopener">Brochure</a>`:"<span></span>";
+  let body="";
+  if(over){
+    body=edit?`<label class="fld"><span>Result (for example 4/7)</span><input data-f="result" maxlength="40" value="${esc(t.result)}"></label>
+      <label class="fld"><span>What did we learn?</span><textarea data-f="note" maxlength="300" rows="3">${esc(t.note)}</textarea></label>
+      <div class="row"><button class="btn" data-tr="saveRes" data-id="${t.id}" type="button">Save</button></div>`
+      :(t.result||t.note?`<p>${t.result?`<b>${esc(t.result)}</b> `:""}${esc(t.note)}</p>`:"");
+  }else{
+    body=(edit?`<div class="trn-tabs" role="group" aria-label="Are you going?"><button class="trn-tab" aria-pressed="${going}" data-tr="status" data-id="${t.id}" data-v="going" type="button">Going</button><button class="trn-tab" aria-pressed="${!going}" data-tr="status" data-id="${t.id}" data-v="maybe" type="button">Maybe</button></div>`
+      :`<span class="pill ${going?"trn-go":""}">${going?"Going":"Maybe"}</span>`)
+      +`<div class="trn-todo" role="group" aria-label="Checklist">${TR_TODO.map(([k,l])=>`<label><input type="checkbox" ${t.todo[k]?"checked":""} ${edit?`data-tr="todo" data-id="${t.id}" data-k="${k}"`:"disabled"}><span>${l}</span></label>`).join("")}</div>`
+      +(edit&&going?`<div><p class="eyebrow">Remind me</p><div class="trn-rem">${TR_REM.map(([d,l])=>`<button class="trn-tab" aria-pressed="${t.rem.includes(d)}" data-tr="rem" data-id="${t.id}" data-d="${d}" type="button">${l}</button>`).join("")}</div></div>`:"");
+  }
+  const del=!edit?"":TR.askDel===t.id?`<div class="par-ask" role="alertdialog"><p><b>Remove this tournament?</b></p><div class="row"><button class="btn" data-tr="delYes" data-id="${t.id}" type="button">Yes, remove</button><button class="btn ghost" data-tr="delNo" type="button">Keep it</button></div></div>`
+    :`<button class="link trn-del" data-tr="del" data-id="${t.id}" type="button">Remove</button>`;
+  return `<article class="card stack trn-c${over?" past":""}">${head}${body}<div class="row" style="justify-content:space-between;align-items:center">${link}${del}</div></article>`}
+
+function trEventCard(e,d){
+  const on=(d.mine||[]).find(t=>t.ref===e.id);
+  const act=!d.canEdit?"":on?`<span class="pill ${on.status==="going"?"trn-go":""}">On your plan: ${on.status==="going"?"Going":"Maybe"}</span>`
+    :`<div class="row"><button class="btn" data-tr="pick" data-id="${e.id}" data-v="going" type="button">We're going</button><button class="btn ghost" data-tr="pick" data-id="${e.id}" data-v="maybe" type="button">Maybe</button></div>`;
+  return `<article class="card stack trn-c"><div class="trn-top"><div><h3 class="tile-h">${esc(e.name)}</h3><p class="li-m">${trFmt(e.start,e.end)}${e.place?" · "+esc(e.place):""}</p></div><span class="pill">${trWhen(Math.max(0,trLeft(e.start)))}</span></div>
+    ${act}${e.link?`<a class="link" href="${esc(e.link)}" target="_blank" rel="noopener">Brochure (AICF)</a>`:""}</article>`}
+
+const trMonth=s=>trD(s).toLocaleDateString(undefined,{month:"long",year:"numeric"});
+const trSource=d=>`<p class="li-m trn-src">${d.updated?`List updated ${esc(new Date(d.updated).toLocaleDateString(undefined,{day:"numeric",month:"short"}))} from the`:"The list fills in every morning from the"} <a href="https://aicf.in/all-events/" target="_blank" rel="noopener">All India Chess Federation (AICF) events page</a>. Dates and fees can change, so always check the brochure.</p>`;
+function trAddForm(){return `<article class="card stack"><h2 class="par-h">Add my own tournament</h2>
+  <label class="fld"><span>Name</span><input id="trName" maxlength="120"></label>
+  <label class="fld"><span>Date</span><input id="trStart" type="date"></label>
+  <label class="fld"><span>Last day (if more than one day)</span><input id="trEnd" type="date"></label>
+  <label class="fld"><span>Place</span><input id="trPlace" maxlength="60"></label>
+  <div class="row"><button class="btn" data-tr="addOwn" type="button">Add to my plan</button><button class="btn ghost" data-tr="addNo" type="button">Cancel</button></div></article>`}
+
+function vTrFamily(d){
+  const mine=d.mine||[],coming=mine.filter(t=>trLeft(t.end)>=0),past=mine.filter(t=>trLeft(t.end)<0).reverse();
+  const soon=trSoon(),tabBtn=(k,l,n)=>`<button class="trn-tab" role="tab" aria-selected="${TR.tab===k}" aria-pressed="${TR.tab===k}" data-tr="tab" data-v="${k}" type="button">${l} (${n})</button>`;
+  let main;
+  if(TR.tab==="mine"){
+    main=(coming.length?coming.map(t=>trMineCard(t,d.canEdit)).join(""):`<article class="card stack"><p class="li-m">${d.canEdit?"Nothing planned yet. Pick a tournament from the Karnataka list.":"No tournament planned yet. Your parent can add one."}</p>${d.canEdit?`<div class="row"><button class="btn" data-tr="tab" data-v="list" type="button">See the Karnataka list</button></div>`:""}</article>`)
+      +(past.length?`<h2 class="trn-mo">Past tournaments</h2>${past.map(t=>trMineCard(t,d.canEdit)).join("")}`:"");
+  }else{
+    let last="";
+    main=(d.events.length?d.events.map(e=>{const m=trMonth(e.start),h=m!==last?`<h2 class="trn-mo">${esc(m)}</h2>`:"";last=m;return h+trEventCard(e,d)}).join(""):`<article class="card stack"><p class="li-m">No tournaments on the list yet.</p></article>`)+trSource(d);
+    if(d.canEdit)main+=TR.adding?trAddForm():`<div class="row"><button class="btn ghost" data-tr="addOpen" type="button">Add my own tournament</button></div>`;
+  }
+  return `<section class="stack view trn"><div><div class="eyebrow">Tournaments</div><h1>Plan the next one</h1>
+    <p class="li-m">${soon?`${esc(soon.name)} ${trLeft(soon.start)<=0?"is on now":"is "+trWhen(trLeft(soon.start))}.`:"Karnataka tournaments, picked by you."}</p></div>
+    ${trEmailCard(d)}
+    <div class="trn-tabs" role="tablist">${tabBtn("mine","My plan",mine.length)}${tabBtn("list","Karnataka list",d.events.length)}</div>${main}</section>`}
+
+function vTrTeacher(d){
+  return `<section class="stack view trn"><div><div class="eyebrow">Tournaments</div><h1>Karnataka list</h1>
+    <p class="li-m">Read from AICF every morning. Hide wrong ones, add missing ones. Parents choose from this list; their plans are private and not shown here.</p></div>
+    ${d.err?`<article class="card stack"><p><b>The last update failed.</b></p><p class="li-m">${esc(d.err)} Parents still see the older list.</p></article>`:""}
+    <div class="row"><button class="btn" data-tr="refresh" type="button">Refresh now</button><button class="btn ghost" data-tr="addOpen" type="button">Add an event</button></div>
+    <p class="li-m">${d.updated?"Last updated "+esc(new Date(d.updated).toLocaleString(undefined,{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}))+".":"Not loaded yet."} ${d.emailReady?"Email reminders are on.":"Email reminders are off (RESEND_API_KEY is not set)."}</p>
+    ${TR.adding?`<article class="card stack"><h2 class="par-h">Add an event</h2>
+      <label class="fld"><span>Name</span><input id="trName" maxlength="120"></label><label class="fld"><span>Date</span><input id="trStart" type="date"></label>
+      <label class="fld"><span>Last day (optional)</span><input id="trEnd" type="date"></label><label class="fld"><span>Place</span><input id="trPlace" maxlength="60"></label>
+      <label class="fld"><span>Link to details (optional)</span><input id="trLink" type="url" inputmode="url"></label>
+      <div class="row"><button class="btn" data-tr="addEvent" type="button">Add</button><button class="btn ghost" data-tr="addNo" type="button">Cancel</button></div></article>`:""}
+    ${d.events.map(e=>`<article class="card stack trn-c${e.hidden?" past":""}"><div class="trn-top"><div><h3 class="tile-h">${esc(e.name)}</h3><p class="li-m">${trFmt(e.start,e.end)}${e.place?" · "+esc(e.place):""}${e.mine?" · added by you":""}</p></div>${e.hidden?`<span class="pill">Hidden</span>`:""}</div>
+      <div class="row"><button class="btn ghost" data-tr="${e.hidden?"show":"hide"}" data-id="${e.id}" type="button">${e.hidden?"Show to parents":"Hide from parents"}</button>${e.mine?`<button class="btn ghost" data-tr="rmEvent" data-id="${e.id}" type="button">Delete</button>`:""}</div></article>`).join("")||`<article class="card"><p class="li-m">No events yet. Press Refresh now.</p></article>`}</section>`}
+
+function vTourney(){
+  if(TR.state==="idle")trLoad(()=>{if(route()==="tourney")render()});
+  if(TR.state==="idle"||TR.state==="loading")return skel("cards");
+  if(TR.state==="err")return `<section class="stack view"><div class="eyebrow">Tournaments</div><h1>Tournaments</h1><div class="card stack"><p class="li-m">${esc(TR.msg)}</p><button class="btn" id="trRetry" type="button">Try again</button></div></section>`;
+  return trTeacher()?vTrTeacher(TR.data):vTrFamily(TR.data)}
+
+function afterTourney(){
+  const r=$("#trRetry");if(r)r.onclick=()=>{TR.state="idle";render()};
+  const app=$("#app"),val=id=>{const e=$(id);return e?e.value.trim():""};
+  app.onclick=async ev=>{const b=ev.target.closest("[data-tr]");if(!b)return;const a=b.dataset.tr,id=b.dataset.id,t=((TR.data&&TR.data.mine)||[]).find(x=>x.id===id);
+    if(a==="tab"){TR.tab=b.dataset.v;TR.adding=false;render()}
+    else if(a==="addOpen"){TR.adding=true;render();const n=$("#trName");if(n)n.focus()}
+    else if(a==="addNo"){TR.adding=false;render()}
+    else if(a==="pick"){await trSend({action:"add",eventId:id,status:b.dataset.v},b.dataset.v==="going"?"Added to your plan":"Saved as maybe")}
+    else if(a==="addOwn"){if(!val("#trName")||!val("#trStart"))return toast("Please enter a name and a date.");
+      if(await trSend({action:"add",name:val("#trName"),start:val("#trStart"),end:val("#trEnd")||val("#trStart"),place:val("#trPlace")},"Added to your plan")){TR.adding=false;TR.tab="mine";render()}}
+    else if(a==="status")trSend({action:"update",id,status:b.dataset.v});
+    else if(a==="todo"&&t)trSend({action:"update",id,todo:{...t.todo,[b.dataset.k]:!t.todo[b.dataset.k]}});
+    else if(a==="rem"&&t){const d=+b.dataset.d,on=t.rem.includes(d);trSend({action:"update",id,rem:on?t.rem.filter(x=>x!==d):[...t.rem,d]})}
+    else if(a==="saveRes"){const c=b.closest(".trn-c");trSend({action:"update",id,result:c.querySelector('[data-f="result"]').value,note:c.querySelector('[data-f="note"]').value},"Saved")}
+    else if(a==="del"){TR.askDel=id;render()}
+    else if(a==="delNo"){TR.askDel=null;render()}
+    else if(a==="delYes"){TR.askDel=null;try{await liveApi("/tournaments?id="+encodeURIComponent(id),{method:"DELETE"});await trReload();toast("Removed")}catch(e){toast(e.message)}}
+    else if(a==="emailChg"){TR.emailEdit=true;render()}
+    else if(a==="emailNo"){TR.emailEdit=false;render()}
+    else if(a==="emailSave"){if(await trSend({action:"email",email:val("#trEmail")},val("#trEmail")?"Email saved":"Email removed"))TR.emailEdit=false}
+    else if(a==="emailDel"){if(await trSend({action:"email",email:""},"Email removed"))TR.emailEdit=false}
+    // teacher
+    else if(a==="refresh"){b.disabled=true;b.textContent="Reading AICF…";const j=await trSend({action:"refresh"});if(j)toast(j.ok?`Updated: ${j.count} Karnataka events`:j.error)}
+    else if(a==="hide"||a==="show")trSend({action:"hide",id,hidden:a==="hide"});
+    else if(a==="rmEvent")trSend({action:"removeEvent",id},"Deleted");
+    else if(a==="addEvent"){if(!val("#trName")||!val("#trStart"))return toast("Please enter a name and a date.");
+      if(await trSend({action:"addEvent",name:val("#trName"),start:val("#trStart"),end:val("#trEnd")||val("#trStart"),place:val("#trPlace"),link:val("#trLink")},"Event added")){TR.adding=false;render()}}}}
 
 /* ---------- Teaching layer: "Why" after every puzzle (Phase 1) ----------
    The words live in /teach/themes.json (theme explanations, lesson cards, the Sathi Check questions), so they can be
@@ -2025,7 +2193,7 @@ function vLocked(){return `<section class="card stack view lockcard" style="max-
   <p class="li-m" style="font-size:.85rem">Want to join? Just ask your coach after class.</p></section>`}
 function vProgressTeacher(){
   if(TPROG.state==="idle"){setTimeout(loadTeacherProgress,0);TPROG.state="loading"}
-  const head=`<section class="stack view"><div class="eyebrow">Progress</div><div class="row" style="justify-content:space-between;align-items:end"><h1>Student progress</h1><button class="btn ghost" id="tpRefresh">Refresh</button></div></section>`;
+  const head=`<section class="stack view"><div class="eyebrow">Progress</div><div class="row" style="justify-content:space-between;align-items:end"><h1>Student progress</h1><div class="row"><a class="btn ghost" href="#tourney">Tournament list</a><button class="btn ghost" id="tpRefresh">Refresh</button></div></div></section>`;
   if(TPROG.state==="loading")return head+`<section class="stack view" role="status" aria-label="Loading">${[1,2,3,4].map(()=>`<div class="sk sk-row"></div>`).join("")}</section>`;
   if(TPROG.state==="err")return head+`<section class="card view"><p>${esc(TPROG.msg||"Could not load progress.")}</p></section>`;
   const all=TPROG.list,batches=[...new Map(all.map(u=>[u.batch,u.batchName||u.batch])).entries()];
@@ -2211,7 +2379,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 // Teacher: everyone's progress for the Progress tab.
 let TPROG={state:"idle",list:[],batch:"all",open:null};
 async function loadTeacherProgress(){TPROG.state="loading";try{TPROG.list=(await liveApi("/progress")).students||[];TPROG.state="ok"}catch(e){TPROG.state="err";TPROG.msg=e.message}if(route()==="progress")render()}
-function signOut(){if(progT)progPush();TPROG={state:"idle",list:[],batch:"all",open:null};S.liveToken="";S.liveUser=null;save();AUTH={state:"out",user:null,msg:""};resetLive();location.hash="#home";render()}
+function signOut(){if(progT)progPush();TPROG={state:"idle",list:[],batch:"all",open:null};TR={state:"idle",data:null,msg:"",tab:"mine",adding:false,askDel:null,emailEdit:false,busy:false};PAR={state:"idle",data:null,msg:"",ask:false};S.liveToken="";S.liveUser=null;save();AUTH={state:"out",user:null,msg:""};resetLive();location.hash="#home";render()}
 
 function authView(){
   if(AUTH.state==="check")return `<section class="login"><div class="card login-card stack" style="text-align:center"><div class="spin" aria-hidden="true"></div><p class="li-m" role="status">Opening Chess Sathi…</p></div></section>`;
@@ -2564,7 +2732,7 @@ function afterOpening(){
   document.querySelectorAll("[data-line]").forEach(b=>b.onclick=()=>{OPJUMP=OPL.guide.lines[+b.dataset.line].from||0;location.hash="opening?id="+OPL.guide.id+"&l="+b.dataset.line});
   opBind(document.querySelector(".op-play"));
 }
-const VIEWS={plevel:[vPlevel,afterPlevel],classic:[vClassic,afterClassic],practice:[vPractice,afterPractice],drill:[vDrill,afterDrill],live:[vLive,afterLive],home:[vHome,afterHome],puzzles:[vPuzzles,afterPuzzles],tests:[vTests,afterTests],progress:[vProgress,afterProgress],openings:[vOpenings,afterOpenings],opening:[vOpening,afterOpening],ofam:[vOfam,afterOfam],theme:[vTheme,afterTheme],wdrill:[vWdrill,afterPlevel],doctor:[vDoctor,afterDoctor]};
+const VIEWS={plevel:[vPlevel,afterPlevel],classic:[vClassic,afterClassic],practice:[vPractice,afterPractice],drill:[vDrill,afterDrill],live:[vLive,afterLive],home:[vHome,afterHome],puzzles:[vPuzzles,afterPuzzles],tests:[vTests,afterTests],progress:[vProgress,afterProgress],openings:[vOpenings,afterOpenings],opening:[vOpening,afterOpening],ofam:[vOfam,afterOfam],theme:[vTheme,afterTheme],wdrill:[vWdrill,afterPlevel],doctor:[vDoctor,afterDoctor],tourney:[vTourney,afterTourney]};
 function route(){const h=(location.hash||"#home").slice(1).split("?")[0];return VIEWS[h]?h:"home"}
 function render(){
   document.body.classList.toggle("gated",AUTH.state!=="in"&&AUTH.state!=="guest");renderWho();
@@ -2572,13 +2740,13 @@ function render(){
   if(!HAS_CHESS){$("#app").innerHTML=`<div class="card"><h2>The chess engine didn't load</h2><p class="li-m" style="margin-top:8px">Check your connection and reload the page.</p></div>`;return}
   document.body.classList.toggle("demo",isDemo());document.body.classList.toggle("parentv",isParent());
   let r=route();
-  if(isParent()&&r!=="live"&&r!=="progress"){location.replace("#progress");return}  // a parent sees only their child's progress and the class schedule
+  if(isParent()&&r!=="live"&&r!=="progress"&&r!=="tourney"){location.replace("#progress");return}  // a parent sees only their child's progress and the class schedule
   if(r!=="plevel"&&r!=="wdrill")atRecord();                                      // leaving a puzzle after a wrong move counts as a failed attempt
   if(isDemo()&&r!=="live"){if(r==="home"){location.replace("#live");return}document.body.dataset.route=r;$("#app").innerHTML=vLocked();
     document.querySelectorAll("#tabs a").forEach(x=>x.removeAttribute("aria-current"));$("#lkGo").onclick=()=>location.hash="live";return}
   document.body.dataset.route=r;
   const [v,a]=VIEWS[r];$("#app").innerHTML=v();a&&a();
-  const tab=(r==="opening"||r==="ofam")?"openings":r==="drill"?"practice":(r==="plevel"||r==="classic"||r==="theme"||r==="wdrill"||r==="doctor")?"puzzles":r;
+  const tab=r==="tourney"?(isStudent()?"home":"progress"):(r==="opening"||r==="ofam")?"openings":r==="drill"?"practice":(r==="plevel"||r==="classic"||r==="theme"||r==="wdrill"||r==="doctor")?"puzzles":r;
   document.querySelectorAll("#tabs a").forEach(x=>{if(x.getAttribute("href")==="#"+tab)x.setAttribute("aria-current","page");else x.removeAttribute("aria-current")});
   document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>location.hash=b.dataset.go);
 }

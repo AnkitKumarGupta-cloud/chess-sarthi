@@ -45,6 +45,17 @@ Sathi explains a student's wrong move in plain English and answers questions on 
 3. Optional settings: `AI_PROVIDERS` (order to try, default `groq,cerebras,openrouter`), `GROQ_MODEL` / `CEREBRAS_MODEL` / `OPENROUTER_MODEL` (model names; free model lists change, so check the provider's list if Sathi stops answering), `AI_DAILY_LIMIT` (questions per student per day, default 40), `AI_GLOBAL_LIMIT` (whole app per day, default 900, to stay inside the free limits).
 Only the position and moves are sent to the provider, never a student's name.
 
+## 5b. Tournament reminders by email (optional) — free
+The Tournaments screen works without this (parents still see reminders in the app). To also send **email** reminders:
+1. Make a free account at https://resend.com and create an **API key**.
+2. In Vercel -> Settings -> Environment Variables add:
+   - `RESEND_API_KEY` - the key from Resend.
+   - `CRON_SECRET` - any long random text you make up. Vercel sends it with the daily job; without it the job refuses to run, so nobody else can trigger emails.
+   - `MAIL_FROM` - for example `Chess Sathi <reminders@yourdomain.com>`. Until you verify a domain in Resend (Resend -> Domains), it can only email **your own** address, so verify one before parents use it.
+   - `APP_URL` (optional) - the site address, e.g. `https://your-site.vercel.app`, so the email can link back to the app.
+3. Redeploy. The daily job runs at about 8 AM India time. It also refreshes the Karnataka tournament list from the AICF website.
+Free plan limits: Resend sends up to 100 emails a day; Vercel Cron runs once a day (so a reminder arrives that morning, not at an exact hour).
+
 ## 6. Deploy
 - Vercel project settings: Framework **Vite**, build command `vite build`, output `dist` (already in `vercel.json`).
 - If your GitHub repo keeps the website on its own branch, set **Settings → Git → Production Branch** to that branch.

@@ -13,6 +13,8 @@ export function useEnv(extra = {}) { Object.assign(process.env, env, extra); }
 
 export const db = new Map();     // key -> string | Set
 export const lk = { rooms: {}, egress: {}, calls: [] };
+export const mail = { sent: [], fail: false };      // fake Resend: every email "sent" is kept here
+export const aicf = { html: "", status: 200 };       // fake aicf.in/all-events page
 
 function redis(cmd) {
   const [op, k, ...a] = cmd;
@@ -43,6 +45,12 @@ globalThis.fetch = async (url, opts = {}) => {
     if (u.pathname === "/pipeline") return json(200, JSON.parse(opts.body).map((c) => ({ result: redis(c) })));
     return json(200, { result: redis(JSON.parse(opts.body)) });
   }
+  if (u.origin === "https://api.resend.com") {
+    assert.equal(opts.headers.Authorization, "Bearer re_test_key");
+    if (mail.fail) return json(500, { message: "boom" });
+    mail.sent.push(JSON.parse(opts.body)); return json(200, { id: "m" + mail.sent.length });
+  }
+  if (u.origin === "https://aicf.in") return { ok: aicf.status < 300, status: aicf.status, text: async () => aicf.html };
   if (u.origin === "https://demo.livekit.cloud") {
     const tok = decode(opts.headers.Authorization.replace("Bearer ", "")); assert.equal(tok.iss, env.LIVEKIT_API_KEY);
     const m = u.pathname.replace("/twirp/livekit.", ""), body = JSON.parse(opts.body || "{}"); lk.calls.push(m);

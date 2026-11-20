@@ -181,8 +181,8 @@ const before = JSON.stringify([...db.entries()].map(([k, v]) => [k, v instanceof
 await runMigrations({ dry: true, log: quiet });
 assert.equal(JSON.stringify([...db.entries()].map(([k, v]) => [k, v instanceof Set ? [...v] : v])), before, "a dry run changes nothing");
 const ran = await runMigrations({ log: quiet });
-assert.equal(ran.length, 3);
-assert.equal(db.get("schema:version"), "3");
+assert.equal(ran.length, 4);
+assert.equal(db.get("schema:version"), "4");
 assert.deepEqual(JSON.parse(db.get("at:" + old.username)).seed, { fork: [10, 6], pin: [6, 5] }, "old counts become [tries, misses]; a bad theme name is skipped");
 assert.equal(db.get("at:" + meera.username), keep, "an existing record is never overwritten");
 assert.ok(db.has("at:" + both[0].username), "every student gets a record");
