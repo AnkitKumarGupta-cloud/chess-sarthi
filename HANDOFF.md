@@ -240,3 +240,4 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 ### Phase 6f: level puzzles accept another winning move; stronger hint glow
 - Levels: a move that is not the stored one is checked with Stockfish (`lvAnalyse`): if it is at most 100 cp worse than the best move and the position after it is clearly winning (300+ cp), it is accepted and the puzzle counts as solved at once (the stored line no longer applies). Otherwise it is rejected as before (the analysis is reused by the coach). Status shows "Checking your move…".
 - Hints (Practice and Levels): the hinted square now gets a red pulsing ring (`.sq.hint`) instead of the faint yellow, and Practice scrolls the board into view after a hint click.
+- Level Hint is now two clicks too (was 3 text-first steps where step 1 highlighted nothing): click 1 glows the piece, click 2 glows both squares and names the move ("The move is Re8+"). `LVS.hintTo`.

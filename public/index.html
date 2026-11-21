@@ -1507,12 +1507,11 @@ async function coachAsk(q){
   if(LVS!==tok||c.seq!==my)return;
   if(r&&r.text){c.log.push({q,a:r.text});coachSay(r.text,false)}
   else coachSay(r&&r.limit?r.error:"I could not answer that right now. Try the Hint button.",false)}
-function coachHint(p){const l=LVS.hl=Math.min(4,(LVS.hl||0)+1),mv=LVS.moves[LVS.ply],from=mv.slice(0,2),pc=LVS.g.get(from),th=themesOf(p),c=cs();c.seq++;
+function coachHint(p){const l=LVS.hl=Math.min(2,(LVS.hl||0)+1),mv=LVS.moves[LVS.ply],from=mv.slice(0,2),to=mv.slice(2,4),pc=LVS.g.get(from),th=themesOf(p),c=cs();c.seq++;
+  // Two clicks: 1 = the piece to move glows (+ the idea), 2 = the move itself (both squares glow, move name shown)
   let msg;
-  if(l===1){msg=(th.map(t=>HINT1[t]).find(Boolean))||HINT_GENERIC}
-  else if(l===2){LVS.hint=from;msg="Look at the highlighted piece. It is the one that does the job."}
-  else if(l===3){LVS.hint=from;msg=`The highlighted ${pc?PIECE_N[pc.type]:"piece"} is the key.${th.length?` The idea is: ${themeName(th[0])}.`:""} Where should it go?`}
-  else{LVS.hl=4;LVS.hint=from;msg="No more hints. If you are really stuck, press Solution and I will show you why it works."}
+  if(l===1){LVS.hint=from;LVS.hintTo=null;msg=`Move the glowing ${pc?PIECE_N[pc.type]:"piece"}.${th.length?` ${(th.map(t=>HINT1[t]).find(Boolean))||`The idea is: ${themeName(th[0])}.`}`:""} Press Hint again to see the move.`}
+  else{const m=new Chess(LVS.g.fen()).move({from,to,promotion:mv[4]||undefined});LVS.hint=from;LVS.hintTo=to;msg=`The move is ${m?m.san:from+to}. Play it on the board.`}
   c.msg=msg;c.busy=false;render()}
 
 /* ---------- Game doctor (Phase 3) ----------
@@ -2033,7 +2032,7 @@ function vPlevel(){
     <div class="lvdots" aria-label="Puzzles in this level">${list.map((_,i)=>`<span class="${LVS.res[i]||""}${i===LVS.k?" cur":""}" title="Puzzle ${i+1}">${LVS.res[i]==="ok"?"✓":LVS.res[i]==="retry"?"•":i+1}</span>`).join("")}</div>
     ${LVS.chk&&s==="idle"?scPanel():`<div class="ds-status ${scls}" role="status">${stat}</div>`}
     <div class="ds-tools">
-      <button class="tbtn" id="lvHint" ${s==="idle"||s==="no"?"":"disabled"}><svg viewBox="0 0 24 24"><path d="M9 21h6M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5v1h6v-1c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg><span>Hint${LVS.hl?` ${Math.min(3,LVS.hl)}/3`:""}</span></button>
+      <button class="tbtn" id="lvHint" ${s==="idle"||s==="no"?"":"disabled"}><svg viewBox="0 0 24 24"><path d="M9 21h6M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5v1h6v-1c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg><span>Hint${LVS.hl?` ${Math.min(2,LVS.hl)}/2`:""}</span></button>
       <button class="tbtn" id="lvShow" ${s==="idle"||s==="no"?"":"disabled"}><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span>Solution</span></button>
       <button class="tbtn" id="lvRetry"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>Retry</span></button>
     </div>
@@ -2047,13 +2046,13 @@ function afterPlevel(){
   const l=LVS.l,list=lvList(l),g=LVS.g,flip=LVS.color==="b";
   const live=(LVS.state==="idle"||LVS.state==="no")&&!LVS.promo&&!LVS.chk&&g.turn()===LVS.color;
   const dots=LVS.sel?g.moves({square:LVS.sel,verbose:true}).map(m=>m.to):[];const anim=LVS.anim;LVS.anim=null;
-  drawBoard($("#lvBoard"),g.fen(),{flip,anim,sel:LVS.sel,dots,bad:LVS.bad,mark:LVS.chk&&LVS.chk.sq?LVS.chk.sq:null,hi:LVS.chk||LVS.hint?[]:LVS.last,hint:LVS.hint&&!LVS.chk?[LVS.hint]:null,
+  drawBoard($("#lvBoard"),g.fen(),{flip,anim,sel:LVS.sel,dots,bad:LVS.bad,mark:LVS.chk&&LVS.chk.sq?LVS.chk.sq:null,hi:LVS.chk||LVS.hint?[]:LVS.last,hint:LVS.hint&&!LVS.chk?(LVS.hintTo?[LVS.hint,LVS.hintTo]:[LVS.hint]):null,
     onSquare:live?sq=>{const pc=g.get(sq);
       if(pc&&pc.color===g.turn()){LVS.sel=LVS.sel===sq?null:sq;LVS.bad=[];if(LVS.state==="no")LVS.state="idle";return render()}
       if(!LVS.sel)return;ac();const cand=g.moves({square:LVS.sel,verbose:true}).filter(m=>m.to===sq);if(!cand.length){LVS.sel=null;return render()}
       if(cand.some(m=>m.promotion)){LVS.promo={from:LVS.sel,to:sq};LVS.sel=null;return render()}
       lvUser({from:LVS.sel,to:sq})}:null});
-  function lvUser(m){const fenBefore=g.fen(),mv=g.move(m);LVS.sel=null;LVS.hint=null;if(!mv)return render();
+  function lvUser(m){const fenBefore=g.fen(),mv=g.move(m);LVS.sel=null;LVS.hint=null;LVS.hintTo=null;if(!mv)return render();
     const want=LVS.moves[LVS.ply],last=LVS.ply===LVS.moves.length-1;
     if(mv.from+mv.to+(mv.promotion&&want[4]?mv.promotion:"")===want||(mv.from+mv.to===want.slice(0,4)&&!want[4])||(last&&g.in_checkmate())){
       moveSound(mv,g);LVS.anim=[mv.from,mv.to];LVS.last=[mv.from,mv.to];LVS.bad=[];LVS.ply++;
