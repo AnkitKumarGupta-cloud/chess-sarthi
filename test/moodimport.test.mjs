@@ -36,7 +36,7 @@ console.log("ChessMood puzzles OK: " + mood.length + " puzzles");
 
 // Practice theme topics rebuilt from ChessMood-style puzzles: playable, climbing, and with a goal the app can check
 const prac = JSON.parse(fs.readFileSync("public/practice.json", "utf8"));
-const rebuilt = prac.topics.filter((t) => t.v === 2); assert.equal(rebuilt.length, 9, "nine theme topics were rebuilt");
+const rebuilt = prac.topics.filter((t) => t.v === 2); assert.equal(rebuilt.length, 11, "eleven theme topics were rebuilt");
 for (const t of rebuilt) {
   assert.ok(t.chapters.length >= 5, t.title + " has chapters");
   for (const c of t.chapters) {

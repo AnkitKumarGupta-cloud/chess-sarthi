@@ -12,8 +12,9 @@ const require = createRequire(import.meta.url.replace("tools/moodimport/practice
 const { Chess } = require("chess.js");
 
 const PER_TOPIC = 12;
-const TOPICS = { pin: "9ogFv8Ac", skewer: "tuoBxVE5", fork: "Qj281y1p", discoveredAttack: "MnsJEWnI", doubleCheck: "RUQASaZm", xRayAttack: "lyVYjhPG", deflection: "kdKpaYLW", attraction: "jOZejFWk", clearance: "Grmtwuft" };
-const NAME = { pin: "Pin", skewer: "Skewer", fork: "Fork", discoveredAttack: "Discovery", doubleCheck: "Double check", xRayAttack: "X-ray", deflection: "Deflection", attraction: "Attraction", clearance: "Clearance" };
+const TOPICS = { pin: "9ogFv8Ac", skewer: "tuoBxVE5", fork: "Qj281y1p", discoveredAttack: "MnsJEWnI", doubleCheck: "RUQASaZm", xRayAttack: "lyVYjhPG", deflection: "kdKpaYLW", attraction: "jOZejFWk", clearance: "Grmtwuft",
+  counterCheck: "CgjKPvxQ", underpromotion: "49fDW0wP", greekGift: "s5pLU7Of", desperado: "0YcGiH4Y", zwischenzug: "ITWY4GN2" };   // the last five come from OUR OWN generated puzzles (generate.mjs)
+const NAME = { pin: "Pin", skewer: "Skewer", fork: "Fork", discoveredAttack: "Discovery", doubleCheck: "Double check", xRayAttack: "X-ray", deflection: "Deflection", attraction: "Attraction", clearance: "Clearance", counterCheck: "Counter check", underpromotion: "Underpromotion", greekGift: "Greek gift", desperado: "Desperado", zwischenzug: "Zwischenzug" };
 
 async function engine() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sf-"));
@@ -32,6 +33,8 @@ async function engine() {
 
 const dry = process.argv.includes("--dry");
 const mood = JSON.parse(fs.readFileSync(new URL("./puzzles.json", import.meta.url), "utf8")).puzzles;
+const gf = new URL("./generated.jsonl", import.meta.url);
+if (fs.existsSync(gf)) mood.push(...fs.readFileSync(gf, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l)));   // our own generated puzzles
 const pfile = new URL("../../public/practice.json", import.meta.url), practice = JSON.parse(fs.readFileSync(pfile, "utf8"));
 const sf = await engine(), taken = new Set(), made = {};
 

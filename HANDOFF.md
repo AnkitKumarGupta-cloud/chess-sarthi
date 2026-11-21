@@ -216,3 +216,11 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - `node tools/moodimport/practice.mjs` builds them. Goal = mate in N, or "win about 60% of what the best line wins (min 150 cp) within N moves" (the app checks with Stockfish, so other good moves count too).
 - Rebuilt topics have `v: 2`; `prKey` adds it, so old "done" ticks do not mark the new puzzles done. `practice.json?v=5`.
 - Not done: Lichess-based Overloaded, Zwischenzug, Interference, etc. topics still use the old puzzles (too few ChessMood ones to fill them).
+
+### Phase 6c: original generated puzzles (Desperado, Counter Check)
+- `tools/moodimport/generate.mjs [minutes]` makes ORIGINAL puzzles with Stockfish: careless engine games, or random endings (`IDEAS=1`),
+  keeps positions with one clearly winning move that wins 2+ points of material and that very shallow searches miss. Output `generated.jsonl` (469 puzzles, committed).
+  Ideas are named by simple detectors (`detect()`): counter check, underpromotion, Greek gift, desperado (rough: a capture by a piece that is itself attacked), zwischenzug.
+- Result of the run: desperado 91, counter check 7, underpromotion 2, Greek gift 0, zwischenzug 0. `practice.mjs` rebuilds a topic only with 5+ puzzles,
+  so Desperado (12) and Counter Check (7) are new (v 2); Underpromotion, Greek Gift, Zwischenzug, Overloaded, Interference, Undermining, Zugzwang keep the Lichess puzzles.
+- Positions from random endings look artificial (many pieces on odd squares). Good enough to practise the idea, not as pretty as real games.
