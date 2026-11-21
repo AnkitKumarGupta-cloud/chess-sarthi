@@ -251,3 +251,6 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - User report: in "Two rook mate" a different, perfectly good rook move was refused (guided lines only accept THE line).
 - `node tools/moodimport/guided.mjs` turns guided chapters where the kid moves first and gives the final mate into goal chapters ("Checkmate in N"): any move that still mates in time is accepted, the computer answers with Stockfish. 13 chapters changed. Long technique lessons (5+ moves) get 4 extra moves of slack (Two rook mate: 9 instead of 5); short mates stay exact.
 - The other 31 guided lessons (openings and similar, no mate at the end) still use their fixed line.
+- Stage 2 (`guided.mjs`): the endgame lessons (7th-rank rook pawn, rook endings...) also became goal chapters. The goal comes from what the lesson line reaches
+  after at most 12 kid moves, judged by Stockfish: mate, "win about 60% of that advantage" or "hold the draw". 24 more chapters. Only 7 fixed lines remain
+  (Knight & Bishop intros, "how not to" lessons, and chapters where the computer moves first, which goal chapters cannot start yet).

@@ -47,3 +47,17 @@ for (const t of rebuilt) {
   }
 }
 console.log("Practice topics OK: " + rebuilt.map((t) => t.title + " " + t.chapters.length).join(", "));
+
+// every Practice chapter is either a goal chapter or (only a few intro lessons) a fixed line; goals are well-formed
+{
+  let fixed = 0;
+  for (const t of prac.topics) for (const c of t.chapters) {
+    const g = new Chess(c.fen); assert.ok(g.fen(), t.title + " " + c.name + " loads");
+    if (!c.goal) { if (c.line.length) fixed++; continue; }
+    assert.ok(["mate", "eval", "promote", "draw", "equalize"].includes(c.goal.type), c.name + " goal type");
+    assert.ok(c.goal.n >= 1, c.name + " goal moves");
+    if (c.goal.type === "eval") assert.ok(g.turn() === "w" ? c.goal.cp !== 0 : c.goal.cp !== 0);
+  }
+  assert.ok(fixed <= 10, "only a few fixed-line lessons are left (" + fixed + ")");
+  console.log("Practice goals OK, fixed-line lessons left: " + fixed);
+}
