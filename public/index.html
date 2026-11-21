@@ -1201,7 +1201,7 @@ function sfWarm(){sfStart().catch(()=>{})}                       // load the eng
 function afterPractice(){sfWarm();if(!PR)prLoad().then(()=>{if(route()==="practice")try{render()}catch(e){console.error(e)}}).catch(()=>{const a=$("#app");if(a)a.insertAdjacentHTML("beforeend",`<p class="feedback no">Couldn't load practice. Check your internet and try again.</p>`)})}
 
 function prParam(){const m=location.hash.match(/[?&]t=([^&]+)/);return m?decodeURIComponent(m[1]):""}
-function prOpen(t,i){const c=t.chapters[i],g=new Chess(c.fen);PRS={tid:t.id,i,g,color:prColor(c),moves:0,ply:0,sel:null,state:"idle",msg:"",last:[],bad:[],hint:null,promo:null,anim:null,hist:[],hn:0,hintSan:""};
+function prOpen(t,i){const c=t.chapters[i],g=new Chess(c.fen);PRS={tid:t.id,i,g,color:prColor(c),moves:0,ply:0,sel:null,state:"idle",msg:"",last:[],bad:[],hint:null,promo:null,anim:null,hist:[],hn:0,hintSan:"",fb:null};
   if(!c.goal&&c.line.length&&g.turn()!==PRS.color)prAuto()}
 function vDrill(){
   if(!PR)return skel("board");
@@ -1217,6 +1217,7 @@ function vDrill(){
   else if(st==="think"){stat=`<span class="spin sm" aria-hidden="true"></span> ${esc(PRS.msg||"The computer is thinking…")}`;scls="think"}
   else if(PRS.g.turn()===PRS.color&&PRS.hint&&PRS.hn===1){stat="Move the glowing piece. Tap Hint again to see the move.";scls="think"}
   else if(PRS.g.turn()===PRS.color&&PRS.hint&&PRS.hn>=2){stat=`Best move: <b>${esc(PRS.hintSan||"")}</b>`;scls="think"}
+  else if(PRS.fb&&PRS.g.turn()===PRS.color){stat=esc(PRS.fb.text);scls=PRS.fb.cls}
   else stat=PRS.g.turn()===PRS.color?"":"Waiting for the computer…";
   const ti=PR.topics.indexOf(t),nt=PR.topics[ti+1];
   return `<section class="drill view" data-sec="${t.section}">
@@ -1249,6 +1250,15 @@ function prPlay(m){const mv=PRS.g.move(m);if(!mv)return null;moveSound(mv,PRS.g)
 function prAuto(){const t=PR.topics.find(x=>x.id===PRS.tid),c=t.chapters[PRS.i];const u=c.line[PRS.ply];if(!u)return;
   PRS.state="think";PRS.msg="";setTimeout(()=>{if(!PRS||PRS.tid!==t.id)return;prPlay({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});PRS.ply++;
     PRS.state=PRS.ply>=c.line.length?"ok":"idle";if(PRS.state==="ok")return prSolved();render()},550)}
+/** Feedback on the player's move (scores are capped at +-6 pawns: any move that keeps a clearly won position counts as good). base = engine result BEFORE the move, after = result for the position AFTER it. Returns {cls,text} or null. */
+function prFeedback(base,after,fenBefore,me,mv){
+  if(!base||!after||!fenBefore)return null;
+  const sg=me==="w"?1:-1,cl=x=>Math.max(-600,Math.min(600,x)),loss=cl(base.white*sg)-cl(after.white*sg);
+  const played=mv.from+mv.to+(mv.promotion||"");
+  let best="";try{if(base.best&&base.best!==played&&base.best!=="(none)"){const m=new Chess(fenBefore).move({from:base.best.slice(0,2),to:base.best.slice(2,4),promotion:base.best[4]});best=m?m.san:""}}catch(e){}
+  if(loss<=40)return {cls:"ok",text:"Good move!"};
+  if(loss<=120)return {cls:"",text:`Playable, but there was a stronger move${best?": "+best:""}.`};
+  return {cls:"no",text:`That gives up a lot${best?`. Stronger was ${best}`:""}. You can press Take back and try again.`}}
 const prEnd=g=>g.in_checkmate()||g.in_draw()||g.in_stalemate()||g.insufficient_material()||g.in_threefold_repetition();
 async function prAfterUser(mv){
   const t=PR.topics.find(x=>x.id===PRS.tid),c=t.chapters[PRS.i],g=PRS.g,goal=c.goal,me=PRS.color,tok=PRS;
@@ -1266,9 +1276,13 @@ async function prAfterUser(mv){
     if(type==="promote"&&mv.promotion){const r=await sfAsk(g.fen(),{depth:13});if(PRS!==tok)return;return meets(r.white)?prSolved():prFail("You promoted, but the position isn't winning. Try again!")}
     if(type==="mate"&&goal&&goal.n<99&&PRS.moves>=goal.n)return prFail(`Not checkmate in ${goal.n}. Try again!`);
     if((type==="draw"||type==="equalize")&&PRS.moves>=goal.n){const r=await sfAsk(g.fen(),{depth:12});if(PRS!==tok)return;const mine=me==="w"?r.white:-r.white;return mine>-150?prSolved():prFail("You held on for a while, but the position slipped. Try again!")}
+    // How good was YOUR move? Compare the engine score before it with the score after it (from your side).
+    const fenBefore=PRS.hist[PRS.hist.length-1];let base=null;
+    if(fenBefore){PRS.msg="Checking your move…";render();try{base=await sfAsk(fenBefore,{depth:11,movetime:400})}catch(e){}if(PRS!==tok)return}
     // The computer answers with its best move.
     PRS.msg="The computer is thinking…";render();
     const r=await sfAsk(g.fen(),{depth:type==="mate"?14:12,movetime:type==="mate"?undefined:700});if(PRS!==tok)return;
+    PRS.fb=prFeedback(base,r,fenBefore,me,mv);
     if(!r.best||r.best==="(none)")return prFail("No moves left. Try again!");
     prPlay({from:r.best.slice(0,2),to:r.best.slice(2,4),promotion:r.best[4]});
     if(g.in_checkmate())return prFail("You got checkmated. Try again!");
@@ -1291,7 +1305,7 @@ function afterDrill(){sfWarm();
       const cand=g.moves({square:PRS.sel,verbose:true}).filter(m=>m.to===sq);if(!cand.length){PRS.sel=null;return render()}
       if(cand.some(m=>m.promotion)){PRS.promo={from:PRS.sel,to:sq};PRS.sel=null;return render()}
       prMove({from:PRS.sel,to:sq})}:null});
-  function prMove(m){PRS.hist.push(g.fen());const mv=prPlay(m);PRS.sel=null;PRS.bad=[];PRS.hint=null;PRS.hn=0;if(!mv){PRS.hist.pop();return render()}PRS.moves++;prAfterUser(mv)}
+  function prMove(m){PRS.hist.push(g.fen());const mv=prPlay(m);PRS.sel=null;PRS.bad=[];PRS.hint=null;PRS.hn=0;PRS.fb=null;if(!mv){PRS.hist.pop();return render()}PRS.moves++;prAfterUser(mv)}
   document.querySelectorAll("[data-promo]").forEach(b=>b.onclick=()=>{const p=PRS.promo;PRS.promo=null;prMove({...p,promotion:b.dataset.promo})});
   // Hint, step by step: click 1 = which piece to move (glows), click 2 = the best move itself (arrow squares + move name)
   const hintShow=u=>{PRS.hint=u;PRS.hn=1;render()};
@@ -1303,7 +1317,7 @@ function afterDrill(){sfWarm();
     try{const r=await sfAsk(g.fen(),{depth:14});if(PRS!==tok)return;PRS.state="idle";PRS.msg="";hintShow(r.best)}catch(e){PRS.state="idle";render()}};
   $("#prUndo").onclick=()=>{const f=PRS.hist.pop();if(!f)return;PRS.g=new Chess(f);PRS.moves=Math.max(0,PRS.moves-1);
     if(!c.goal&&c.line.length){const back=PRS.g.history().length;/* guided: recompute ply from line */let ply=0;const g2=new Chess(c.fen);while(ply<c.line.length&&g2.fen()!==PRS.g.fen()){const u=c.line[ply];g2.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});ply++}PRS.ply=ply}
-    PRS.state="idle";PRS.msg="";PRS.last=[];PRS.hint=null;PRS.hn=0;PRS.bad=[];render()};
+    PRS.state="idle";PRS.msg="";PRS.last=[];PRS.hint=null;PRS.hn=0;PRS.fb=null;PRS.bad=[];render()};
   $("#prReset").onclick=()=>{prOpen(t,PRS.i);render()};
   $("#prNext").onclick=()=>{if(PRS.i<t.chapters.length-1){prOpen(t,PRS.i+1);render();window.scrollTo(0,0)}else{const nt=PR.topics[PR.topics.indexOf(t)+1];PRS=null;location.hash=nt?"drill?t="+nt.id:"practice"}};
   document.querySelectorAll("[data-ch]").forEach(b=>b.onclick=()=>{prOpen(t,+b.dataset.ch);render()});

@@ -254,3 +254,10 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - Stage 2 (`guided.mjs`): the endgame lessons (7th-rank rook pawn, rook endings...) also became goal chapters. The goal comes from what the lesson line reaches
   after at most 12 kid moves, judged by Stockfish: mate, "win about 60% of that advantage" or "hold the draw". 24 more chapters. Only 7 fixed lines remain
   (Knight & Bishop intros, "how not to" lessons, and chapters where the computer moves first, which goal chapters cannot start yet).
+
+### Phase 6i: feedback after every move in Practice
+- User report: with goal chapters accepting any move there was no way to know if a move was good. After each of your moves the status now says:
+  "Good move!" (green), "Playable, but there was a stronger move: X." or "That gives up a lot. Stronger was X. You can press Take back and try again." (`prFeedback`).
+- How: Stockfish scores the position before your move (depth 11, 0.4 s) and after it (the search the computer already does for its reply), from your side, capped at +-6 pawns
+  (a move that keeps a clearly won position is "good"). Loss 40 cp or less = good, up to 120 = playable, more = gives up a lot. Costs about 0.4 s extra per move.
+- Not shown on the last move of a chapter (it is judged by the goal) and not for fixed-line lessons (they already say "Not quite").
