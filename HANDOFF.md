@@ -245,3 +245,4 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 ### Phase 6g: Practice speed
 - `practice.json` and `levels.json` use the normal browser cache (their `?v=` number changes with the content); `practice.json` is fetched in the background 2.5 s after the app opens;
   the 7 MB Stockfish engine starts (`sfWarm`) as soon as the Practice list or a drill opens, so the first computer reply and the Hint no longer wait for it.
+- Hint fix (user report): the status box in a Practice drill is now always there (64 px, `.ds-status.prs`), so Hint / Next position do not jump when the hint text appears (a second tap used to land on "Next position"). Hint squares use soft gold (`--sq-hi`) instead of red. The auto-scroll after a hint was removed (it moved buttons under the finger).
