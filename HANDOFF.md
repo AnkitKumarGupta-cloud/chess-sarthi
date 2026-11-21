@@ -231,3 +231,8 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - `practice.mjs` mixes exact puzzles, lessons and generated puzzles per topic (15 chapters, spread easy to hard, longest version of a position wins). Goals now go up to 6 moves.
 - Levels: 344 exact ChessMood puzzles placed (was 288), ratings up to 1900, so the levels now get harder than before. Cache versions bumped (levels v3, practice v6).
 - Honest limit: pools per theme are small, so most chapters are still 1 to 3 moves; the 4 to 6 move ones sit at the end of each topic.
+
+### Phase 6e: two-step Hint in Practice
+- Practice Hint is now two clicks: click 1 glows the piece to move ("Hint 1/2"), click 2 also shows the target square and the move name, e.g. "Best move: Qg3+" ("Hint 2/2").
+  A third click does nothing. The hint resets after any move, Take back or Restart. Code: `hintShow`/`hintMore` in `afterDrill`, `PRS.hn`, `PRS.hintSan`.
+- The Puzzles levels already have their own Hint (3 steps) and a Solution button; unchanged.

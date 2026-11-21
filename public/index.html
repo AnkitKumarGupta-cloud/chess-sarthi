@@ -1194,7 +1194,7 @@ function vPractice(){
 function afterPractice(){if(!PR)prLoad().then(()=>{if(route()==="practice")try{render()}catch(e){console.error(e)}}).catch(()=>{const a=$("#app");if(a)a.insertAdjacentHTML("beforeend",`<p class="feedback no">Couldn't load practice. Check your internet and try again.</p>`)})}
 
 function prParam(){const m=location.hash.match(/[?&]t=([^&]+)/);return m?decodeURIComponent(m[1]):""}
-function prOpen(t,i){const c=t.chapters[i],g=new Chess(c.fen);PRS={tid:t.id,i,g,color:prColor(c),moves:0,ply:0,sel:null,state:"idle",msg:"",last:[],bad:[],hint:null,promo:null,anim:null,hist:[]};
+function prOpen(t,i){const c=t.chapters[i],g=new Chess(c.fen);PRS={tid:t.id,i,g,color:prColor(c),moves:0,ply:0,sel:null,state:"idle",msg:"",last:[],bad:[],hint:null,promo:null,anim:null,hist:[],hn:0,hintSan:""};
   if(!c.goal&&c.line.length&&g.turn()!==PRS.color)prAuto()}
 function vDrill(){
   if(!PR)return skel("board");
@@ -1208,6 +1208,8 @@ function vDrill(){
   else if(st==="fail"){stat=esc(PRS.msg||"Not quite. Try again!");scls="no"}
   else if(st==="no"){stat="Not quite. Try another move!";scls="no"}
   else if(st==="think"){stat=`<span class="spin sm" aria-hidden="true"></span> ${esc(PRS.msg||"The computer is thinking…")}`;scls="think"}
+  else if(PRS.g.turn()===PRS.color&&PRS.hint&&PRS.hn===1){stat="Hint: move the glowing piece. Press Hint again to see the move.";scls="think"}
+  else if(PRS.g.turn()===PRS.color&&PRS.hint&&PRS.hn>=2){stat=`Best move: <b>${esc(PRS.hintSan||"")}</b>`;scls="think"}
   else stat=PRS.g.turn()===PRS.color?"":"Waiting for the computer…";
   const ti=PR.topics.indexOf(t),nt=PR.topics[ti+1];
   return `<section class="drill view" data-sec="${t.section}">
@@ -1223,7 +1225,7 @@ function vDrill(){
       <div><b class="ds-pos">${esc(c.name)}</b><span class="ds-goal-t">${esc(goalText(c,PRS.color))}</span></div></div>
     <div class="ds-status ${scls}" role="status"${stat?"":" hidden"}>${stat}</div>
     <div class="ds-tools">
-      <button class="tbtn" id="prHint" ${st==="idle"||st==="no"?"":"disabled"} title="Show a hint"><svg viewBox="0 0 24 24"><path d="M9 21h6M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5v1h6v-1c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg><span>Hint</span></button>
+      <button class="tbtn" id="prHint" ${st==="idle"||st==="no"?"":"disabled"} title="Show a hint"><svg viewBox="0 0 24 24"><path d="M9 21h6M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5v1h6v-1c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg><span>Hint${PRS.hn?` ${PRS.hn}/2`:""}</span></button>
       <button class="tbtn" id="prUndo" ${PRS.hist.length&&st!=="think"?"":"disabled"} title="Take back your last move"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span>Take back</span></button>
       <button class="tbtn" id="prReset" title="Start this position again"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>Restart</span></button>
     </div>
@@ -1275,22 +1277,26 @@ function afterDrill(){
   const live=(PRS.state==="idle"||PRS.state==="no")&&!PRS.promo&&g.turn()===PRS.color;
   const dots=PRS.sel?g.moves({square:PRS.sel,verbose:true}).map(m=>m.to):[];
   const anim=PRS.anim;PRS.anim=null;
-  drawBoard($("#prBoard"),g.fen(),{flip,anim,sel:PRS.sel,dots,bad:PRS.bad,hi:PRS.hint?[PRS.hint.slice(0,2),PRS.hint.slice(2,4)]:PRS.last,
+  drawBoard($("#prBoard"),g.fen(),{flip,anim,sel:PRS.sel,dots,bad:PRS.bad,hi:PRS.hint?(PRS.hn>=2?[PRS.hint.slice(0,2),PRS.hint.slice(2,4)]:[PRS.hint.slice(0,2)]):PRS.last,
     onSquare:live?sq=>{const pc=g.get(sq);
       if(pc&&pc.color===g.turn()){PRS.sel=PRS.sel===sq?null:sq;PRS.bad=[];if(PRS.state==="no")PRS.state="idle";return render()}
       if(!PRS.sel)return;ac();
       const cand=g.moves({square:PRS.sel,verbose:true}).filter(m=>m.to===sq);if(!cand.length){PRS.sel=null;return render()}
       if(cand.some(m=>m.promotion)){PRS.promo={from:PRS.sel,to:sq};PRS.sel=null;return render()}
       prMove({from:PRS.sel,to:sq})}:null});
-  function prMove(m){PRS.hist.push(g.fen());const mv=prPlay(m);PRS.sel=null;PRS.bad=[];PRS.hint=null;if(!mv){PRS.hist.pop();return render()}PRS.moves++;prAfterUser(mv)}
+  function prMove(m){PRS.hist.push(g.fen());const mv=prPlay(m);PRS.sel=null;PRS.bad=[];PRS.hint=null;PRS.hn=0;if(!mv){PRS.hist.pop();return render()}PRS.moves++;prAfterUser(mv)}
   document.querySelectorAll("[data-promo]").forEach(b=>b.onclick=()=>{const p=PRS.promo;PRS.promo=null;prMove({...p,promotion:b.dataset.promo})});
+  // Hint, step by step: click 1 = which piece to move (glows), click 2 = the best move itself (arrow squares + move name)
+  const hintShow=u=>{PRS.hint=u;PRS.hn=1;render()};
+  const hintMore=()=>{const m=new Chess(g.fen()).move({from:PRS.hint.slice(0,2),to:PRS.hint.slice(2,4),promotion:PRS.hint[4]});PRS.hintSan=m?m.san:"";PRS.hn=2;render()};
   $("#prHint").onclick=async()=>{
-    if(!c.goal&&c.line.length){PRS.hint=c.line[PRS.ply];return render()}
+    if(PRS.hint&&PRS.g.turn()===PRS.color)return PRS.hn<2?hintMore():0;           // second click (a third does nothing)
+    if(!c.goal&&c.line.length)return hintShow(c.line[PRS.ply]);
     PRS.state="think";PRS.msg="Looking for a hint…";render();const tok=PRS;
-    try{const r=await sfAsk(g.fen(),{depth:14});if(PRS!==tok)return;PRS.hint=r.best;PRS.state="idle";PRS.msg="";render()}catch(e){PRS.state="idle";render()}};
+    try{const r=await sfAsk(g.fen(),{depth:14});if(PRS!==tok)return;PRS.state="idle";PRS.msg="";hintShow(r.best)}catch(e){PRS.state="idle";render()}};
   $("#prUndo").onclick=()=>{const f=PRS.hist.pop();if(!f)return;PRS.g=new Chess(f);PRS.moves=Math.max(0,PRS.moves-1);
     if(!c.goal&&c.line.length){const back=PRS.g.history().length;/* guided: recompute ply from line */let ply=0;const g2=new Chess(c.fen);while(ply<c.line.length&&g2.fen()!==PRS.g.fen()){const u=c.line[ply];g2.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});ply++}PRS.ply=ply}
-    PRS.state="idle";PRS.msg="";PRS.last=[];PRS.hint=null;PRS.bad=[];render()};
+    PRS.state="idle";PRS.msg="";PRS.last=[];PRS.hint=null;PRS.hn=0;PRS.bad=[];render()};
   $("#prReset").onclick=()=>{prOpen(t,PRS.i);render()};
   $("#prNext").onclick=()=>{if(PRS.i<t.chapters.length-1){prOpen(t,PRS.i+1);render();window.scrollTo(0,0)}else{const nt=PR.topics[PR.topics.indexOf(t)+1];PRS=null;location.hash=nt?"drill?t="+nt.id:"practice"}};
   document.querySelectorAll("[data-ch]").forEach(b=>b.onclick=()=>{prOpen(t,+b.dataset.ch);render()});
