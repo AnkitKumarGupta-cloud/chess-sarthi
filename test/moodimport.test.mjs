@@ -33,3 +33,17 @@ for (const p of mood) {
 // original puzzles keep their place: each level still starts with its first 10 untouched puzzles
 assert.ok(data.levels.every((l) => l.slice(0, 10).every((p) => !String(p[0]).startsWith("cm"))), "ChessMood puzzles sit after the original ten");
 console.log("ChessMood puzzles OK: " + mood.length + " puzzles");
+
+// Practice theme topics rebuilt from ChessMood-style puzzles: playable, climbing, and with a goal the app can check
+const prac = JSON.parse(fs.readFileSync("public/practice.json", "utf8"));
+const rebuilt = prac.topics.filter((t) => t.v === 2); assert.equal(rebuilt.length, 9, "nine theme topics were rebuilt");
+for (const t of rebuilt) {
+  assert.ok(t.chapters.length >= 5, t.title + " has chapters");
+  for (const c of t.chapters) {
+    const g = new Chess(c.fen); assert.ok(g.fen(), t.title + " " + c.name + " loads");
+    assert.equal(c.orient, g.turn() === "w" ? "white" : "black");
+    assert.ok(c.goal.type === "mate" ? c.goal.n >= 1 : c.goal.type === "eval" && (g.turn() === "w" ? c.goal.cp >= 150 : c.goal.cp <= -150) && c.goal.n >= 1, t.title + " " + c.name + " goal");
+    assert.ok(g.moves().length > 0);
+  }
+}
+console.log("Practice topics OK: " + rebuilt.map((t) => t.title + " " + t.chapters.length).join(", "));

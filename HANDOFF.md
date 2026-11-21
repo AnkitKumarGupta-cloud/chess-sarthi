@@ -208,3 +208,11 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - Levels with extras now have up to 16 puzzles; stars use the share of clean solves (90% / 70%) instead of 9 / 7 out of 10. `levels.json?v=2` busts the cache.
 - Ratings are estimates (by number of moves and how clear the best move is). Themes come from the lesson headings; about a third have none.
 - Test: `test/moodimport.test.mjs` (every ChessMood puzzle replays legally, ids unique, original ten puzzles untouched).
+
+### Phase 6b: Practice theme topics rebuilt
+- The user liked that ChessMood puzzles get harder step by step (Lichess ones do not). So the Practice theme topics
+  (Pin, Skewer, Fork, Discovered Attacks, Double Check, X-Ray, Deflection, Attraction, Clearance) now hold 12 chapters each,
+  taken from the vetted ChessMood-style puzzles and spread from easiest to hardest. Other Practice topics (mates, endgames, etc.) are unchanged.
+- `node tools/moodimport/practice.mjs` builds them. Goal = mate in N, or "win about 60% of what the best line wins (min 150 cp) within N moves" (the app checks with Stockfish, so other good moves count too).
+- Rebuilt topics have `v: 2`; `prKey` adds it, so old "done" ticks do not mark the new puzzles done. `practice.json?v=5`.
+- Not done: Lichess-based Overloaded, Zwischenzug, Interference, etc. topics still use the old puzzles (too few ChessMood ones to fill them).

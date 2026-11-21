@@ -1143,10 +1143,11 @@ function afterHome(){
 /* ---------- Practice (positions from Lichess practice, CC0 database; explanations are our own) ---------- */
 let PR=null;            // loaded data {sections, topics:[{id,section,title,intro,chapters:[{name,fen,goal,line,orient}]}]}
 let PRS=null;           // current session
-const prKey=(t,i)=>t.id+"/"+i;
+// topics rebuilt later carry v (e.g. 2) so old ticks from the earlier puzzles do not count for the new ones
+const prKey=(t,i)=>t.id+(t.v?"v"+t.v:"")+"/"+i;
 const prDone=t=>t.chapters.filter((c,i)=>S.practice&&S.practice[prKey(t,i)]).length;
 const prAll=()=>PR?PR.topics.reduce((a,t)=>a+prDone(t),0):Object.keys(S.practice||{}).length;
-async function prLoad(){if(PR)return PR;const r=await fetch("/practice.json?v=4",{cache:"no-cache"});if(!r.ok)throw new Error("load");PR=await r.json();return PR}
+async function prLoad(){if(PR)return PR;const r=await fetch("/practice.json?v=5",{cache:"no-cache"});if(!r.ok)throw new Error("load");PR=await r.json();return PR}
 
 /* Stockfish runs in the browser (Web Worker). One request at a time. */
 const SF={w:null,ready:null,busy:Promise.resolve()};
