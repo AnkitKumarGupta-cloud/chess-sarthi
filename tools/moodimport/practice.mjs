@@ -11,7 +11,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url.replace("tools/moodimport/practice.mjs", "package.json"));
 const { Chess } = require("chess.js");
 
-const PER_TOPIC = 12;
+const PER_TOPIC = 15;
 const TOPICS = { pin: "9ogFv8Ac", skewer: "tuoBxVE5", fork: "Qj281y1p", discoveredAttack: "MnsJEWnI", doubleCheck: "RUQASaZm", xRayAttack: "lyVYjhPG", deflection: "kdKpaYLW", attraction: "jOZejFWk", clearance: "Grmtwuft",
   counterCheck: "CgjKPvxQ", underpromotion: "49fDW0wP", greekGift: "s5pLU7Of", desperado: "0YcGiH4Y", zwischenzug: "ITWY4GN2" };   // the last five come from OUR OWN generated puzzles (generate.mjs)
 const NAME = { pin: "Pin", skewer: "Skewer", fork: "Fork", discoveredAttack: "Discovery", doubleCheck: "Double check", xRayAttack: "X-ray", deflection: "Deflection", attraction: "Attraction", clearance: "Clearance", counterCheck: "Counter check", underpromotion: "Underpromotion", greekGift: "Greek gift", desperado: "Desperado", zwischenzug: "Zwischenzug" };
@@ -34,19 +34,25 @@ async function engine() {
 const dry = process.argv.includes("--dry");
 const mood = JSON.parse(fs.readFileSync(new URL("./puzzles.json", import.meta.url), "utf8")).puzzles;
 const gf = new URL("./generated.jsonl", import.meta.url);
+const lf = new URL("./lessons.json", import.meta.url);                                   // whole lesson lines (up to 6 moves), goal-only
+if (fs.existsSync(lf)) mood.push(...JSON.parse(fs.readFileSync(lf, "utf8")).lessons);
 if (fs.existsSync(gf)) mood.push(...fs.readFileSync(gf, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l)));   // our own generated puzzles
 const pfile = new URL("../../public/practice.json", import.meta.url), practice = JSON.parse(fs.readFileSync(pfile, "utf8"));
+// the kid-to-move start position of an entry (exact puzzles have the opponent's setup move first)
+const startOf = (p) => { if (p.kidFirst) return p.fen; const g = new Chess(p.fen); g.move({ from: p.moves[0].slice(0, 2), to: p.moves[0].slice(2, 4), promotion: p.moves[0][4] }); return g.fen(); };
+const longest = new Map();
+for (const p of mood) { const k = startOf(p).split(" ").slice(0, 2).join(" "), len = p.kidFirst ? p.moves.length : p.moves.length - 1, o = longest.get(k); if (!o || len > o.len) longest.set(k, { p, len }); }
+const unique = new Set([...longest.values()].map((x) => x.p.id));
 const sf = await engine(), taken = new Set(), made = {};
 
 for (const theme of Object.keys(TOPICS)) {
-  const pool = mood.filter((p) => !taken.has(p.id) && p.themes.split(" ").includes(theme)).sort((a, b) => a.rating - b.rating);
+  const pool = mood.filter((p) => unique.has(p.id) && !taken.has(p.id) && p.themes.split(" ").includes(theme)).sort((a, b) => a.rating - b.rating);
   const pick = pool.length <= PER_TOPIC ? pool : Array.from({ length: PER_TOPIC }, (_, i) => pool[Math.round(i * (pool.length - 1) / (PER_TOPIC - 1))]);   // spread over the whole difficulty range
   const chapters = [];
   for (const p of pick) {
     taken.add(p.id);
-    const g = new Chess(p.fen); g.move({ from: p.moves[0].slice(0, 2), to: p.moves[0].slice(2, 4), promotion: p.moves[0][4] });
-    const start = g.fen(), color = g.turn(), n = (p.moves.length - 1 + 1) / 2;       // kid moves = (moves - setup move + 1) / 2
-    p.moves.slice(1).forEach((u) => g.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] }));
+    const start = startOf(p), g = new Chess(start), color = g.turn(), line = p.kidFirst ? p.moves : p.moves.slice(1), n = (line.length + 1) / 2;   // kid moves
+    line.forEach((u) => g.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] }));
     let goal;
     if (g.in_checkmate()) goal = { type: "mate", n };
     else { const w = await sf.white(g.fen()), mine = color === "w" ? w : -w, cp = Math.min(900, Math.max(150, Math.round(mine * 0.6 / 50) * 50)); goal = { type: "eval", cp: color === "w" ? cp : -cp, n }; }

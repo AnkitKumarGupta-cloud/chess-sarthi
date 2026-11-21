@@ -6,7 +6,7 @@
 //    (Stockfish says so by a big margin) - otherwise the app would mark a good alternative move as wrong.
 //  * Lessons start with the kid to move. The app (like Lichess) starts with the OPPONENT's last move, so we
 //    invent a believable last move for the opponent ("un-move" a piece one step back). It is checked with chess.js.
-//  * Long lesson lines are cut after at most 3 kid moves, always ending on a kid move.
+//  * Long lesson lines are cut after at most 6 kid moves, always ending on a kid move.
 // Permission: the user (Gupta Chess Academy) has ChessMood's permission to use these. No credit is shown in the app.
 import fs from "node:fs";
 import path from "node:path";
@@ -16,7 +16,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url.replace("tools/moodimport/convert.mjs", "package.json"));
 const { Chess } = require("chess.js");
 
-const DEPTH = 12, GAP = 150, MAX_KID_MOVES = 3, WORKERS = 4;
+const DEPTH = 12, GAP = 150, MAX_KID_MOVES = 6, WORKERS = 4;
 
 /* ---------- reading the PGN (main line only; comments, variations and symbols dropped) ---------- */
 export function parseFile(file) {
@@ -101,6 +101,19 @@ async function engine() {
   return { ask, close: () => p.kill() };
 }
 
+/** The WHOLE lesson line (up to 6 kid moves) as a goal-only puzzle: the kid may find other good moves, the app only checks the result with Stockfish.
+ *  Kept when the lesson line really wins: mate, or the kid is clearly winning at the end and gained material (or the line is 3+ moves long). */
+async function lessonGoal(g, fens, uci, ask, heading) {
+  const n = Math.min(uci.length, MAX_KID_MOVES * 2 - 1), cut = n % 2 === 0 ? n - 1 : n;   // end on a kid move
+  if (cut < 1) return null;
+  const kid = fens[0].split(" ")[1], end = fens[cut], e = new Chess(end), kidMoves = (cut + 1) / 2;
+  const mate = e.in_checkmate(); let score = 100000;
+  if (!mate) { const top = await ask(end); if (!top[0]) return null; score = -top[0].score; const s0 = (await ask(fens[0]))[0]; if (!s0 || s0.score < 200 || score < 200) return null; }
+  const mat = (f) => f.split(" ")[0].replace(/[^a-zA-Z]/g, "").split("").reduce((a, c) => a + ({ p: 1, n: 3, b: 3, r: 5, q: 9 }[c.toLowerCase()] || 0) * ((c === c.toUpperCase()) === (kid === "w") ? 1 : -1), 0);
+  if (!mate && mat(end) - mat(fens[0]) < 1 && kidMoves < 3) return null;
+  return { fen: fens[0], moves: uci.slice(0, cut), kidFirst: true, score, rating: Math.max(700, Math.min(2000, 700 + 230 * (kidMoves - 1) + (mate ? -50 : 0))), themes: themesFor(heading + " " + (g.title || ""), mate, kidMoves), key: placement(fens[0]) };
+}
+
 /* ---------- one lesson position -> puzzle (or null with a reason) ---------- */
 async function convertOne(g, heading, ask) {
   const fen = fixFen(g.fen || ""); if (!fen) return { skip: "no position" };
@@ -118,13 +131,14 @@ async function convertOne(g, heading, ask) {
     keep.push(uci[i]); if (uci[i + 1]) keep.push(uci[i + 1]);
     if (new Chess(fens[i + 1]).in_checkmate()) break;
   }
-  if (!keep.length) return { skip: "not a clear best move" };
+  const lesson = await lessonGoal(g, fens, uci, ask, heading);                            // goal-only version (several moves may work), used by Practice
+  if (!keep.length) return lesson ? { lesson } : { skip: "not a clear best move" };
   if (keep.length % 2 === 0) keep.pop();                                                // end on a kid move
   const end = new Chess(fens[0]); keep.forEach((u) => end.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] }));
   const mate = end.in_checkmate(), kidMoves = (keep.length + 1) / 2;
   const un = unMove(fens[0]); if (!un) return { skip: "no believable last move" };
   const rating = Math.max(600, Math.min(1900, Math.round(650 + 250 * (kidMoves - 1) + Math.max(-100, Math.min(200, 300 - gap / 3)) + (mate ? -50 : 0))));
-  return { puz: { fen: un.fen, moves: [un.uci, ...keep], rating, themes: themesFor(heading + " " + g.title, mate, kidMoves), key: placement(fens[0]) } };
+  return { lesson, puz: { fen: un.fen, moves: [un.uci, ...keep], rating, themes: themesFor(heading + " " + g.title, mate, kidMoves), key: placement(fens[0]) } };
 }
 
 /* ---------- main ---------- */
@@ -142,9 +156,12 @@ if (process.argv[1] && process.argv[1].endsWith("convert.mjs")) {
     for (;;) { const i = next++; if (i >= jobs.length) break; results[i] = await convertOne(jobs[i].g, jobs[i].heading, sf.ask); if (++done % 100 === 0) console.log(done + "/" + jobs.length); }
     sf.close();
   }));
-  const seen = new Set(), puzzles = [];
-  results.forEach((r, i) => { if (r.skip) { skips[r.skip] = (skips[r.skip] || 0) + 1; return; } if (seen.has(r.puz.key)) { skips.duplicate = (skips.duplicate || 0) + 1; return; } seen.add(r.puz.key); const { key, ...p } = r.puz; puzzles.push({ id: jobs[i].id, ...p }); });
-  puzzles.sort((a, b) => a.rating - b.rating);
+  const seen = new Set(), puzzles = [], lessons = [], seenL = new Set();
+  results.forEach((r, i) => { if (r.lesson && !seenL.has(r.lesson.key)) { seenL.add(r.lesson.key); const { key, ...l } = r.lesson; lessons.push({ id: jobs[i].id + "L", ...l }); }
+    if (!r.puz && !r.skip) return;
+    if (r.skip) { skips[r.skip] = (skips[r.skip] || 0) + 1; return; } if (seen.has(r.puz.key)) { skips.duplicate = (skips.duplicate || 0) + 1; return; } seen.add(r.puz.key); const { key, ...p } = r.puz; puzzles.push({ id: jobs[i].id, ...p }); });
+  puzzles.sort((a, b) => a.rating - b.rating); lessons.sort((a, b) => a.rating - b.rating);
+  fs.writeFileSync(new URL("./lessons.json", import.meta.url), JSON.stringify({ source: "ChessMood (used with permission)", lessons }));
   fs.writeFileSync(new URL("./puzzles.json", import.meta.url), JSON.stringify({ source: "ChessMood (used with permission)", puzzles }));
-  console.log("kept", puzzles.length, "skipped", JSON.stringify(skips));
+  console.log("goal-only lessons", lessons.length, "| kept", puzzles.length, "skipped", JSON.stringify(skips));
 }

@@ -224,3 +224,10 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - Result of the run: desperado 91, counter check 7, underpromotion 2, Greek gift 0, zwischenzug 0. `practice.mjs` rebuilds a topic only with 5+ puzzles,
   so Desperado (12) and Counter Check (7) are new (v 2); Underpromotion, Greek Gift, Zwischenzug, Overloaded, Interference, Undermining, Zugzwang keep the Lichess puzzles.
 - Positions from random endings look artificial (many pieces on odd squares). Good enough to practise the idea, not as pretty as real games.
+
+### Phase 6d: longer lines (4 to 6 of the kid's moves)
+- `convert.mjs` now keeps up to 6 kid moves in exact puzzles (was 3) and also writes `lessons.json`: the WHOLE lesson line as a goal-only puzzle for positions
+  where several moves work (685 of them, incl. ones dropped before as "not a clear best move"). Goal-only = the app only checks the result with Stockfish.
+- `practice.mjs` mixes exact puzzles, lessons and generated puzzles per topic (15 chapters, spread easy to hard, longest version of a position wins). Goals now go up to 6 moves.
+- Levels: 344 exact ChessMood puzzles placed (was 288), ratings up to 1900, so the levels now get harder than before. Cache versions bumped (levels v3, practice v6).
+- Honest limit: pools per theme are small, so most chapters are still 1 to 3 moves; the 4 to 6 move ones sit at the end of each topic.
