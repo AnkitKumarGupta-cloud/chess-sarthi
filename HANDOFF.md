@@ -236,3 +236,7 @@ Code: `src/pip.jsx`, used from `src/class.jsx`; styles are the `.pip…` and `.p
 - Practice Hint is now two clicks: click 1 glows the piece to move ("Hint 1/2"), click 2 also shows the target square and the move name, e.g. "Best move: Qg3+" ("Hint 2/2").
   A third click does nothing. The hint resets after any move, Take back or Restart. Code: `hintShow`/`hintMore` in `afterDrill`, `PRS.hn`, `PRS.hintSan`.
 - The Puzzles levels already have their own Hint (3 steps) and a Solution button; unchanged.
+
+### Phase 6f: level puzzles accept another winning move; stronger hint glow
+- Levels: a move that is not the stored one is checked with Stockfish (`lvAnalyse`): if it is at most 100 cp worse than the best move and the position after it is clearly winning (300+ cp), it is accepted and the puzzle counts as solved at once (the stored line no longer applies). Otherwise it is rejected as before (the analysis is reused by the coach). Status shows "Checking your move…".
+- Hints (Practice and Levels): the hinted square now gets a red pulsing ring (`.sq.hint`) instead of the faint yellow, and Practice scrolls the board into view after a hint click.

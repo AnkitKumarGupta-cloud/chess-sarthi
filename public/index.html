@@ -81,6 +81,8 @@ main{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-le
 .sq{position:relative;aspect-ratio:1;min-width:0;min-height:0;overflow:visible;justify-content:center;padding:0;background:var(--sq-light);cursor:default}
 .sq.d{background:var(--sq-dark)}
 .sq.hi::after{background:var(--sq-hi);opacity:.55}
+.sq.hint::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;box-shadow:inset 0 0 0 4px var(--accent);background:color-mix(in srgb,var(--accent) 30%,transparent)}
+@media (prefers-reduced-motion:no-preference){.sq.hint::before{animation:hintp .9s ease-in-out infinite alternate}@keyframes hintp{from{opacity:.55}to{opacity:1}}}
 .sq.bad::after,.sq.hi::after,.sq.sel::after{content:"";position:absolute;inset:0}
 .sq.sel::after{background:var(--sq-sel);opacity:.6}
 .sq.bad::after{background:var(--accent);opacity:.55}
@@ -985,6 +987,7 @@ function drawBoard(el,fen,o={}){
     const s=document.createElement(o.onSquare?"button":"div");
     s.className="sq"+((file+rank)%2===0?" d":"");
     if(o.hi&&o.hi.includes(name))s.classList.add("hi");
+    if(o.hint&&o.hint.includes(name))s.classList.add("hint");
     if(o.mark&&o.mark.includes(name))s.classList.add("mark");
     if(o.sel===name)s.classList.add("sel");
     if(o.bad&&o.bad.includes(name))s.classList.add("bad");
@@ -1277,7 +1280,7 @@ function afterDrill(){
   const live=(PRS.state==="idle"||PRS.state==="no")&&!PRS.promo&&g.turn()===PRS.color;
   const dots=PRS.sel?g.moves({square:PRS.sel,verbose:true}).map(m=>m.to):[];
   const anim=PRS.anim;PRS.anim=null;
-  drawBoard($("#prBoard"),g.fen(),{flip,anim,sel:PRS.sel,dots,bad:PRS.bad,hi:PRS.hint?(PRS.hn>=2?[PRS.hint.slice(0,2),PRS.hint.slice(2,4)]:[PRS.hint.slice(0,2)]):PRS.last,
+  drawBoard($("#prBoard"),g.fen(),{flip,anim,sel:PRS.sel,dots,bad:PRS.bad,hi:PRS.hint?[]:PRS.last,hint:PRS.hint?(PRS.hn>=2?[PRS.hint.slice(0,2),PRS.hint.slice(2,4)]:[PRS.hint.slice(0,2)]):null,
     onSquare:live?sq=>{const pc=g.get(sq);
       if(pc&&pc.color===g.turn()){PRS.sel=PRS.sel===sq?null:sq;PRS.bad=[];if(PRS.state==="no")PRS.state="idle";return render()}
       if(!PRS.sel)return;ac();
@@ -1287,8 +1290,9 @@ function afterDrill(){
   function prMove(m){PRS.hist.push(g.fen());const mv=prPlay(m);PRS.sel=null;PRS.bad=[];PRS.hint=null;PRS.hn=0;if(!mv){PRS.hist.pop();return render()}PRS.moves++;prAfterUser(mv)}
   document.querySelectorAll("[data-promo]").forEach(b=>b.onclick=()=>{const p=PRS.promo;PRS.promo=null;prMove({...p,promotion:b.dataset.promo})});
   // Hint, step by step: click 1 = which piece to move (glows), click 2 = the best move itself (arrow squares + move name)
-  const hintShow=u=>{PRS.hint=u;PRS.hn=1;render()};
-  const hintMore=()=>{const m=new Chess(g.fen()).move({from:PRS.hint.slice(0,2),to:PRS.hint.slice(2,4),promotion:PRS.hint[4]});PRS.hintSan=m?m.san:"";PRS.hn=2;render()};
+  const seeBoard=()=>{const b=$("#prBoard");if(b)b.scrollIntoView({block:"nearest",behavior:"smooth"})};
+  const hintShow=u=>{PRS.hint=u;PRS.hn=1;render();seeBoard()};
+  const hintMore=()=>{const m=new Chess(g.fen()).move({from:PRS.hint.slice(0,2),to:PRS.hint.slice(2,4),promotion:PRS.hint[4]});PRS.hintSan=m?m.san:"";PRS.hn=2;render();seeBoard()};
   $("#prHint").onclick=async()=>{
     if(PRS.hint&&PRS.g.turn()===PRS.color)return PRS.hn<2?hintMore():0;           // second click (a third does nothing)
     if(!c.goal&&c.line.length)return hintShow(c.line[PRS.ply]);
@@ -1459,12 +1463,12 @@ async function lvAnalyse(fenBefore,uci){
   const g=new Chess(fenBefore),mover=g.turn(),mv=g.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||undefined});if(!mv)return null;
   const fenAfter=g.fen(),sign=mover==="w"?1:-1,cp=x=>Math.max(-1500,Math.min(1500,x.white*sign));
   const a=await sfAsk(fenBefore,{depth:12});
-  if(g.game_over())return {san:mv.san,cpLoss:0,hangs:false,reply:null,pieceMoved:PIECE_N[mv.piece],to:mv.to};
+  if(g.game_over())return {san:mv.san,cpLoss:0,after:g.in_checkmate()?1500:0,hangs:false,reply:null,pieceMoved:PIECE_N[mv.piece],to:mv.to};
   const b=await sfAsk(fenAfter,{depth:12});
   let reply=null,hangs=false;
   if(b.best&&b.best!=="(none)"){const rm=g.move({from:b.best.slice(0,2),to:b.best.slice(2,4),promotion:b.best[4]||undefined});
     if(rm){reply={san:rm.san,captures:rm.captured?PIECE_N[rm.captured]:"",check:/\+/.test(rm.san),mate:/#/.test(rm.san)};hangs=!!rm.captured&&rm.to===mv.to}}
-  return {san:mv.san,cpLoss:Math.max(0,Math.min(1000,Math.round(cp(a)-cp(b)))),hangs,reply,pieceMoved:PIECE_N[mv.piece],to:mv.to}}
+  return {san:mv.san,cpLoss:Math.max(0,Math.min(1000,Math.round(cp(a)-cp(b)))),after:cp(b),hangs,reply,pieceMoved:PIECE_N[mv.piece],to:mv.to}}
 function coachLocal(m,opp){const r=m.reply;
   if(r&&r.mate)return `After ${m.san}, ${opp} can play ${r.san}. That is checkmate.`;
   if(m.hangs&&r)return `Your ${m.pieceMoved} on ${m.to} can be captured by ${r.san}. Always check that the square you move to is safe.`;
@@ -1472,10 +1476,10 @@ function coachLocal(m,opp){const r=m.reply;
   if(m.cpLoss>=300)return `That move gives ${opp} a big advantage. Check what ${opp} is threatening before you move.`;
   if(m.cpLoss>=100)return `That helps ${opp}. There is a stronger move here.`;
   return "That is not the move this puzzle wants, but it is not a blunder. Look for a more forcing move: a check, a capture or a threat."}
-async function coachMistake(fenBefore,uci,p){
+async function coachMistake(fenBefore,uci,p,pre){
   const tok=LVS,c=cs(),my=++c.seq,opp=LVS.color==="w"?"Black":"White";
   coachSay("Checking your move…",true);
-  let m=null;try{m=await lvAnalyse(fenBefore,uci)}catch(e){}
+  let m=pre||null;if(!m)try{m=await lvAnalyse(fenBefore,uci)}catch(e){}
   if(LVS!==tok||c.seq!==my)return;
   if(!m){coachSay("Not quite. Try another move!");return}
   c.last={fen:fenBefore,played:m};
@@ -2015,7 +2019,7 @@ function vPlevel(){
   else if(LVS.complete){stat=`<b>Level ${l} complete!</b> ${starsHtml(LVS.complete)}`;scls="ok"}
   else if(s==="ok"){const rd=LVS.rd,rt=rd!=null?` · Your rating ${prState().r} <span class="rd ${rd>=0?"up":"down"}">${rd>=0?"+":""}${rd}</span>`:"";stat=(LVS.res[LVS.k]==="ok"?(LVS.replay?"<b>Correct!</b>":"<b>Correct!</b> +5 XP"):"<b>Solved.</b> Next time, first try!")+rt;scls="ok"}
   else if(s==="no"){stat="Not quite. Try another move!";scls="no"}
-  else if(s==="think")stat=LVS.ply===0?"Watch your opponent's move…":`<span class="spin sm" aria-hidden="true"></span> Opponent is replying…`;
+  else if(s==="think")stat=LVS.checking?`<span class="spin sm" aria-hidden="true"></span> Checking your move…`:LVS.ply===0?"Watch your opponent's move…":`<span class="spin sm" aria-hidden="true"></span> Opponent is replying…`;
   else stat=LVS.ply<=1?`<i class="tm ${LVS.color}" aria-hidden="true"></i> ${col} to move`:"Good! Keep going.";
   const nextBtn=LVS.dcomplete?"Back to home":LVS.complete?(l<LVD.length?`Go to Level ${l+1} →`:"Back to puzzles"):LVS.k<list.length-1?"Next puzzle →":D?"Finish practice":"Finish level";
   const canNext=s==="ok"||LVS.complete||LVS.dcomplete;
@@ -2043,7 +2047,7 @@ function afterPlevel(){
   const l=LVS.l,list=lvList(l),g=LVS.g,flip=LVS.color==="b";
   const live=(LVS.state==="idle"||LVS.state==="no")&&!LVS.promo&&!LVS.chk&&g.turn()===LVS.color;
   const dots=LVS.sel?g.moves({square:LVS.sel,verbose:true}).map(m=>m.to):[];const anim=LVS.anim;LVS.anim=null;
-  drawBoard($("#lvBoard"),g.fen(),{flip,anim,sel:LVS.sel,dots,bad:LVS.bad,mark:LVS.chk&&LVS.chk.sq?LVS.chk.sq:null,hi:LVS.chk?[]:LVS.hint?[LVS.hint]:LVS.last,
+  drawBoard($("#lvBoard"),g.fen(),{flip,anim,sel:LVS.sel,dots,bad:LVS.bad,mark:LVS.chk&&LVS.chk.sq?LVS.chk.sq:null,hi:LVS.chk||LVS.hint?[]:LVS.last,hint:LVS.hint&&!LVS.chk?[LVS.hint]:null,
     onSquare:live?sq=>{const pc=g.get(sq);
       if(pc&&pc.color===g.turn()){LVS.sel=LVS.sel===sq?null:sq;LVS.bad=[];if(LVS.state==="no")LVS.state="idle";return render()}
       if(!LVS.sel)return;ac();const cand=g.moves({square:LVS.sel,verbose:true}).filter(m=>m.to===sq);if(!cand.length){LVS.sel=null;return render()}
@@ -2055,7 +2059,14 @@ function afterPlevel(){
       moveSound(mv,g);LVS.anim=[mv.from,mv.to];LVS.last=[mv.from,mv.to];LVS.bad=[];LVS.ply++;
       if(LVS.ply>=LVS.moves.length)return lvSolved();
       LVS.state="think";render();const tok=LVS;setTimeout(()=>{if(LVS!==tok)return;lvPlay(LVS.moves[LVS.ply]);LVS.ply++;LVS.state="idle";render()},500);return}
-    g.undo();LVS.miss=true;LVS.wrongs=(LVS.wrongs||0)+1;LVS.state="no";LVS.bad=[mv.from,mv.to];LVS.last=[];sfx("wrong");render();coachMistake(fenBefore,mv.from+mv.to+(mv.promotion||""),list[LVS.k])}
+    // Not the stored move. A different move that STILL CLEARLY WINS is accepted too (Stockfish checks: at most 1 pawn worse than the best move, and a winning position after it).
+    // The stored line no longer applies after a different move, so the puzzle counts as solved right there.
+    const uci=mv.from+mv.to+(mv.promotion||""),tok=LVS;LVS.state="think";LVS.checking=1;render();
+    const wrong=a=>{g.undo();LVS.checking=0;LVS.miss=true;LVS.wrongs=(LVS.wrongs||0)+1;LVS.state="no";LVS.bad=[mv.from,mv.to];LVS.last=[];sfx("wrong");render();coachMistake(fenBefore,uci,list[LVS.k],a)};
+    lvAnalyse(fenBefore,uci).then(a=>{if(LVS!==tok)return;
+      if(a&&a.cpLoss<=100&&a.after>=300){LVS.checking=0;moveSound(mv,g);LVS.anim=[mv.from,mv.to];LVS.last=[mv.from,mv.to];LVS.bad=[];LVS.ply=LVS.moves.length;
+        coachSay("That is not the move I had in mind, but it wins too. Well done!",false);return lvSolved()}
+      wrong(a)}).catch(()=>{if(LVS===tok)wrong(null)})}
   document.querySelectorAll("[data-promo]").forEach(b=>b.onclick=()=>{const p=LVS.promo;LVS.promo=null;lvUser({...p,promotion:b.dataset.promo})});
   $("#lvHint").onclick=()=>{LVS.chk=null;LVS.miss=true;LVS.hinted=true;coachHint(list[LVS.k])};
   $("#lvShow").onclick=()=>{LVS.chk=null;LVS.miss=true;LVS.shown=true;LVS.state="think";render();const tok=LVS;
