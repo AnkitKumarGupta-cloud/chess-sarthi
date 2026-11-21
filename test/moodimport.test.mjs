@@ -55,7 +55,7 @@ console.log("Practice topics OK: " + rebuilt.map((t) => t.title + " " + t.chapte
     const g = new Chess(c.fen); assert.ok(g.fen(), t.title + " " + c.name + " loads");
     if (!c.goal) { if (c.line.length) fixed++; continue; }
     assert.ok(["mate", "eval", "promote", "draw", "equalize"].includes(c.goal.type), c.name + " goal type");
-    assert.ok(c.goal.n >= 1, c.name + " goal moves");
+    assert.ok(c.goal.n === undefined || c.goal.n >= 1, c.name + " goal moves");   // older Lichess goals may have no move limit
     if (c.goal.type === "eval") assert.ok(g.turn() === "w" ? c.goal.cp !== 0 : c.goal.cp !== 0);
   }
   assert.ok(fixed <= 10, "only a few fixed-line lessons are left (" + fixed + ")");
