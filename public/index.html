@@ -1150,10 +1150,11 @@ let PRS=null;           // current session
 const prKey=(t,i)=>t.id+(t.v?"v"+t.v:"")+"/"+i;
 const prDone=t=>t.chapters.filter((c,i)=>S.practice&&S.practice[prKey(t,i)]).length;
 const prAll=()=>PR?PR.topics.reduce((a,t)=>a+prDone(t),0):Object.keys(S.practice||{}).length;
-async function prLoad(){if(PR)return PR;const r=await fetch("/practice.json?v=6",{cache:"no-cache"});if(!r.ok)throw new Error("load");PR=await r.json();return PR}
+async function prLoad(){if(PR)return PR;const r=await fetch("/practice.json?v=6");if(!r.ok)throw new Error("load");PR=await r.json();return PR}
 
 /* Stockfish runs in the browser (Web Worker). One request at a time. */
 const SF={w:null,ready:null,busy:Promise.resolve()};
+addEventListener("load",()=>setTimeout(()=>{prLoad().catch(()=>{})},2500));   // Practice data ready before the first visit
 function sfStart(){if(SF.ready)return SF.ready;
   SF.ready=new Promise((res,rej)=>{try{SF.w=new Worker("/stockfish/stockfish-18-lite-single.js")}catch(e){return rej(e)}
     const t=setTimeout(()=>rej(new Error("engine timeout")),30000);
@@ -1194,7 +1195,8 @@ function vPractice(){
       <span class="prcard-foot"><span class="bar"><i style="width:${d/n*100}%"></i></span><span class="mono">${d}/${n}</span></span></span></a>`}).join("")}</div></section>`}).join("")}
 `;
 }
-function afterPractice(){if(!PR)prLoad().then(()=>{if(route()==="practice")try{render()}catch(e){console.error(e)}}).catch(()=>{const a=$("#app");if(a)a.insertAdjacentHTML("beforeend",`<p class="feedback no">Couldn't load practice. Check your internet and try again.</p>`)})}
+function sfWarm(){sfStart().catch(()=>{})}                       // load the engine in the background (no waiting)
+function afterPractice(){sfWarm();if(!PR)prLoad().then(()=>{if(route()==="practice")try{render()}catch(e){console.error(e)}}).catch(()=>{const a=$("#app");if(a)a.insertAdjacentHTML("beforeend",`<p class="feedback no">Couldn't load practice. Check your internet and try again.</p>`)})}
 
 function prParam(){const m=location.hash.match(/[?&]t=([^&]+)/);return m?decodeURIComponent(m[1]):""}
 function prOpen(t,i){const c=t.chapters[i],g=new Chess(c.fen);PRS={tid:t.id,i,g,color:prColor(c),moves:0,ply:0,sel:null,state:"idle",msg:"",last:[],bad:[],hint:null,promo:null,anim:null,hist:[],hn:0,hintSan:""};
@@ -1274,7 +1276,7 @@ async function prAfterUser(mv){
     PRS.state="idle";PRS.msg="";render();
   }catch(e){PRS.state="fail";PRS.msg="The chess engine couldn't start on this device. Try reloading the page.";render()}
 }
-function afterDrill(){
+function afterDrill(){sfWarm();
   if(!PR){prLoad().then(()=>{if(route()==="drill")render()}).catch(()=>{});return}
   const t=PR.topics.find(x=>x.id===PRS.tid),c=t.chapters[PRS.i],g=PRS.g,flip=PRS.color==="b";
   const live=(PRS.state==="idle"||PRS.state==="no")&&!PRS.promo&&g.turn()===PRS.color;
@@ -1312,7 +1314,7 @@ function afterDrill(){
 /* ---------- Puzzle levels (Lichess puzzle database, CC0). One path, 10 puzzles per level, getting harder. ---------- */
 let LVD=null, LVS=null;
 const LV_STAGES=[["Beginner",1,20],["Improver",21,40],["Intermediate",41,60],["Club player",61,80],["Advanced",81,100],["Expert",101,115]];
-async function lvLoad(){if(LVD)return LVD;const r=await fetch("/levels.json?v=3",{cache:"no-cache"});if(!r.ok)throw new Error("load");LVD=(await r.json()).levels;return LVD}
+async function lvLoad(){if(LVD)return LVD;const r=await fetch("/levels.json?v=3");if(!r.ok)throw new Error("load");LVD=(await r.json()).levels;return LVD}
 const lvState=()=>{S.lv=S.lv||{unlocked:1,done:{}};return S.lv};
 // Stars by share of clean solves (levels can hold more than 10 puzzles now): 90% = 3 stars, 70% = 2 stars
 const lvStars=r=>{const q=r.filter(x=>x==="ok").length/Math.max(1,r.length);return q>=.9?3:q>=.7?2:1};
