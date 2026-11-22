@@ -1268,14 +1268,14 @@ async function prAfterUser(mv){
     g.undo();PRS.hist.pop();PRS.moves--;PRS.state="no";PRS.bad=[mv.from,mv.to];PRS.last=[];sfx("wrong");return render()}
   const type=goal?goal.type:"mate";
   if(g.in_checkmate())return prSolved();   // you delivered mate: always a win
-  if(prEnd(g))return (type==="draw"||type==="equalize")?prSolved():prFail("That's a draw. You needed to win. Try again!");
+  if(prEnd(g))return (type==="draw"||type==="equalize")?prSolved():prFail("That ended in a draw, but this one needs a win. Press Restart and keep more pressure on.");
   const meets=w=>me==="w"?w>=goal.cp:w<=goal.cp;
   PRS.state="think";PRS.msg="Checking your move…";render();
   try{
-    if(type==="eval"&&PRS.moves>=goal.n){const r=await sfAsk(g.fen(),{depth:13});if(PRS!==tok)return;return meets(r.white)?prSolved():prFail("Good try, but that didn't win enough. Try again!")}
-    if(type==="promote"&&mv.promotion){const r=await sfAsk(g.fen(),{depth:13});if(PRS!==tok)return;return meets(r.white)?prSolved():prFail("You promoted, but the position isn't winning. Try again!")}
-    if(type==="mate"&&goal&&goal.n<99&&PRS.moves>=goal.n)return prFail(`Not checkmate in ${goal.n}. Try again!`);
-    if((type==="draw"||type==="equalize")&&PRS.moves>=goal.n){const r=await sfAsk(g.fen(),{depth:12});if(PRS!==tok)return;const mine=me==="w"?r.white:-r.white;return mine>-150?prSolved():prFail("You held on for a while, but the position slipped. Try again!")}
+    if(type==="eval"&&PRS.moves>=goal.n){const r=await sfAsk(g.fen(),{depth:13});if(PRS!==tok)return;return meets(r.white)?prSolved():prFail(`Not enough yet. After ${goal.n} move${goal.n>1?"s":""} you needed a clearly better position, usually by winning material. Press Take back and look for a check, capture or threat.`)}
+    if(type==="promote"&&mv.promotion){const r=await sfAsk(g.fen(),{depth:13});if(PRS!==tok)return;return meets(r.white)?prSolved():prFail("You promoted, but the position still isn't winning, because the new piece can be lost or the game drawn. Press Take back and look for a stronger way.")}
+    if(type==="mate"&&goal&&goal.n<99&&PRS.moves>=goal.n)return prFail(`That was not checkmate in ${goal.n}. Press Take back and look for a faster way to trap the king.`);
+    if((type==="draw"||type==="equalize")&&PRS.moves>=goal.n){const r=await sfAsk(g.fen(),{depth:12});if(PRS!==tok)return;const mine=me==="w"?r.white:-r.white;return mine>-150?prSolved():prFail("You held on for a while, but the position slipped and you are worse now. Press Take back and look for a safer move.")}
     // How good was YOUR move? Compare the engine score before it with the score after it (from your side).
     const fenBefore=PRS.hist[PRS.hist.length-1];let base=null;
     if(fenBefore){PRS.msg="Checking your move…";render();try{base=await sfAsk(fenBefore,{depth:11,movetime:400})}catch(e){}if(PRS!==tok)return}
@@ -1283,12 +1283,12 @@ async function prAfterUser(mv){
     PRS.msg="The computer is thinking…";render();
     const r=await sfAsk(g.fen(),{depth:type==="mate"?14:12,movetime:type==="mate"?undefined:700});if(PRS!==tok)return;
     PRS.fb=prFeedback(base,r,fenBefore,me,mv);
-    if(!r.best||r.best==="(none)")return prFail("No moves left. Try again!");
+    if(!r.best||r.best==="(none)")return prFail("The computer has no legal moves and it is not checkmate. That is stalemate, a draw. Press Take back and leave the king a move.");
     prPlay({from:r.best.slice(0,2),to:r.best.slice(2,4),promotion:r.best[4]});
-    if(g.in_checkmate())return prFail("You got checkmated. Try again!");
-    if(prEnd(g))return (type==="draw"||type==="equalize")?prSolved():prFail("That's a draw. You needed to win. Try again!");
+    if(g.in_checkmate())return prFail("You were checkmated. Press Take back and look for a safer move.");
+    if(prEnd(g))return (type==="draw"||type==="equalize")?prSolved():prFail("That ended in a draw, but this one needs a win. Press Restart and keep more pressure on.");
     if(type==="mate"&&goal&&goal.n<99){const left=goal.n-PRS.moves;if(left>0){const e=await sfAsk(g.fen(),{depth:Math.min(20,left*2+8)});if(PRS!==tok)return;
-      const mateFor=me==="w"?e.mate:(e.mate==null?null:-e.mate);if(!(mateFor>0&&mateFor<=left))return prFail(`That lets the king escape. Checkmate in ${goal.n} isn't possible any more. Try again!`)}}
+      const mateFor=me==="w"?e.mate:(e.mate==null?null:-e.mate);if(!(mateFor>0&&mateFor<=left))return prFail(`That lets the king slip away, so checkmate in ${goal.n} is no longer possible. Press Take back and try another move.`)}}
     PRS.state="idle";PRS.msg="";render();
   }catch(e){PRS.state="fail";PRS.msg="The chess engine couldn't start on this device. Try reloading the page.";render()}
 }
