@@ -1259,6 +1259,10 @@ function prFeedback(base,after,fenBefore,me,mv){
   if(loss<=40)return {cls:"ok",text:"Good move!"};
   if(loss<=120)return {cls:"",text:`Playable, but there was a stronger move${best?": "+best:""}.`};
   return {cls:"no",text:`That gives up a lot${best?`. Stronger was ${best}`:""}. You can press Take back and try again.`}}
+/** The strongest move in the position before the player's last move, in words ("Qg3+"), or "" if the engine cannot say. */
+async function prBestSan(fenBefore){
+  try{const r=await sfAsk(fenBefore,{depth:12,movetime:600});if(!r.best||r.best==="(none)")return "";
+    const m=new Chess(fenBefore).move({from:r.best.slice(0,2),to:r.best.slice(2,4),promotion:r.best[4]});return m?m.san:""}catch(e){return ""}}
 const prEnd=g=>g.in_checkmate()||g.in_draw()||g.in_stalemate()||g.insufficient_material()||g.in_threefold_repetition();
 async function prAfterUser(mv){
   const t=PR.topics.find(x=>x.id===PRS.tid),c=t.chapters[PRS.i],g=PRS.g,goal=c.goal,me=PRS.color,tok=PRS;
@@ -1272,8 +1276,8 @@ async function prAfterUser(mv){
   const meets=w=>me==="w"?w>=goal.cp:w<=goal.cp;
   PRS.state="think";PRS.msg="Checking your move…";render();
   try{
-    if(type==="eval"&&PRS.moves>=goal.n){const r=await sfAsk(g.fen(),{depth:13});if(PRS!==tok)return;return meets(r.white)?prSolved():prFail(`Not enough yet. After ${goal.n} move${goal.n>1?"s":""} you needed a clearly better position, usually by winning material. Press Take back and look for a check, capture or threat.`)}
-    if(type==="promote"&&mv.promotion){const r=await sfAsk(g.fen(),{depth:13});if(PRS!==tok)return;return meets(r.white)?prSolved():prFail("You promoted, but the position still isn't winning, because the new piece can be lost or the game drawn. Press Take back and look for a stronger way.")}
+    if(type==="eval"&&PRS.moves>=goal.n){const r=await sfAsk(g.fen(),{depth:13});if(PRS!==tok)return;if(meets(r.white))return prSolved();const b=await prBestSan(PRS.hist[PRS.hist.length-1]);if(PRS!==tok)return;return prFail(b?`That move didn't win enough. The strongest move here was ${b}. Press Take back to undo and try it.`:"That move didn't win enough. Press Take back and look for a check, capture or threat.")}
+    if(type==="promote"&&mv.promotion){const r=await sfAsk(g.fen(),{depth:13});if(PRS!==tok)return;if(meets(r.white))return prSolved();const b=await prBestSan(PRS.hist[PRS.hist.length-1]);if(PRS!==tok)return;return prFail(`You promoted, but the position still isn't winning, because the new piece can be lost or the game drawn.${b?" The strongest move here was "+b+".":""} Press Take back and try again.`)}
     if(type==="mate"&&goal&&goal.n<99&&PRS.moves>=goal.n)return prFail(`That was not checkmate in ${goal.n}. Press Take back and look for a faster way to trap the king.`);
     if((type==="draw"||type==="equalize")&&PRS.moves>=goal.n){const r=await sfAsk(g.fen(),{depth:12});if(PRS!==tok)return;const mine=me==="w"?r.white:-r.white;return mine>-150?prSolved():prFail("You held on for a while, but the position slipped and you are worse now. Press Take back and look for a safer move.")}
     // How good was YOUR move? Compare the engine score before it with the score after it (from your side).
